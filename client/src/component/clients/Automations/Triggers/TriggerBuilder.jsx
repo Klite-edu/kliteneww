@@ -26,28 +26,28 @@ const TriggerBuilder = () => {
       try {
         // Fetch forms
         const formsResponse = await axios.get(
-          "http://localhost:5000/api/form/forms"
+          `${process.env.REACT_APP_API_URL}/api/form/forms`
         );
         console.log("Forms response:", formsResponse.data);
         setForms(formsResponse.data);
 
         // Fetch stages
         const stagesResponse = await axios.get(
-          "http://localhost:5000/api/stages/list"
+          `${process.env.REACT_APP_API_URL}/api/stages/list`
         );
         console.log("Stages response:", stagesResponse.data);
         setStages(stagesResponse.data);
 
         // Fetch event sources from the Trigger collection
         const eventSourcesResponse = await axios.get(
-          "http://localhost:5000/api/triggers/event-sources"
+          `${process.env.REACT_APP_API_URL}/api/triggers/event-sources`
         );
         console.log("Event sources response:", eventSourcesResponse.data);
         setEventSources(eventSourcesResponse.data);
 
         // Fetch predefined triggers
         const predefinedTriggersResponse = await axios.get(
-          "http://localhost:5000/api/triggers/predefined"
+          `${process.env.REACT_APP_API_URL}/api/triggers/predefined`
         );
         console.log(
           "Predefined triggers response:",
@@ -66,7 +66,7 @@ const TriggerBuilder = () => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/triggers/create",
+        `${process.env.REACT_APP_API_URL}/api/triggers/create`,
         triggerData
       );
       alert(response.data.message);

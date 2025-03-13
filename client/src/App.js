@@ -40,6 +40,10 @@ import StageLeads from "./component/clients/CRM/Pipeline/StageLeads";
 import Opportunity from "./component/clients/CRM/opportunities/Opportunities";
 import ChatbotForm from "./component/clients/Chatbot/ChatbotForm";
 import MetaSignup from "./component/clients/Metasignup/MetaSignup";
+import MetaClient from "./component/clients/Metasignup/MetaClient";
+import MetaMessage from "./component/clients/Metasignup/MetaMessage";
+import MetaTemplate from "./component/clients/Metasignup/MetaTemplate";
+import Chats from "./component/clients/Chats/Chats";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -98,6 +102,10 @@ const App = () => {
         <Route path="/opportunities" element={<Opportunity />} />
         <Route path="/chatbotform" element={<ChatbotForm />} />
         <Route path="/metasignup" element={<MetaSignup />} />
+        <Route path="/metaclient" element={<MetaClient />} />
+        <Route path="/metamessage" element={<MetaMessage />} />
+        <Route path="/metatemplate" element={<MetaTemplate />} />
+        <Route path="/chats" element={<Chats />} />
       </Routes>
     </div>
   );

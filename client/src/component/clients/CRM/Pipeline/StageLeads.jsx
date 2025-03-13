@@ -9,7 +9,7 @@ const StageLeads = ({ form_id }) => {
   const fetchLeadsByStages = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/form/leads-by-stages?form_id=${form_id}`
+        `${process.env.REACT_APP_API_URL}/api/form/leads-by-stages?form_id=${form_id}`
       );
       console.log("Leads fetched successfully:", response.data);
       setLeadsByStages(response.data);

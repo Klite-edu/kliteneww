@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Business = require('../../../models/clients/MetaBusiness/MetaBusiness-model');
+const Waba = require('../../../models/clients/MetaBusiness/MetaBusiness-model');
 
 // Save Meta Access Token
 router.post('/exchange-token', async (req, res) => {

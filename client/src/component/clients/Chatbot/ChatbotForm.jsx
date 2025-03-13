@@ -24,7 +24,7 @@ const ChatbotForm = () => {
 
     try {
       // Send the form data to the backend
-      const response = await fetch("http://localhost:5000/api/chat/submit-form", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/submit-form`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

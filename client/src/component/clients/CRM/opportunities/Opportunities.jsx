@@ -40,10 +40,10 @@ const Opportunity = () => {
 
       if (storedRole === "user") {
         console.log(`🟢 Employee role detected. Fetching pipelines for userId: ${storedUserId}`);
-        response = await axios.get(`http://localhost:5000/api/stages/user/${storedUserId}`);
+        response = await axios.get(`${process.env.REACT_APP_API_URL}/api/stages/user/${storedUserId}`);
       } else {
         console.log("🟢 Admin/Supervisor role detected. Fetching all pipelines.");
-        response = await axios.get("http://localhost:5000/api/stages/list");
+        response = await axios.get(`${process.env.REACT_APP_API_URL}/api/stages/list`);
       }
 
       console.log("✅ Pipelines fetched:", response.data);
@@ -59,7 +59,7 @@ const Opportunity = () => {
   const fetchEmployees = async () => {
     console.log("🔵 Fetching employee list...");
     try {
-      const response = await axios.get("http://localhost:5000/api/employee/contactinfo");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/contactinfo`);
       console.log("✅ Employees fetched:", response.data);
       setEmployees(response.data);
     } catch (error) {
