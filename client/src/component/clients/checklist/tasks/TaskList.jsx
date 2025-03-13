@@ -8,7 +8,6 @@ const TaskList = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [updatedTask, setUpdatedTask] = useState({});
   const [loading, setLoading] = useState(false);
-  const [userRole, setUserRole] = useState("");
   const [serverDate, setServerDate] = useState(null);
 
   // ✅ Sorting & Date Range States
@@ -16,18 +15,29 @@ const TaskList = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
-  // ✅ Fetch role from localStorage when the component loads
+  const [userRole, setUserRole] = useState(""); // Role state
+
+  // ✅ Fetch role and userId from localStorage
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
-    console.log("Fetched user role from localStorage:", storedRole); // Log role from localStorage
+    const storedUserId = localStorage.getItem("userId");
+  
+    console.log("Fetched role from localStorage:", storedRole);
+    console.log("Fetched userId from localStorage:", storedUserId);
+  
     setUserRole(storedRole);
     fetchServerDate();
+  
+    if (storedUserId && storedRole) {
+      console.log("Fetching tasks for userId:", storedUserId, "and role:", storedRole);
+      fetchTasks(storedUserId, storedRole);  // Fetch tasks using userId and role
+    }
   }, []);
 
   const fetchServerDate = async () => {
     try {
       console.log("Fetching server date...");
-      const res = await axios.get("http://localhost:5000/api/tasks/serverdate");
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/serverdate`);
       console.log("Received server date:", res.data.currentDate); // Log server date response
       setServerDate(new Date(res.data.currentDate));
     } catch (error) {
@@ -35,27 +45,38 @@ const TaskList = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, [sorting, startDate, endDate]);
-
-  const fetchTasks = async () => {
+  const fetchTasks = async (userId, role) => {
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem("token");  // Assuming token is saved in localStorage
+      if (!token) {
+        throw new Error("Token not found. User is not authenticated.");
+      }
+  
       const params = {
         sort: sorting,
         startDate: startDate ? startDate.toISOString() : "",
         endDate: endDate ? endDate.toISOString() : "",
         generateFutureTasks: true,
+        userId: role === "user" ? userId : "", // Only filter by userId for 'user' role
       };
+  
       console.log("Fetching tasks with params:", params); // Log params being sent to the backend
-
-      const res = await axios.get("http://localhost:5000/api/tasks/list", { params });
+  
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/list`, {
+        headers: {
+          "Authorization": `Bearer ${token}`  // Include the token in the Authorization header
+        },
+        params,
+      });
+  
       console.log("Received tasks:", res.data); // Log received tasks data
       setTasks(res.data);
     } catch (error) {
       console.error("❌ Error Fetching Tasks:", error);
     }
   };
+  
 
   const handleEditClick = (task) => {
     console.log("Editing task:", task); // Log task being edited
@@ -67,7 +88,7 @@ const TaskList = () => {
     try {
       console.log("Updating task with ID:", editingTask, "and data:", updatedTask); // Log task update request
       setLoading(true);
-      await axios.put(`http://localhost:5000/api/tasks/update/${editingTask}`, updatedTask);
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/update/${editingTask}`, updatedTask);
       alert("✅ Task updated successfully!");
       setEditingTask(null);
       fetchTasks();
@@ -84,7 +105,7 @@ const TaskList = () => {
     if (!window.confirm("❓ Are you sure you want to delete this task?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/delete/${taskId}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/tasks/delete/${taskId}`);
       alert("✅ Task deleted successfully!");
       fetchTasks();
     } catch (error) {
@@ -99,19 +120,19 @@ const TaskList = () => {
       alert("⚠️ Server date is not available. Please try again.");
       return;
     }
-  
+
     // Normalize to UTC for consistency with backend
     const selectedDate = new Date(taskDate);
     selectedDate.setUTCHours(0, 0, 0, 0); // Normalize to ignore time
-  
+
     if (selectedDate.toDateString() !== serverDate.toDateString()) {
       alert("⚠️ You can only complete the task on the assigned date.");
       return;
     }
-  
+
     try {
       console.log("Sending completion request for task ID:", taskId, "with selected date:", selectedDate.toISOString());
-      const res = await axios.put(`http://localhost:5000/api/tasks/markCompleted/${taskId}`, { selectedDate: selectedDate.toISOString() });
+      const res = await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/markCompleted/${taskId}`, { selectedDate: selectedDate.toISOString() });
       console.log("Server response:", res.data); // Log server response
       alert("✅ Task marked as completed!");
       fetchTasks();
@@ -120,7 +141,6 @@ const TaskList = () => {
       alert("⚠️ Failed to update status.");
     }
   };
-
   return (
     <div>
       <h2>Task List</h2>
@@ -164,7 +184,7 @@ const TaskList = () => {
             return (
               <tr key={task._id}>
                 <td>{task.taskName}</td>
-                <td>{task.doerName}</td>
+                <td>{task.doer.fullName}</td>
                 <td>{task.department}</td>
                 <td>{task.frequency}</td>
                 <td>{new Date(task.plannedDate).toLocaleDateString()}</td>

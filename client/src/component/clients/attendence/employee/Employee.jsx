@@ -15,7 +15,7 @@ const Employee = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/employees");
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/employees`);
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -35,9 +35,9 @@ const Employee = () => {
 
     try {
       if (editingId) {
-        await axios.put(`http://localhost:5000/api/employees/${editingId}`, { name, jobProfile, mobile, email });
+        await axios.put(`${process.env.REACT_APP_API_URL}/api/employees/${editingId}`, { name, jobProfile, mobile, email });
       } else {
-        await axios.post("http://localhost:5000/api/employees", { name, jobProfile, mobile, email });
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/employees`, { name, jobProfile, mobile, email });
       }
       setName("");
       setJobProfile("Driver");
@@ -61,7 +61,7 @@ const Employee = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this employee?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/employees/${id}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/employees/${id}`);
       fetchEmployees();
     } catch (error) {
       console.error("Error deleting employee:", error);

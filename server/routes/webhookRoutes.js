@@ -43,8 +43,9 @@ router.post("/webhook", async (req, res) => {
             console.log(`📩 New Message from ${senderPhone}: ${messageText}`);
 
             try {
-              // ✅ Forward Message to Chatbot API
+              console.log("chatbotresponse entry point");
               const chatbotResponse = await axios.post(CHATBOT_API_URL, { message: messageText });
+              console.log("chatbotresponse", chatbotResponse);
               
               const chatbotReply = chatbotResponse.data.response;
               console.log(`🤖 Chatbot Reply: ${chatbotReply}`);

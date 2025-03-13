@@ -1,6 +1,6 @@
 const express = require("express");
 const Lead = require("../models/leads-model");
-
+const { v4: uuidv4 } = require("uuid");
 const router = express.Router();
 
 // ✅ Create a New Contact
@@ -26,6 +26,34 @@ router.post("/create", async (req, res) => {
         res.status(500).json({ error: "Server error while creating lead" });
     }
 });
+
+
+router.post("/submit-form", async (req, res) => {
+    try {
+      const { name, phoneNumber, email, description } = req.body;
+  
+      // Generate a unique form ID
+      const formId = uuidv4();
+  
+      // Create a new lead with form data
+      const newLead = new Lead({
+        formId,
+        name,
+        phoneNumber,
+        email,
+        description,
+      });
+  
+      // Save the lead to the database
+      await newLead.save();
+  
+      // Send success response
+      res.status(201).json({ message: "Form submitted successfully!", formId });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      res.status(500).json({ message: "Error submitting form", error: error.message });
+    }
+  });
 
 // ✅ Fetch All Contacts
 router.get("/leads", async (req, res) => {

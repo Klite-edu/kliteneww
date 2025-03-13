@@ -28,10 +28,18 @@ import ChatBox from "./component/Admin/Chats/ChatBox";
 import View from "./component/clients/CRM/ContactsManagement/Contacts/contactDescription/View";
 import EditContact from "./component/clients/CRM/ContactsManagement/Contacts/edit/EditContact";
 import Attendance from "./component/clients/attendence/attendence/Attendence";
-import EmployeeLogin from "./component/clients/attendence/employeeLogin/EmployeeLogin";
 import AddTask from "./component/clients/checklist/tasks/AddTask";
-import DoerList from "./component/clients/checklist/doers/DoerList";
 import TaskList from "./component/clients/checklist/tasks/TaskList";
+import DelegateTask from "./component/clients/taskDelegation/DelegateTask/DelegateTask";
+import DelegationList from "./component/clients/taskDelegation/TaskDelegationList/DelegationList";
+import Pipeline from "./component/clients/CRM/Pipeline/Pipeline";
+import Form from "./component/landingPage/Form/Form";
+import TriggerBuilder from "./component/clients/Automations/Triggers/TriggerBuilder";
+import FormBuilder from "./component/clients/FormBuilder/FormBuilder";
+import StageLeads from "./component/clients/CRM/Pipeline/StageLeads";
+import Opportunity from "./component/clients/CRM/opportunities/Opportunities";
+import ChatbotForm from "./component/clients/Chatbot/ChatbotForm";
+import MetaSignup from "./component/clients/Metasignup/MetaSignup";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -54,6 +62,7 @@ const App = () => {
         {/* ✅ Public Routes (Accessible Without Login) */}
         <Route path="/" element={<PanelLogin />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="/form/:id" element={<Form />} />
 
         {/* ✅ All Routes Accessible Without Authentication */}
         <Route path="/dashboard" element={<Dashboard />} />
@@ -80,6 +89,15 @@ const App = () => {
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/check-addtask" element={<AddTask />} />
         <Route path="/check-tasklist" element={<TaskList />} />
+        <Route path="/delegation-taskadd" element={<DelegateTask />} />
+        <Route path="/delegation-tasklist" element={<DelegationList />} />
+        <Route path="/pipeline" element={<Pipeline />} />
+        <Route path="/automation" element={<TriggerBuilder />} />
+        <Route path="/FormBuilder" element={<FormBuilder />} />
+        <Route path="/pipeline" element={<StageLeads />} />
+        <Route path="/opportunities" element={<Opportunity />} />
+        <Route path="/chatbotform" element={<ChatbotForm />} />
+        <Route path="/metasignup" element={<MetaSignup />} />
       </Routes>
     </div>
   );

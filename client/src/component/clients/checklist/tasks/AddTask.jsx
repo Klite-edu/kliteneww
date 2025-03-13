@@ -16,7 +16,7 @@ const AddTask = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/employee/contactinfo");
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/contactinfo`);
         setEmployees(res.data);
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -48,7 +48,7 @@ const AddTask = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/tasks/add", task);
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks/add`, task);
       alert("Task added successfully!");
       navigate("/check-tasklist")
       setTask({

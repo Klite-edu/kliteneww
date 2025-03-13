@@ -1,0 +1,64 @@
+/* Container for the form */
+.form-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  /* Form heading */
+  .form-heading {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  /* Form element */
+  .form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Form group (each input field and label) */
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  /* Label styling */
+  .form-label {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  /* Input field styling */
+  .form-input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+  
+  /* Textarea styling */
+  .form-textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    resize: vertical; /* Allow vertical resizing */
+  }
+  
+  /* Submit button styling */
+  .form-button {
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  /* Hover effect for the button */
+  .form-button:hover {
+    background-color: #0056b3;
+  }

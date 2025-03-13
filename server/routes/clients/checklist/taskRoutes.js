@@ -1,26 +1,39 @@
 const express = require("express");
 const router = express.Router();
 const Task = require("../../../models/clients/checklist/task");
+const Employee = require("../../../models/clients/contactdata");
 const { calculateNextDueDate } = require("../../../middlewares/TaskScheduler");
+const verifyToken = require("../../../middlewares/auth")
 
+// ✅ Add a New Task
+// ✅ Add a New Task
 // ✅ Add a New Task
 router.post("/add", async (req, res) => {
   try {
     console.log("📩 Received Task Data:", req.body);
 
     const { taskName, doerName, department, frequency, plannedDate } = req.body;
+    
+    // Fetch the employeeId based on the doerName
+    const employee = await Employee.findOne({ fullName: doerName });
+    if (!employee) {
+      return res.status(400).json({ message: "Employee not found" });
+    }
+
+    const employeeId = employee._id; // Get the employee ID
+
     let nextDueDate = calculateNextDueDate(plannedDate, frequency);
 
     console.log("📝 Calculated Next Due Date:", nextDueDate);
 
     const newTask = new Task({
       taskName,
-      doerName,
+      doer: employeeId,  // Save the employee ID in the task document
       department,
       frequency,
-      plannedDate,  // ✅ Planned date remains original
-      nextDueDate,  // ✅ Only nextDueDate is calculated
-      status: "Pending",
+      plannedDate,
+      nextDueDate,  
+      statusHistory: [{ status: "Pending" }],  // Add initial status to statusHistory
     });
 
     console.log("📤 Saving Task to Database...");
@@ -35,43 +48,58 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// ✅ Get All Tasks with Correct nextDueDate
-// ✅ Get All Tasks with nextDueDate Filtering
-router.get("/list", async (req, res) => {
+
+
+router.get("/list", verifyToken, async (req, res) => {
   try {
-      let { startDate, endDate, sort, generateFutureTasks } = req.query;
-      let filter = {};
+    let { startDate, endDate, sort, generateFutureTasks } = req.query;
+    let filter = {};
 
-      if (startDate && endDate) {
-          filter.nextDueDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
-      }
+    const userId = req.user.id;  // Assuming 'id' is available in the JWT payload
+    const userRole = req.user.role;  // Assuming 'role' is available in the JWT payload
 
-      let tasks = await Task.find(filter).sort({ nextDueDate: sort === "desc" ? -1 : 1 });
+    console.log(`User ID: ${userId}, Role: ${userRole}`); // Log user info
 
-      if (generateFutureTasks === "true") {
-          let extendedTasks = [];
+    if (userRole === "user") {
+      // If the user is a "user", show only tasks assigned to them
+      filter.doer = userId;
+    }
 
-          tasks.forEach(task => {
-              let nextDueDate = new Date(task.nextDueDate);
-              while (nextDueDate <= new Date(endDate)) {
-                  extendedTasks.push({
-                      ...task.toObject(),
-                      _id: task._id + "_" + nextDueDate.toISOString(), // Unique ID for frontend
-                      nextDueDate: new Date(nextDueDate),
-                  });
-                  nextDueDate = calculateNextDueDate(nextDueDate, task.frequency);
-              }
+    if (startDate && endDate) {
+      filter.nextDueDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
+
+    // Fetch tasks from the database and populate the 'doer' field with employee details
+    let tasks = await Task.find(filter)
+      .sort({ nextDueDate: sort === "desc" ? -1 : 1 })
+      .populate("doer", "fullName");  // Populate 'doer' with employee's fullName
+
+    // For generating future tasks, if applicable
+    if (generateFutureTasks === "true") {
+      let extendedTasks = [];
+
+      tasks.forEach((task) => {
+        let nextDueDate = new Date(task.nextDueDate);
+        while (nextDueDate <= new Date(endDate)) {
+          extendedTasks.push({
+            ...task.toObject(),
+            _id: task._id + "_" + nextDueDate.toISOString(), // Unique ID for frontend
+            nextDueDate: new Date(nextDueDate),
           });
+          nextDueDate = calculateNextDueDate(nextDueDate, task.frequency);
+        }
+      });
 
-          tasks = [...tasks, ...extendedTasks];
-      }
+      tasks = [...tasks, ...extendedTasks];
+    }
 
-      res.json(tasks);
+    res.json(tasks);
   } catch (error) {
-      console.error("❌ Error Fetching Tasks:", error.message);
-      res.status(500).json({ error: error.message });
+    console.error("❌ Error Fetching Tasks:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
+
 
 
 
@@ -158,7 +186,7 @@ router.put("/markCompleted/:id", async (req, res) => {
 
 
 router.get("/serverdate", (req, res) => {
-  const currentDate = new Date("2025-03-20").toISOString(); // Use ISO string to ensure UTC format
+  const currentDate = new Date().toISOString(); // Use ISO string to ensure UTC format
   res.json({ currentDate });
 });
 

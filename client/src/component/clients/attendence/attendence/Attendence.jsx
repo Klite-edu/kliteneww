@@ -30,7 +30,7 @@ const Attendance = () => {
   
       console.log("📡 Fetching employee details for ID:", userId);
   
-      const response = await axios.get(`http://localhost:5000/api/employee/${userId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/${userId}`);
       setEmployee(response.data);
   
       console.log("✅ Employee details fetched:", response.data);
@@ -45,7 +45,7 @@ const Attendance = () => {
     try {
       console.log("📡 Fetching all registered office locations...");
       const response = await axios.get(
-        "http://localhost:5000/api/attendance/sites"
+        `${process.env.REACT_APP_API_URL}/api/attendance/sites`
       );
       setSiteList(response.data);
       console.log("✅ Sites fetched successfully:", response.data);
@@ -142,7 +142,7 @@ const Attendance = () => {
     try {
       console.log("📡 Sending attendance data to backend...");
       const response = await axios.post(
-        "http://localhost:5000/api/attendance/submit",
+        `${process.env.REACT_APP_API_URL}/api/attendance/submit`,
         {
           employeeID: employee._id,
           name: employee.name,
