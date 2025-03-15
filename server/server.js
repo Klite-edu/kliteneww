@@ -33,7 +33,6 @@ const ChatbotRoute = require("./routes/clients/chatbot/ChatbotRoute");
 const MetaClientRoutes = require("./routes/clients/MetaBusiness/MetaClientRoutes");
 const MetaMessagesRoutes = require("./routes/clients/MetaBusiness/MetaMessagesRoutes");
 const MetaTemplateRoutes = require("./routes/clients/MetaBusiness/MetaTemplateRoutes");
-const MetaWebhookRoutes = require("./routes/clients/MetaBusiness/MetaWebhookRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -67,7 +66,6 @@ app.use("/api/triggers", TriggerRoutes);
 app.use("/api/builder", formBuilderRoutes);
 app.use("/api/form", formRoutes);
 app.use("/api/chat", ChatbotRoute);
-app.use("/api/meta", MetaWebhookRoutes);
 app.use("/api/meta", MetaTemplateRoutes);
 app.use("/api/meta", MetaMessagesRoutes);
 app.use("/api/meta", MetaClientRoutes);
