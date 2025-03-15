@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios"; // ✅ Axios imported
 
 const ChatbotForm = () => {
   // State to manage form data
   const [formData, setFormData] = useState({
     apiKey: "",
-    phoneNumber: "",
     model: "",
     instructionFile: "", // Instructions as text
   });
+
+  // Get `userId` from LocalStorage
+  const userId = localStorage.getItem("userId");
 
   // Handle input changes
   const handleChange = (e) => {
@@ -22,27 +25,54 @@ const ChatbotForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      // Send the form data to the backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/submit-form`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData), // Send as JSON
-      });
+    if (!userId) {
+      alert("User ID is missing. Please log in again.");
+      return;
+    }
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Success:", result);
-        alert("Form submitted successfully!");
-      } else {
-        console.error("Error:", response.statusText);
-        alert("Form submission failed.");
+    try {
+      // 1️⃣ Try to update the existing client first
+      const updateUrl = `${process.env.REACT_APP_API_URL}/api/chat/update-client`;
+      const updatePayload = { userId, ...formData };
+
+      console.log("🔄 Attempting to update existing client...");
+
+      const updateResponse = await axios.put(updateUrl, updatePayload);
+
+      if (updateResponse.status === 200) {
+        console.log("✅ Client updated successfully:", updateResponse.data);
+        alert("Chatbot details updated successfully!");
+        return;
       }
+
     } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred while submitting the form.");
+      if (error.response && error.response.status === 404) {
+        // 2️⃣ If not found, create a new client
+        console.log("⚠️ Client not found. Creating new client...");
+
+        try {
+          const createUrl = `${process.env.REACT_APP_API_URL}/api/chat/create-client`;
+          const createPayload = { userId, ...formData };
+
+          const createResponse = await axios.post(createUrl, createPayload);
+
+          if (createResponse.status === 201) {
+            console.log("✅ New client created:", createResponse.data);
+            alert("New client created and chatbot details saved!");
+          } else {
+            console.error("❌ Failed to create new client:", createResponse);
+            alert("Failed to create new client.");
+          }
+
+        } catch (createError) {
+          console.error("❌ Error during client creation:", createError);
+          alert("An error occurred while creating the client.");
+        }
+
+      } else {
+        console.error("❌ Error during client update:", error);
+        alert("An error occurred while updating the client.");
+      }
     }
   };
 
@@ -60,22 +90,6 @@ const ChatbotForm = () => {
             id="apiKey"
             name="apiKey"
             value={formData.apiKey}
-            onChange={handleChange}
-            style={styles.input}
-            required
-          />
-        </div>
-
-        {/* Phone Number Input */}
-        <div style={styles.formGroup}>
-          <label htmlFor="phoneNumber" style={styles.label}>
-            Phone Number:
-          </label>
-          <input
-            type="tel"
-            id="phoneNumber"
-            name="phoneNumber"
-            value={formData.phoneNumber}
             onChange={handleChange}
             style={styles.input}
             required
@@ -100,7 +114,7 @@ const ChatbotForm = () => {
 
         {/* Instructions Textarea */}
         <div style={styles.formGroup}>
-          <label htmlFor="instruction" style={styles.label}>
+          <label htmlFor="instructionFile" style={styles.label}>
             Instructions:
           </label>
           <textarea
