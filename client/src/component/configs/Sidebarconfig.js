@@ -97,7 +97,7 @@ const sidebarConfig = {
       path: "/metasignup",
       icon: faChartBar,
       options: [
-        { name: "Client", path: "/metaclient", icon: faCog },
+        { name: "Client", path: "/metasignup", icon: faCog },
         { name: "Template", path: "/metatemplate", icon: faCog },
         { name: "Message", path: "/metamessage", icon: faCog },
       ],
