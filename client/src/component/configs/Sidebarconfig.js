@@ -46,6 +46,7 @@ const sidebarConfig = {
     },
     { name: "Automations", path: "/triggers", icon: faChartBar },
     { name: "Opportunities", path: "/opportunities", icon: faChartBar },
+    { name: "Email Connect", path: "/email", icon: faChartBar },
     {
       name: "CRM",
       path: "/dashboard",
@@ -89,7 +90,7 @@ const sidebarConfig = {
       icon: faChartBar,
       options: [
         { name: "ChatbotForm", path: "/chatbotform", icon: faCog },
-        { name: "Chats", path: "/chats", icon: faCog },
+        { name: "Chats", path: "/chatbox", icon: faCog },
       ],
     },
     {

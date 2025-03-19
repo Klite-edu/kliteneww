@@ -24,7 +24,6 @@ import Settings from "./component/Admin/settings/Settings";
 import Contacts from "./component/clients/CRM/ContactsManagement/Contacts/list/Contact";
 import CreateContact from "./component/clients/CRM/ContactsManagement/Contacts/create/CreateContact";
 import Leads from "./component/clients/CRM/leads/list/Leads";
-import ChatBox from "./component/Admin/Chats/ChatBox";
 import View from "./component/clients/CRM/ContactsManagement/Contacts/contactDescription/View";
 import EditContact from "./component/clients/CRM/ContactsManagement/Contacts/edit/EditContact";
 import Attendance from "./component/clients/attendence/attendence/Attendence";
@@ -43,7 +42,8 @@ import MetaSignup from "./component/clients/Metasignup/MetaSignup";
 import MetaClient from "./component/clients/Metasignup/MetaClient";
 import MetaMessage from "./component/clients/Metasignup/MetaMessage";
 import MetaTemplate from "./component/clients/Metasignup/MetaTemplate";
-import Chats from "./component/clients/Chats/Chats";
+import EmailIntegrate from "./component/clients/EmailIntegration/EmailIntegrate";
+import ChatRoomUI from "./component/clients/Chats/ChatRoomUI";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -88,7 +88,7 @@ const App = () => {
         <Route path="/crm/leads" element={<Leads />} />
         <Route path="/contactmgmt/create" element={<CreateContact />} />
         <Route path="/contactmgmt/edit/:id" element={<EditContact />} />
-        <Route path="/chatbox" element={<ChatBox />} />
+        <Route path="/chatbox" element={<ChatRoomUI />} />
         <Route path="/contactsmgmt/view/:id" element={<View />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/check-addtask" element={<AddTask />} />
@@ -105,7 +105,7 @@ const App = () => {
         <Route path="/metaclient" element={<MetaClient />} />
         <Route path="/metamessage" element={<MetaMessage />} />
         <Route path="/metatemplate" element={<MetaTemplate />} />
-        <Route path="/chats" element={<Chats />} />
+        <Route path="/email" element={<EmailIntegrate />} />
       </Routes>
     </div>
   );
