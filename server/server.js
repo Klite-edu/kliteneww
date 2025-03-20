@@ -126,7 +126,6 @@ const MetaClientRoutes = require("./routes/clients/MetaBusiness/MetaClientRoutes
 const MetaMessagesRoutes = require("./routes/clients/MetaBusiness/MetaMessagesRoutes");
 const MetaTemplateRoutes = require("./routes/clients/MetaBusiness/MetaTemplateRoutes");
 // const EmailIntegrationRoutes = require("./routes/clients/EmailIntegration/EmailIntegrationRoutes");
-const chatRoute = require("./routes/clients/chatbot/chatRoute");
 const ticketRoute = require("./routes/clients/chatbot/ticketRoute");
 
 // ✅ Initialize Express app and HTTP server
@@ -209,7 +208,6 @@ app.use("/api/meta", MetaTemplateRoutes);
 app.use("/api/meta", MetaMessagesRoutes);
 app.use("/api/meta", MetaClientRoutes);
 // app.use("/api/mail", EmailIntegrationRoutes);
-app.use("/api/chats", chatRoute);
 app.use("/api/ticket", ticketRoute);
 
 // ✅ Start any scheduled tasks (Optional)

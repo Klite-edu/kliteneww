@@ -4,18 +4,17 @@ import ChatWindow from './ChatWindow';
 import ProfileSidebar from './ProfileSidebar';
 
 function ChatRoomUI() {
-    const [users, setUsers] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [showProfile, setShowProfile] = useState(false);
-
+    const [chatUsers, setChatUsers] = useState([]);
+    const [activeUser, setActiveUser] = useState(null);
+    const [isProfileVisible, setIsProfileVisible] = useState(false);
 
     useEffect(() => {
-        fetchUsers();
+        fetchActiveChatUsers();
     }, []);
 
-    const fetchUsers = async () => {
+    const fetchActiveChatUsers = async () => {
         try {
-            const res = await fetch(`${process.env.REACT_APP_API_URL}/api/chats/chatbot/unique-users`);
+            const res = await fetch(`${process.env.REACT_APP_API_URL}/api/ticket/chats/chatbot/unique-users`);
             const data = await res.json();
             const usersData = data.map((userId, index) => ({
                 id: userId,
@@ -25,37 +24,37 @@ function ChatRoomUI() {
                 online: Math.random() > 0.5, // simulate online
                 lastSeen: new Date().toLocaleString()
             }));
-            setUsers(usersData);
-            if (usersData.length > 0) setSelectedUser(usersData[0]);
+            setChatUsers(usersData);
+            if (usersData.length > 0) setActiveUser(usersData[0]);
         } catch (error) {
             console.error('Error fetching users:', error);
         }
     };
 
-    const updateUserProfile = (id, updates) => {
-        setUsers(users.map(user => user.id === id ? { ...user, ...updates } : user));
-        setSelectedUser(prev => prev && prev.id === id ? { ...prev, ...updates } : prev);
+    const updateChatUserProfile = (id, updates) => {
+        setChatUsers(chatUsers.map(user => user.id === id ? { ...user, ...updates } : user));
+        setActiveUser(prev => prev && prev.id === id ? { ...prev, ...updates } : prev);
     };
 
     return (
         <div style={styles.container}>
             <Sidebar
-                users={users}
-                selectedUser={selectedUser}
-                onUserSelect={(user) => {
-                    setSelectedUser(user);
-                    setShowProfile(false);
+                chatUsers={chatUsers}
+                activeUser={activeUser}
+                onChatUserSelect={(user) => {
+                    setActiveUser(user);
+                    setIsProfileVisible(false);
                 }}
             />
             <ChatWindow
-                selectedUser={selectedUser}
-                onProfileClick={() => setShowProfile(true)}
+                activeUser={activeUser}
+                onProfileIconClick={() => setIsProfileVisible(true)}
             />
             <ProfileSidebar
-                show={showProfile}
-                user={selectedUser}
-                onClose={() => setShowProfile(false)}
-                onUpdateProfile={updateUserProfile}
+                isVisible={isProfileVisible}
+                user={activeUser}
+                onClose={() => setIsProfileVisible(false)}
+                onUpdateProfile={updateChatUserProfile}
             />
         </div>
     );

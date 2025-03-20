@@ -55,35 +55,3 @@
 
 // module.exports = router;
 
-const express = require("express");
-const router = express.Router();
-const UserChat = require("../../../models/clients/chat/userchat-model");
-
-router.post("/chatbot", async (req, res) => {
-  try {
-    const chat = await UserChat.create(req.body);
-    res.status(201).json(chat);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-router.get("/chatbot", async (req, res) => {
-  try {
-    const chats = await UserChat.find();
-    res.json(chats);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get("/chatbot/unique-users", async (req, res) => {
-  try {
-    const uniqueUsers = await UserChat.distinct("user_id");
-    res.json(uniqueUsers);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-module.exports = router;

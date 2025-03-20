@@ -217,7 +217,7 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/chats/chatbot`);
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket/chats/chatbot`);
       const data = res.data;
 
       const userChat = data.find(chat => chat.user_id === selectedUser.user_id);
@@ -279,7 +279,7 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
         message: input
       });
 
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/chats/chatbot`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/chats/chatbot`, {
         user_id: selectedUser.user_id,
         user_message: [input],
         bot_response: [],
