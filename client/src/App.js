@@ -42,7 +42,6 @@ import MetaSignup from "./component/clients/Metasignup/MetaSignup";
 import MetaClient from "./component/clients/Metasignup/MetaClient";
 import MetaMessage from "./component/clients/Metasignup/MetaMessage";
 import MetaTemplate from "./component/clients/Metasignup/MetaTemplate";
-import EmailIntegrate from "./component/clients/EmailIntegration/EmailIntegrate";
 import ChatRoomUI from "./component/clients/Chats/ChatRoomUI";
 
 const TrackImpressions = () => {
@@ -105,7 +104,6 @@ const App = () => {
         <Route path="/metaclient" element={<MetaClient />} />
         <Route path="/metamessage" element={<MetaMessage />} />
         <Route path="/metatemplate" element={<MetaTemplate />} />
-        <Route path="/email" element={<EmailIntegrate />} />
       </Routes>
     </div>
   );

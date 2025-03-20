@@ -126,10 +126,11 @@ const router = express.Router();
 const Client = require("../models/clients/MetaBusiness/MetaClient-model");
 const User = require("../models/clients/chat/userchat-model");
 const Chat = require("../models/clients/chat/chat-model");
+const Ticket = require("../models/clients/chat/ticket-model");
 
 const CHATBOT_API_URL = "https://chatbot.autopilotmybusiness.com/chat";
 
-router.get("/meta/webhook", (req, res) => {
+router.get("/webhook", (req, res) => {
   const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -142,7 +143,7 @@ router.get("/meta/webhook", (req, res) => {
   }
 });
 
-router.post("/meta/webhook", async (req, res) => {
+router.post("/webhook", async (req, res) => {
   if (req.body.entry) {
     for (const entry of req.body.entry) {
       const waba_id = entry.id;
@@ -154,7 +155,6 @@ router.post("/meta/webhook", async (req, res) => {
           for (const message of change.value.messages) {
             const user_id = message.from;
             const messageText = message.text?.body || "[No Text]";
-
             try {
               let userSession = await User.findOne({ user_id, waba_id });
               if (!userSession) {
@@ -162,34 +162,36 @@ router.post("/meta/webhook", async (req, res) => {
                 await userSession.save();
               }
 
-              await Chat.create({
-                user_id,
-                sender: "user",
-                message: messageText,
-              });
-
               const humanTriggers = ["human", "agent", "support", "help"];
-              const requestHuman = humanTriggers.some((trigger) =>
-                messageText.toLowerCase().includes(trigger)
-              );
+              const requestHuman = humanTriggers.some((trigger) => messageText.toLowerCase().includes(trigger));
 
               if (requestHuman) {
                 userSession.status = "human";
                 await userSession.save();
 
-                const humanReply =
-                  "✅ You are now connected to a human agent. Please wait...";
-                await Chat.create({
-                  user_id,
-                  sender: "agent",
-                  message: humanReply,
-                });
+                const existingTicket = await Ticket.findOne({ user_id, status: "pending" });
+                if (!existingTicket) {
+                  await Ticket.create({ user_id, waba_id, status: "pending" });
+                }
 
+                io.emit("newTicket", { user_id, waba_id, message: messageText });
+
+                const humanReply = "✅ You are now connected to a human agent. Please wait...";
                 await sendWhatsAppMessage(client, user_id, humanReply);
                 continue;
               }
 
               if (userSession.status === "human") {
+                io.to(userSession.assignedAgent).emit("receiveMessage", {
+                  user_id,
+                  message: messageText,
+                });
+                await Chat.create({
+                  user_id: user_id,
+                  user_message: [messageText],
+                  bot_response: [],
+                  model: "human",
+                });
                 continue;
               }
 
@@ -199,18 +201,18 @@ router.post("/meta/webhook", async (req, res) => {
                 message: messageText,
               });
 
-              const chatbotReply =
-                chatbotResponse.data.response ||
-                "🤖 Sorry, no response from chatbot.";
+              const chatbotReply = chatbotResponse.data.response || "🤖 Sorry, no response from chatbot.";
+
               await Chat.create({
-                user_id,
-                sender: "bot",
-                message: chatbotReply,
+                user_id: user_id,
+                user_message: [messageText],
+                bot_response: [chatbotReply],
+                model: "bot",
               });
 
               await sendWhatsAppMessage(client, user_id, chatbotReply);
             } catch (error) {
-              console.error("Error:", error.message);
+              console.error("Webhook error:", error.message);
             }
           }
         }
@@ -221,8 +223,8 @@ router.post("/meta/webhook", async (req, res) => {
 });
 
 async function sendWhatsAppMessage(client, to, message) {
-  if (!client.access_token || !client.phone_number_id)
-    throw new Error("Missing client access token or phone number ID");
+  if (!client.access_token || !client.phone_number_id) throw new Error("Missing client access token or phone number ID");
+
   await axios.post(
     `https://graph.facebook.com/v18.0/${client.phone_number_id}/messages`,
     {
@@ -241,6 +243,7 @@ async function sendWhatsAppMessage(client, to, message) {
 }
 
 module.exports = router;
+
 
 // const express = require("express");
 // const axios = require("axios");

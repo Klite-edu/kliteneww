@@ -24,7 +24,6 @@ const setCredentialsForUser = async (googleId) => {
     expiry_date: user.tokenExpiryDate
   });
 
-  // Optional: Refresh the access token if it's expired
   try {
     const { token } = await oAuth2Client.getAccessToken();
     if (token) {
@@ -37,25 +36,27 @@ const setCredentialsForUser = async (googleId) => {
 };
 
 //////////////////////////////////////////////////////
-// STEP 1: Generate Google OAuth URL (Updated)
+// STEP 1: Generate Google OAuth URL
 //////////////////////////////////////////////////////
 router.get('/gmail/google', (req, res) => {
   const SCOPES = [
-    'openid',                               // Required for OpenID Connect
-    'profile',                              // Basic profile info
-    'email',                                // Email address info
+    'https://mail.google.com/',
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.insert',
+    'https://www.googleapis.com/auth/gmail.labels',
     'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.send'
+    'https://www.googleapis.com/auth/gmail.metadata',
+    'https://www.googleapis.com/auth/gmail.settings.basic',
+    'https://www.googleapis.com/auth/gmail.settings.sharing'
   ];
 
   const url = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
-    prompt: 'consent',                     // Force consent screen + refresh_token
+    prompt: 'consent',
     scope: SCOPES,
     redirect_uri: process.env.GOOGLE_REDIRECT_URI
   });
-
-  console.log('Generated OAuth URL:', url);
 
   res.send({ url });
 });
@@ -67,15 +68,12 @@ router.get('/gmail/google/callback', async (req, res) => {
   try {
     const code = req.query.code;
 
-    // 1. Exchange authorization code for tokens
     const { tokens } = await oAuth2Client.getToken(code);
-    console.log('Tokens received:', tokens);
 
     if (!tokens.access_token) {
       throw new Error('No access token received!');
     }
 
-    // 2. Fetch user info from OpenID Connect userinfo endpoint
     const userInfoResponse = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
       headers: {
         Authorization: `Bearer ${tokens.access_token}`
@@ -83,12 +81,9 @@ router.get('/gmail/google/callback', async (req, res) => {
     });
 
     const userInfo = userInfoResponse.data;
-    console.log('User Info:', userInfo);
-
     const userEmail = userInfo.email;
-    const googleId = userInfo.sub; // 'sub' is unique user ID in OpenID
+    const googleId = userInfo.sub;
 
-    // 3. Save/Update user info in MongoDB
     await Email.findOneAndUpdate(
       { googleId },
       {
@@ -101,15 +96,15 @@ router.get('/gmail/google/callback', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    res.send(`✅ Authentication successful for ${userEmail}. You can close this window.`);
+    res.redirect(`${process.env.FRONTEND_URL}/email?status=success`);
   } catch (error) {
     console.error('OAuth Callback Error:', error.response?.data || error.message);
-    res.status(500).send(`❌ OAuth Callback Error: ${JSON.stringify(error.response?.data || error.message)}`);
+    res.status(500).send(`OAuth Callback Error: ${JSON.stringify(error.response?.data || error.message)}`);
   }
 });
 
 //////////////////////////////////////////////////////
-// STEP 3: List Emails (Fetch from Gmail API)
+// STEP 3: List Emails
 //////////////////////////////////////////////////////
 router.get('/gmail/emails', async (req, res) => {
   try {
@@ -117,22 +112,15 @@ router.get('/gmail/emails', async (req, res) => {
     if (!googleId) return res.status(400).send('Missing googleId');
 
     await setCredentialsForUser(googleId);
-
     const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
-    // Step 1: Get message list
     const messagesListResponse = await gmail.users.messages.list({
       userId: 'me',
       maxResults: 10
     });
 
-    const messages = messagesListResponse.data.messages;
+    const messages = messagesListResponse.data.messages || [];
 
-    if (!messages || messages.length === 0) {
-      return res.send({ messages: [] });
-    }
-
-    // Step 2: Fetch full details for each message
     const detailedMessages = await Promise.all(
       messages.map(async (msg) => {
         const message = await gmail.users.messages.get({
@@ -149,13 +137,7 @@ router.get('/gmail/emails', async (req, res) => {
         const subject = headers.find(h => h.name === 'Subject')?.value || '';
         const date = headers.find(h => h.name === 'Date')?.value || '';
 
-        return {
-          id: msg.id,
-          from,
-          subject,
-          date,
-          snippet
-        };
+        return { id: msg.id, from, subject, date, snippet };
       })
     );
 
@@ -166,9 +148,8 @@ router.get('/gmail/emails', async (req, res) => {
   }
 });
 
-
 //////////////////////////////////////////////////////
-// STEP 4: Send Email (Send via Gmail API)
+// STEP 4: Send Email
 //////////////////////////////////////////////////////
 router.post('/gmail/send', async (req, res) => {
   try {
@@ -192,7 +173,6 @@ router.post('/gmail/send', async (req, res) => {
       .replace(/=+$/, '');
 
     const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-
     const response = await gmail.users.messages.send({
       userId: 'me',
       requestBody: { raw: encodedMessage }
@@ -202,6 +182,25 @@ router.post('/gmail/send', async (req, res) => {
   } catch (error) {
     console.error('Error sending email:', error);
     res.status(500).send(error.message);
+  }
+});
+
+//////////////////////////////////////////////////////
+// STEP 5: Fetch Google ID by Email
+//////////////////////////////////////////////////////
+router.get('/gmail/user', async (req, res) => {
+  const userEmail = req.query.email;
+
+  if (!userEmail) return res.status(400).send({ message: 'Email is required' });
+
+  try {
+    const user = await Email.findOne({ email: userEmail });
+    if (!user) return res.status(404).send({ message: 'User not found' });
+
+    res.send({ googleId: user.googleId, email: user.email });
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    res.status(500).send({ message: 'Server error' });
   }
 });
 

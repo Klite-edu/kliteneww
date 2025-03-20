@@ -125,18 +125,29 @@ const ChatbotRoute = require("./routes/clients/chatbot/ChatbotRoute");
 const MetaClientRoutes = require("./routes/clients/MetaBusiness/MetaClientRoutes");
 const MetaMessagesRoutes = require("./routes/clients/MetaBusiness/MetaMessagesRoutes");
 const MetaTemplateRoutes = require("./routes/clients/MetaBusiness/MetaTemplateRoutes");
-const EmailIntegrationRoutes = require("./routes/clients/EmailIntegration/EmailIntegrationRoutes");
+// const EmailIntegrationRoutes = require("./routes/clients/EmailIntegration/EmailIntegrationRoutes");
 const chatRoute = require("./routes/clients/chatbot/chatRoute");
-const AgentRoute = require("./routes/clients/MetaBusiness/AgentRoute");
+const ticketRoute = require("./routes/clients/chatbot/ticketRoute");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
 
+// ✅ Enable CORS for both local and production origins
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://app.autopilotmybusiness.com"
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 // ✅ Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",  // Frontend URL
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -172,12 +183,6 @@ module.exports.io = io;
 // ✅ Middleware setup
 app.use(express.json());
 
-// ✅ Enable CORS
-app.use(cors({
-  origin: "http://localhost:3000",  // Frontend URL
-  credentials: true
-}));
-
 // ✅ Routes
 app.use("/api", ImpressionRoute);
 app.use("/api/admin", adminRoutes);
@@ -203,9 +208,9 @@ app.use("/api/chat", ChatbotRoute);
 app.use("/api/meta", MetaTemplateRoutes);
 app.use("/api/meta", MetaMessagesRoutes);
 app.use("/api/meta", MetaClientRoutes);
-app.use("/api/mail", EmailIntegrationRoutes);
+// app.use("/api/mail", EmailIntegrationRoutes);
 app.use("/api/chats", chatRoute);
-app.use("/api/agents", AgentRoute);
+app.use("/api/ticket", ticketRoute);
 
 // ✅ Start any scheduled tasks (Optional)
 updateTaskFrequency();

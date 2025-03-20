@@ -176,13 +176,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
-import './chatwindow.css'; 
+import './chatwindow.css';
 
 const socket = io(process.env.REACT_APP_SOCKET_URL);
 
 const ChatWindow = ({ selectedUser, onProfileClick }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [showTicketPopup, setShowTicketPopup] = useState(false);
+  const [incomingTicket, setIncomingTicket] = useState(null);
+  const [chatLocked, setChatLocked] = useState(true); // Chat locked until agent accepts
   const chatRef = useRef(null);
 
   useEffect(() => {
@@ -194,13 +197,21 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
 
   useEffect(() => {
     socket.on('newMessage', (message) => {
-      if (message.user_id === selectedUser.user_id) {
+      if (selectedUser && message.user_id === selectedUser.user_id) {
         setMessages((prev) => [...prev, message]);
       }
     });
 
+    // Listen for ticket notifications
+    socket.on('ticketRaised', (ticket) => {
+      console.log('🚨 Ticket Raised:', ticket);
+      setIncomingTicket(ticket);
+      setShowTicketPopup(true);
+    });
+
     return () => {
       socket.off('newMessage');
+      socket.off('ticketRaised');
     };
   }, [selectedUser]);
 
@@ -209,20 +220,50 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/chats/chatbot`);
       const data = res.data;
 
-      setMessages(data.filter(m => m.user_id === selectedUser.user_id));
+      const userChat = data.find(chat => chat.user_id === selectedUser.user_id);
+
+      if (userChat) {
+        const combinedMessages = [];
+
+        const userMessages = userChat.user_message || [];
+        const botResponses = userChat.bot_response || [];
+
+        userMessages.forEach((msg, index) => {
+          combinedMessages.push({
+            _id: `user-${index}`,
+            sender: 'user',
+            message: msg,
+            timestamp: new Date() // Replace with actual timestamp if available
+          });
+
+          if (botResponses[index]) {
+            combinedMessages.push({
+              _id: `bot-${index}`,
+              sender: userChat.model === 'human' ? 'agent' : 'bot',
+              message: botResponses[index],
+              timestamp: new Date()
+            });
+          }
+        });
+
+        setMessages(combinedMessages);
+        setChatLocked(false); // Unlock chat if fetching existing human chat
+      } else {
+        setMessages([]);
+      }
+
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
   };
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || chatLocked) return;
 
     const tempId = `temp-${Date.now()}`;
 
     const newMessage = {
       _id: tempId,
-      user_id: selectedUser.user_id,
       sender: 'agent',
       message: input,
       timestamp: new Date().toISOString()
@@ -232,16 +273,17 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
     setInput('');
 
     try {
-      const metaRes = await axios.post(`${process.env.REACT_APP_API_URL}/api/meta/send`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/meta/send`, {
         clientId: selectedUser.clientId,
         to: selectedUser.user_id,
         message: input
       });
 
-      const saveRes = await axios.post(`${process.env.REACT_APP_API_URL}/api/chats/chatbot`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/chats/chatbot`, {
         user_id: selectedUser.user_id,
-        sender: 'agent',
-        message: input
+        user_message: [input],
+        bot_response: [],
+        model: 'human'
       });
 
       socket.emit('sendMessage', {
@@ -260,6 +302,29 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
             : msg
         )
       );
+    }
+  };
+
+  const acceptTicket = async () => {
+    if (!incomingTicket) return;
+
+    try {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tickets/accept`, {
+        ticketId: incomingTicket.ticketId, // Assuming ticketId is coming from backend
+        agentId: 'yourAgentId', // Replace with actual agentId or get from session
+      });
+
+      if (res.data.success) {
+        console.log('✅ Ticket accepted!');
+        setShowTicketPopup(false);
+        setChatLocked(false); // Unlock chat
+        fetchMessages(); // Fetch previous messages (bot + user)
+      } else {
+        console.error('❌ Ticket acceptance failed!');
+      }
+
+    } catch (error) {
+      console.error('❌ Error accepting ticket:', error);
     }
   };
 
@@ -284,6 +349,18 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
 
   return (
     <div className="chat-container">
+      {/* Ticket popup */}
+      {showTicketPopup && incomingTicket && (
+        <div className="ticket-popup">
+          <div className="ticket-popup-content">
+            <h3>New Ticket Raised!</h3>
+            <p>Customer <strong>{incomingTicket.userName}</strong> needs human support.</p>
+            <button onClick={acceptTicket}>Accept Ticket</button>
+            <button onClick={() => setShowTicketPopup(false)}>Ignore</button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="chat-header">
         <div className="chat-user-info" onClick={onProfileClick}>
@@ -339,15 +416,16 @@ const ChatWindow = ({ selectedUser, onProfileClick }) => {
         <input
           type="text"
           className="input-box"
-          placeholder="Type a message"
+          placeholder={chatLocked ? "Accept ticket to start chatting..." : "Type a message"}
           value={input}
+          disabled={chatLocked}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
         />
         <button
           onClick={sendMessage}
           className="send-button"
-          disabled={!input.trim()}
+          disabled={!input.trim() || chatLocked}
         >
           ➤
         </button>
