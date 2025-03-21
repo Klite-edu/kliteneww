@@ -107,7 +107,7 @@ const userRoutes = require("./routes/userRoute");
 const paymentRoutes = require("./routes/googleRoute");
 const DashboardRoutes = require("./routes/DashboardRoute");
 const LeadRoutes = require("./routes/leadsRoute");
-const WebHookRoutes = require("./routes/webhookRoutes");
+const WebHookRoutes = require("./routes/webhookRoutes"); // Updated to pass io
 const SubscriptionRoutes = require("./routes/Admin/subscriptionRoute");
 const UserSubscriptionRoutes = require("./routes/Admin/UserSubscriptionRoute");
 const clientplanRoutes = require("./routes/clients/clientplanRoute");
@@ -125,7 +125,6 @@ const ChatbotRoute = require("./routes/clients/chatbot/ChatbotRoute");
 const MetaClientRoutes = require("./routes/clients/MetaBusiness/MetaClientRoutes");
 const MetaMessagesRoutes = require("./routes/clients/MetaBusiness/MetaMessagesRoutes");
 const MetaTemplateRoutes = require("./routes/clients/MetaBusiness/MetaTemplateRoutes");
-// const EmailIntegrationRoutes = require("./routes/clients/EmailIntegration/EmailIntegrationRoutes");
 const ticketRoute = require("./routes/clients/chatbot/ticketRoute");
 
 // ✅ Initialize Express app and HTTP server
@@ -164,7 +163,7 @@ io.on("connection", (socket) => {
 
   // Agent sends message and broadcasts to all clients in the room
   socket.on("sendMessage", (data) => {
-    console.log(`✅ Message sent from agent:`, data);
+    console.log("✅ Message sent from agent:", data);
 
     // Emit new message to the user's room
     io.to(data.user_id).emit("newMessage", data);
@@ -175,9 +174,6 @@ io.on("connection", (socket) => {
     console.log(`❌ Socket disconnected: ${socket.id}`);
   });
 });
-
-// ✅ Export io if you want to use in other files (webhooks, etc.)
-module.exports.io = io;
 
 // ✅ Middleware setup
 app.use(express.json());
@@ -190,7 +186,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/auth", paymentRoutes);
 app.use("/api", DashboardRoutes);
 app.use("/api/leads", LeadRoutes);
-app.use("/", WebHookRoutes);
+app.use("/", WebHookRoutes(io)); // Pass io to webhook routes
 app.use("/api", SubscriptionRoutes);
 app.use("/api", UserSubscriptionRoutes);
 app.use("/api", clientplanRoutes);
@@ -207,7 +203,6 @@ app.use("/api/chat", ChatbotRoute);
 app.use("/api/meta", MetaTemplateRoutes);
 app.use("/api/meta", MetaMessagesRoutes);
 app.use("/api/meta", MetaClientRoutes);
-// app.use("/api/mail", EmailIntegrationRoutes);
 app.use("/api/ticket", ticketRoute);
 
 // ✅ Start any scheduled tasks (Optional)

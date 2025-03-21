@@ -4,31 +4,28 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState(users || []);
 
-  // Update filtered users whenever the search query or users list changes
   useEffect(() => {
     if (!users) {
       setFilteredUsers([]);
       return;
     }
-    
+
     if (searchQuery.trim() === '') {
       setFilteredUsers(users);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = users.filter(user => 
-        user.name.toLowerCase().includes(query) || 
+      const filtered = users.filter(user =>
+        user.name.toLowerCase().includes(query) ||
         (user.status && user.status.toLowerCase().includes(query))
       );
       setFilteredUsers(filtered);
     }
   }, [searchQuery, users]);
 
-  // Handle search input changes
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  // Clear search
   const clearSearch = () => {
     setSearchQuery('');
   };
@@ -43,7 +40,7 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
         </div>
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>👥</div>
-          <p>No contacts availableeeee</p>
+          <p>No contacts available</p>
         </div>
       </div>
     );
@@ -59,7 +56,7 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
           </div>
         </div>
       </div>
-      
+
       <div style={styles.searchContainer}>
         <div style={styles.searchInputWrapper}>
           <div style={styles.searchIcon}>🔍</div>
@@ -71,7 +68,7 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
             onChange={handleSearchChange}
           />
           {searchQuery && (
-            <button 
+            <button
               onClick={clearSearch}
               style={styles.clearButton}
               aria-label="Clear search"
@@ -81,11 +78,11 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
           )}
         </div>
       </div>
-      
+
       <div style={styles.userList}>
         {filteredUsers.length === 0 && searchQuery ? (
           <div style={styles.noResults}>
-            <p>No contacts found matchingfffff "{searchQuery}"</p>
+            <p>No contacts found matching "{searchQuery}"</p>
           </div>
         ) : (
           filteredUsers.map(user => (
@@ -95,8 +92,8 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
               style={{
                 ...styles.userItem,
                 backgroundColor: selectedUser?.id === user.id ? '#ece5dd' : 'transparent'
-              }}>
-  
+              }}
+            >
               <div style={styles.avatar}>
                 {user.avatar ? (
                   <img src={user.avatar} alt="avatar" style={styles.avatarImg} />
@@ -105,7 +102,7 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
                 )}
                 {user.online && <div style={styles.onlineIndicator}></div>}
               </div>
-              
+
               <div style={styles.userInfo}>
                 <div style={styles.name}>{user.name}</div>
                 <div style={styles.statusText}>
@@ -121,24 +118,24 @@ const Sidebar = ({ users, selectedUser, onUserSelect }) => {
 };
 
 const styles = {
-  sidebar: { 
-    width: 300, 
-    backgroundColor: '#fff', 
-    borderRight: '1px solid #ddd', 
+  sidebar: {
+    width: 300,
+    backgroundColor: '#fff',
+    borderRight: '1px solid #ddd',
     display: 'flex',
     flexDirection: 'column',
     height: '100%'
   },
-  header: { 
-    padding: 16, 
-    backgroundColor: '#075E54', 
+  header: {
+    padding: 16,
+    backgroundColor: '#075E54',
     color: '#fff'
   },
   headerContent: {
     display: 'flex',
     flexDirection: 'column'
   },
-  headerTitle: { 
+  headerTitle: {
     margin: 0,
     fontSize: '18px',
     fontWeight: 'bold'
@@ -192,19 +189,19 @@ const styles = {
     overflowY: 'auto',
     flex: 1
   },
-  userItem: { 
-    display: 'flex', 
-    alignItems: 'center', 
-    padding: '12px 16px', 
-    cursor: 'pointer', 
+  userItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '12px 16px',
+    cursor: 'pointer',
     borderBottom: '1px solid #f0f0f0',
     transition: 'background-color 0.2s'
   },
-  avatar: { 
-    width: 45, 
-    height: 45, 
-    marginRight: 12, 
-    borderRadius: '50%', 
+  avatar: {
+    width: 45,
+    height: 45,
+    marginRight: 12,
+    borderRadius: '50%',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -236,15 +233,15 @@ const styles = {
     flex: 1,
     overflow: 'hidden'
   },
-  name: { 
+  name: {
     fontWeight: 'bold',
     marginBottom: '3px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
   },
-  statusText: { 
-    fontSize: '12px', 
+  statusText: {
+    fontSize: '12px',
     color: '#888',
     overflow: 'hidden',
     textOverflow: 'ellipsis',

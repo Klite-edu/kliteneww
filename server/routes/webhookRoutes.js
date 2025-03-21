@@ -1,364 +1,392 @@
-// const express = require('express');
-// const axios = require('axios');
-// const router = express.Router();
-// const Client = require('../models/clients/MetaBusiness/MetaClient-model');
 
-// // ✅ External Chatbot API URL
+
+// const express = require("express");
+// const axios = require("axios");
+// const Client = require("../models/clients/MetaBusiness/MetaClient-model");
+// const User = require("../models/clients/chat/userchat-model");
+// const Chat = require("../models/clients/chat/chat-model");
+// const Ticket = require("../models/clients/chat/ticket-model");
+// const Employee = require("../models/clients/contactdata");
+
 // const CHATBOT_API_URL = 'https://chatbot.autopilotmybusiness.com/chat';
 
-// // ✅ Webhook Verification Endpoint
-// router.get('/webhook', (req, res) => {
-//   const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+// module.exports = (io) => {
+//   const router = express.Router();
 
-//   console.log("🔍 Incoming Webhook Verification Request:", req.query);
+//   // WHATSAPP WEBHOOKS
+//   router.get("/webhook", (req, res) => {
+//     const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+//     const mode = req.query["hub.mode"];
+//     const token = req.query["hub.verify_token"];
+//     const challenge = req.query["hub.challenge"];
 
-//   const mode = req.query['hub.mode'];
-//   const token = req.query['hub.verify_token'];
-//   const challenge = req.query['hub.challenge'];
+//     console.log("GET /webhook - Verification request received");
+//     console.log("Mode:", mode);
+//     console.log("Token:", token);
+//     console.log("Challenge:", challenge);
 
-//   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-//     console.log("✅ Webhook Verified Successfully!");
-//     res.status(200).send(challenge);
-//   } else {
-//     console.log("❌ Webhook Verification Failed! Token mismatch.");
-//     res.sendStatus(403);
-//   }
-// });
+//     if (mode === "subscribe" && token === VERIFY_TOKEN) {
+//       console.log("Webhook verified successfully");
+//       res.status(200).send(challenge);
+//     } else {
+//       console.log("Webhook verification failed");
+//       res.sendStatus(403);
+//     }
+//   });
 
-// // ✅ Webhook Receiver with Chatbot Integration
-// router.post('/webhook', async (req, res) => {
-//   console.log("📩 Webhook Received:", JSON.stringify(req.body, null, 2));
+//   router.post("/webhook", async (req, res) => {
+//     console.log("POST /webhook - Incoming webhook request");
+//     console.log("Request body:", JSON.stringify(req.body, null, 2));
 
-//   if (req.body.entry) {
-//     for (const entry of req.body.entry) {
-//       const waba_id = entry.id; // ✅ WABA ID of the receiving business account
+//     if (req.body.entry) {
+//       console.log("Processing entries...");
+//       for (const entry of req.body.entry) {
+//         console.log("Processing entry:", entry);
+//         const waba_id = entry.id;
+//         console.log("WABA ID:", waba_id);
 
-//       for (const change of entry.changes) {
-//         console.log(`🔍 Checking Database for WABA ID: ${waba_id}`);
 //         const client = await Client.findOne({ waba_id });
+//         console.log("Client found:", client);
 
 //         if (!client) {
-//           console.log(`❌ No client found for WABA ID: ${waba_id}`);
+//           console.log("Client not found for WABA ID:", waba_id);
 //           continue;
 //         }
 
-//         console.log(`✅ Client Found: ${client.business_name} (WABA ID: ${client.waba_id})`);
+//         for (const change of entry.changes) {
+//           console.log("Processing change:", change);
+//           if (change.value?.messages) {
+//             console.log("Processing messages...");
+//             for (const message of change.value.messages) {
+//               console.log("Processing message:", message);
+//               const user_id = message.from;
+//               const messageText = message.text?.body || "[No Text]";
+//               console.log("User ID:", user_id);
+//               console.log("Message Text:", messageText);
 
-//         if (change.value?.messages) {
-//           for (const message of change.value.messages) {
-//             const user_id = message.from; // ✅ Customer WhatsApp number (user_id)
-//             const messageText = message.text?.body || '[No Text]'; // ✅ Message text
+//               try {
+//                 let userSession = await User.findOne({ user_id, waba_id });
+//                 console.log("User session found:", userSession);
 
-//             console.log(`📩 New Message from ${user_id}: ${messageText}`);
+//                 if (!userSession) {
+//                   console.log("Creating new user session...");
+//                   userSession = new User({ user_id, waba_id });
+//                   await userSession.save();
+//                   console.log("New user session created:", userSession);
+//                 }
 
-//             try {
-//               console.log("🔄 Sending message to Chatbot API...");
+//                 const humanTriggers = ["human", "agent", "support", "help"];
+//                 const requestHuman = humanTriggers.some(trigger => messageText.toLowerCase().includes(trigger));
+//                 console.log("Request human:", requestHuman);
 
-//               // ✅ Send user_id, waba_id, and message to Chatbot API
-//               const chatbotResponse = await axios.post(CHATBOT_API_URL, {
-//                 user_id,           // Customer's WhatsApp number
-//                 waba_id,           // Your business WABA ID
-//                 message: messageText
-//               });
+//                 if (requestHuman) {
+//                   console.log("User requested human agent");
+//                   userSession.status = "human";
+//                   await userSession.save();
+//                   console.log("User session updated to human:", userSession);
 
-//               console.log("✅ Chatbot API Response:", JSON.stringify(chatbotResponse.data, null, 2));
+//                   const existingTicket = await Ticket.findOne({ user_id, status: "pending" });
+//                   console.log("Existing ticket found:", existingTicket);
 
-//               const chatbotReply = chatbotResponse.data.response || '🤖 Sorry, no response from chatbot.';
-//               console.log(`🤖 Chatbot Reply: ${chatbotReply}`);
+//                   if (!existingTicket) {
+//                     console.log("Creating new ticket...");
+//                     await Ticket.create({ user_id, waba_id, status: "pending" });
+//                     console.log("New ticket created");
+//                   }
 
-//               // ✅ Send Chatbot Reply back to Customer on WhatsApp
-//               await sendWhatsAppMessage(client, user_id, chatbotReply);
+//                   // Emit event using the passed io instance
+//                   console.log("Emitting ticketRaised event...");
+//                   io.emit("ticketRaised", { user_id, waba_id, message: messageText });
 
-//             } catch (error) {
-//               console.error("❌ Error communicating with chatbot API:", error.message);
-//               console.error("🛑 Chatbot API Error Details:", error.response?.data || error.message);
+//                   const humanReply = "✅ You are now connected to a human agent. Please wait...";
+//                   console.log("Sending human reply:", humanReply);
+//                   await sendWhatsAppMessage(client, user_id, humanReply);
+//                   continue;
+//                 }
+
+//                 if (userSession.status === "human") {
+//                   console.log("User is already connected to a human agent");
+//                   io.to(userSession.assignedAgent).emit("receiveMessage", {
+//                     user_id,
+//                     message: messageText,
+//                   });
+//                   console.log("Message forwarded to assigned agent");
+
+//                   await Chat.create({
+//                     user_id,
+//                     user_message: [messageText],
+//                     bot_response: [],
+//                     model: "human",
+//                   });
+//                   console.log("Chat log created for human interaction");
+//                   continue;
+//                 }
+
+//                 console.log("Sending message to chatbot...");
+//                 const chatbotResponse = await axios.post(CHATBOT_API_URL, {
+//                   user_id,
+//                   waba_id,
+//                   message: messageText,
+//                 });
+//                 console.log("Chatbot response received:", chatbotResponse.data);
+
+//                 const chatbotReply = chatbotResponse.data.response || "🤖 Sorry, no response from chatbot.";
+//                 console.log("Chatbot reply:", chatbotReply);
+
+//                 await Chat.create({
+//                   user_id,
+//                   user_message: [messageText],
+//                   bot_response: [chatbotReply],
+//                   model: "bot",
+//                 });
+//                 console.log("Chat log created for bot interaction");
+
+//                 console.log("Sending chatbot reply to user...");
+//                 await sendWhatsAppMessage(client, user_id, chatbotReply);
+//               } catch (error) {
+//                 console.error("Webhook error:", error.message);
+//                 console.error("Error stack:", error.stack);
+//               }
 //             }
 //           }
 //         }
 //       }
 //     }
-//   } else {
-//     console.warn("⚠️ Webhook Received, but no valid 'entry' field found.");
-//   }
 
-//   res.sendStatus(200);
-// });
+//     console.log("Webhook processing complete");
+//     res.sendStatus(200);
+//   });
 
-// // ✅ Function to Send WhatsApp Message (Inside same file)
-// async function sendWhatsAppMessage(client, to, message) {
-//   try {
+//   async function sendWhatsAppMessage(client, to, message) {
 //     if (!client.access_token || !client.phone_number_id) {
-//       throw new Error('❌ Client is missing access_token or phone_number_id');
+//       console.error("Missing client access token or phone number ID");
+//       throw new Error("Missing client access token or phone number ID");
 //     }
 
-//     console.log(`📤 Sending WhatsApp Message to ${to}: "${message}"`);
+//     console.log("Sending WhatsApp message...");
+//     console.log("To:", to);
+//     console.log("Message:", message);
 
-//     const response = await axios.post(
-//       `https://graph.facebook.com/v18.0/${client.phone_number_id}/messages`,
-//       {
-//         messaging_product: 'whatsapp',
-//         to: to,
-//         type: 'text',
-//         text: { body: message },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${client.access_token}`,
-//           'Content-Type': 'application/json',
+//     try {
+//       const response = await axios.post(
+//         `https://graph.facebook.com/v18.0/${client.phone_number_id}/messages`,
+//         {
+//           messaging_product: "whatsapp",
+//           to,
+//           type: "text",
+//           text: { body: message },
 //         },
-//       }
-//     );
-
-//     console.log("✅ WhatsApp Message Sent Successfully:", JSON.stringify(response.data, null, 2));
-//     return response.data;
-
-//   } catch (error) {
-//     console.error("❌ Error sending WhatsApp message:", error.response?.data || error.message);
-//     throw error;
+//         {
+//           headers: {
+//             Authorization: `Bearer ${client.access_token}`,
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+//       console.log("WhatsApp message sent successfully");
+//       console.log("Response:", response.data);
+//     } catch (error) {
+//       console.error("Failed to send WhatsApp message:", error.message);
+//       console.error("Error response:", error.response?.data);
+//     }
 //   }
-// }
 
-// module.exports = router;
+//   return router;
+// };
+
 
 const express = require("express");
-const axios = require("axios");
 const router = express.Router();
+const axios = require("axios");
+
 const Client = require("../models/clients/MetaBusiness/MetaClient-model");
 const User = require("../models/clients/chat/userchat-model");
-const Chat = require("../models/clients/chat/chat-model");
 const Ticket = require("../models/clients/chat/ticket-model");
-const { io } = require("../../server"); // Import the io object from server
+const Chat = require("../models/clients/chat/chat-model");
 
-const CHATBOT_API_URL = "https://chatbot.autopilotmybusiness.com/chat";
+// If you have a separate sendWhatsAppMessage utility, import that
+// const sendWhatsAppMessage = require("../utils/sendWhatsAppMessage");
 
-router.get("/webhook", (req, res) => {
-  const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
+const CHATBOT_API_URL = 'https://chatbot.autopilotmybusiness.com/chat';
 
-  console.log("GET /webhook - Verification request received");
-  console.log("Mode:", mode);
-  console.log("Token:", token);
-  console.log("Challenge:", challenge);
+module.exports = (io) => {
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("Webhook verified successfully");
-    res.status(200).send(challenge);
-  } else {
-    console.log("Webhook verification failed");
-    res.sendStatus(403);
-  }
-});
+  // ✅ WhatsApp verification endpoint
+  router.get("/webhook", (req, res) => {
+    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
 
-router.post("/webhook", async (req, res) => {
-  console.log("POST /webhook - Incoming webhook request");
-  console.log("Request body:", JSON.stringify(req.body, null, 2));
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      console.log("✅ Webhook verified");
+      res.status(200).send(challenge);
+    } else {
+      console.log("❌ Webhook verification failed");
+      res.sendStatus(403);
+    }
+  });
 
-  if (req.body.entry) {
-    console.log("Processing entries in the webhook request");
+  // ✅ Webhook handler
+  router.post("/webhook", async (req, res) => {
+    console.log("➡️ Incoming webhook payload:", JSON.stringify(req.body));
+
+    if (!req.body.entry) {
+      console.log("❌ No entry found in webhook payload");
+      return res.sendStatus(400);
+    }
+
     for (const entry of req.body.entry) {
       const waba_id = entry.id;
-      console.log("Processing entry with waba_id:", waba_id);
+      const client = await Client.findOne({ waba_id });
+
+      if (!client) {
+        console.log(`❌ Client not found for waba_id: ${waba_id}`);
+        continue;
+      }
 
       for (const change of entry.changes) {
-        console.log("Processing change:", JSON.stringify(change, null, 2));
+        const value = change.value;
 
-        const client = await Client.findOne({ waba_id });
-        if (!client) {
-          console.log("Client not found for waba_id:", waba_id);
-          continue;
-        }
-
-        if (change.value?.messages) {
-          console.log("Processing messages in the change");
-          for (const message of change.value.messages) {
+        // ✅ Handle messages
+        if (value?.messages) {
+          for (const message of value.messages) {
             const user_id = message.from;
             const messageText = message.text?.body || "[No Text]";
-            console.log("Processing message from user_id:", user_id);
-            console.log("Message text:", messageText);
+            console.log(`➡️ Message received from user ${user_id}:`, messageText);
 
             try {
               let userSession = await User.findOne({ user_id, waba_id });
+
               if (!userSession) {
-                console.log("Creating new user session for user_id:", user_id);
                 userSession = new User({ user_id, waba_id });
                 await userSession.save();
+                console.log(`✅ New user session created for user_id: ${user_id}`);
               }
 
               const humanTriggers = ["human", "agent", "support", "help"];
-              const requestHuman = humanTriggers.some((trigger) =>
-                messageText.toLowerCase().includes(trigger)
-              );
+              const requestHuman = humanTriggers.some(trigger => messageText.toLowerCase().includes(trigger));
 
+              // ✅ Human request flow
               if (requestHuman) {
-                console.log("User requested human support");
                 userSession.status = "human";
                 await userSession.save();
+                console.log(`✅ Human support requested by user_id: ${user_id}`);
 
                 const existingTicket = await Ticket.findOne({ user_id, status: "pending" });
+
                 if (!existingTicket) {
-                  console.log("Creating new ticket for user_id:", user_id);
-                  await Ticket.create({ user_id, waba_id, status: "pending" });
+                  const newTicket = await Ticket.create({ user_id, waba_id, status: "pending" });
+                  console.log(`✅ New ticket created: ${newTicket._id}`);
+
+                  io.to("agents").emit("ticketRaised", {
+                    ticketId: newTicket._id,
+                    userName: userSession.userName || user_id,
+                    user_id,
+                    waba_id,
+                    message: messageText
+                  });
+
+                  console.log(`✅ ticketRaised event emitted for NEW ticket: ${newTicket._id}`);
+                } else {
+                  console.log(`⚠️ Ticket already exists for user_id: ${user_id}, ticketId: ${existingTicket._id}`);
+
+                  io.to("agents").emit("ticketRaised", {
+                    ticketId: existingTicket._id,
+                    userName: userSession.userName || user_id,
+                    user_id,
+                    waba_id,
+                    message: messageText
+                  });
+
+                  console.log(`✅ ticketRaised event emitted for EXISTING ticket: ${existingTicket._id}`);
                 }
 
-                io.emit("newTicket", { user_id, waba_id, message: messageText });
-                console.log("Emitted newTicket event to Socket.IO");
-
+                // ✅ Notify the user on WhatsApp
                 const humanReply = "✅ You are now connected to a human agent. Please wait...";
                 await sendWhatsAppMessage(client, user_id, humanReply);
-                console.log("Sent human reply to user_id:", user_id);
-                continue;
+
+                continue; // Stop processing this message further
               }
 
-              if (userSession.status === "human") {
-                console.log("Forwarding message to human agent for user_id:", user_id);
+              // ✅ If user is already assigned to a human agent
+              if (userSession.status === "human" && userSession.assignedAgent) {
                 io.to(userSession.assignedAgent).emit("receiveMessage", {
                   user_id,
-                  message: messageText,
+                  message: messageText
                 });
-                console.log("Emitted receiveMessage event to assigned agent");
 
                 await Chat.create({
-                  user_id: user_id,
+                  user_id,
                   user_message: [messageText],
                   bot_response: [],
-                  model: "human",
+                  model: "human"
                 });
-                console.log("Saved human-handled message to Chat collection");
-                continue;
+
+                console.log(`✅ Message sent to assigned agent: ${userSession.assignedAgent}`);
+                continue; // Stop processing this message further
               }
 
-              console.log("Sending message to chatbot for user_id:", user_id);
+              // ✅ Chatbot fallback if not in human mode
               const chatbotResponse = await axios.post(CHATBOT_API_URL, {
                 user_id,
                 waba_id,
-                message: messageText,
+                message: messageText
               });
-              console.log("Received response from chatbot API:", chatbotResponse.data);
 
               const chatbotReply = chatbotResponse.data.response || "🤖 Sorry, no response from chatbot.";
-              console.log("Chatbot reply:", chatbotReply);
 
               await Chat.create({
-                user_id: user_id,
+                user_id,
                 user_message: [messageText],
                 bot_response: [chatbotReply],
-                model: "bot",
+                model: "bot"
               });
-              console.log("Saved bot-handled message to Chat collection");
 
               await sendWhatsAppMessage(client, user_id, chatbotReply);
-              console.log("Sent chatbot reply to user_id:", user_id);
+
+              console.log("✅ Bot response sent:", chatbotReply);
+
             } catch (error) {
-              console.error("Webhook error:", error.message);
-              console.error("Error stack:", error.stack);
+              console.error(`❌ Webhook processing error for user ${user_id}:`, error.message);
             }
           }
         }
       }
     }
-  } else {
-    console.log("No entries found in the webhook request");
-  }
 
-  res.sendStatus(200);
-});
+    res.sendStatus(200);
+  });
 
-async function sendWhatsAppMessage(client, to, message) {
-  console.log("Sending WhatsApp message to:", to);
-  console.log("Message:", message);
+  // ✅ Send WhatsApp message helper (if not using external utility)
+  async function sendWhatsAppMessage(client, to, message) {
+    if (!client.access_token || !client.phone_number_id) {
+      console.error("❌ Missing client access token or phone number ID");
+      return;
+    }
 
-  if (!client.access_token || !client.phone_number_id) {
-    console.error("Missing client access token or phone number ID");
-    throw new Error("Missing client access token or phone number ID");
-  }
-
-  try {
-    const response = await axios.post(
-      `https://graph.facebook.com/v18.0/${client.phone_number_id}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: to,
-        type: "text",
-        text: { body: message },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${client.access_token}`,
-          "Content-Type": "application/json",
+    try {
+      const response = await axios.post(
+        `https://graph.facebook.com/v18.0/${client.phone_number_id}/messages`,
+        {
+          messaging_product: "whatsapp",
+          to,
+          type: "text",
+          text: { body: message }
         },
-      }
-    );
-    console.log("WhatsApp message sent successfully:", response.data);
-  } catch (error) {
-    console.error("Failed to send WhatsApp message:", error.message);
-    console.error("Error details:", error.response?.data);
+        {
+          headers: {
+            Authorization: `Bearer ${client.access_token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log(`✅ WhatsApp message sent successfully to ${to}:`, response.data);
+    } catch (error) {
+      console.error(`❌ Failed to send WhatsApp message to ${to}:`, error.response?.data);
+    }
   }
-}
 
-module.exports = router;
-
-// const express = require("express");
-// const axios = require("axios");
-// require("dotenv").config();  // Load environment variables
-
-// const router = express.Router();
-
-// // ✅ Environment Variables
-// const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "klite";
-// const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;  // From .env
-// const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_ID || "514616105077754"; // Meta API
-// const CHATBOT_API_URL = "https://chatbot.autopilotmybusiness.com/chat";  // 🔹 Your chatbot API URL
-
-// // ✅ Webhook Verification (Required for Meta API)
-// router.get("/webhook", (req, res) => {
-//   console.log("🔍 Incoming Webhook Verification Request:", req.query);
-
-//   const mode = req.query["hub.mode"];
-//   const token = req.query["hub.verify_token"];
-//   const challenge = req.query["hub.challenge"];
-
-//   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-//     console.log("✅ Webhook Verified Successfully!");
-//     res.status(200).send(challenge);
-//   } else {
-//     console.log("❌ Webhook Verification Failed! Token mismatch.");
-//     res.status(403).send("Verification failed!");
-//   }
-// });
-
-// // ✅ Webhook to Receive WhatsApp Messages and Forward to Chatbot API
-// router.post("/webhook", async (req, res) => {
-//   console.log("📩 Incoming Webhook Event:", JSON.stringify(req.body, null, 2));
-
-//   if (req.body.object && req.body.entry) {
-//     req.body.entry.forEach((entry) => {
-//       entry.changes.forEach((change) => {
-//         const value = change.value;
-//         if (value.messages) {
-//           value.messages.forEach(async (message) => {
-//             const senderPhone = message.from;
-//             const messageText = message.text?.body || "[No Text]";
-
-//             console.log(`📩 New Message from ${senderPhone}: ${messageText}`);
-
-//             try {
-//               console.log("chatbotresponse entry point");
-//               const chatbotResponse = await axios.post(CHATBOT_API_URL, { message: messageText });
-
-//               console.log("chatbotresponse", chatbotResponse);
-
-//               const chatbotReply = chatbotResponse.data.response;
-//               console.log(`🤖 Chatbot Reply: ${chatbotReply}`);
-
-//               // ✅ Send Chatbot Response to WhatsApp
-//               await sendWhatsAppMessage(senderPhone, chatbotReply);
-
-//             } catch (error) {
-//               console.error("❌ Error communicating with chatbot API:", error.message);
-//             }
-//           });
-//         }
-//       });
-//     });
+  return router;
+};
