@@ -172,186 +172,231 @@
 
 // module.exports = router;
 
-
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
+
+// ✅ Models
 const Ticket = require("../../../models/clients/chat/ticket-model");
 const User = require("../../../models/clients/chat/userchat-model");
 const Chat = require("../../../models/clients/chat/chat-model");
 const Client = require("../../../models/clients/MetaBusiness/MetaClient-model");
-const Employee = require("../../../models/clients/contactdata");
+const Employee = require("../../../models/Admin/client-modal");
 
-// ✅ Assuming you're using sendWhatsAppMessage utility globally
+// ✅ Utility
 const sendWhatsAppMessage = require("../../../utils/sendWhatsAppMessage");
 
-module.exports = (io) => {
-  /**
-   * ✅ Accept Ticket
-   */
-  router.post("/accept", async (req, res) => {
-    console.log("➡️ POST /ticket/accept called");
-    const { ticket_id, agent_id } = req.body;
+// =====================================================
+// ✅ ACCEPT TICKET
+// =====================================================
+router.post("/accept", async (req, res) => {
+  console.log("➡️ [POST] /ticket/accept called");
 
-    try {
-      const ticket = await Ticket.findById(ticket_id);
-      if (!ticket || ticket.status !== "pending") {
-        console.log("❌ Ticket not available or already accepted");
-        return res.status(400).json({ error: "Ticket not available or already accepted" });
-      }
+  const { ticket_id, agent_id } = req.body;
+  console.log(`📦 Received Payload ➡️ ticket_id: ${ticket_id}, agent_id: ${agent_id}`);
 
-      const employee = await Employee.findOne({ employeeID: agent_id });
-      if (!employee) {
-        console.log("❌ Agent not found in system");
-        return res.status(400).json({ error: "Agent not found in the system" });
-      }
+  try {
+    const ticket = await Ticket.findById(ticket_id);
+    console.log("🔍 Fetched Ticket:", ticket);
 
-      // ✅ Update ticket and user
-      ticket.status = "accepted";
-      ticket.agent_id = agent_id;
-      await ticket.save();
-
-      await User.findOneAndUpdate(
-        { user_id: ticket.user_id },
-        { status: "human", assignedAgent: agent_id }
-      );
-
-      const chatHistory = await Chat.find({ user_id: ticket.user_id });
-      console.log(`✅ Ticket accepted & chat history fetched. Emitting chatAssigned to ${agent_id}`);
-
-      io.to(agent_id).emit("chatAssigned", {
-        ticket,
-        chatHistory,
-        agent: employee,
-      });
-
-      res.json({ message: "Ticket accepted", ticket });
-    } catch (error) {
-      console.error("❌ Error in /ticket/accept:", error.message);
-      res.status(500).json({ error: "Internal server error" });
+    if (!ticket || ticket.status !== "pending") {
+      console.warn("❌ Invalid ticket. Either not found or already accepted.");
+      return res.status(400).json({ error: "Invalid ticket" });
     }
-  });
 
-  /**
-   * ✅ Send Chat Message from Agent
-   */
-  router.post("/send", async (req, res) => {
-    console.log("➡️ POST /ticket/send called");
-    const { agent_id, user_id, message, waba_id } = req.body;
+    const agentObjectId = new mongoose.Types.ObjectId(agent_id);
+    console.log("🆔 Converted agent_id to ObjectId:", agentObjectId);
 
-    try {
-      const client = await Client.findOne({ waba_id });
-      if (!client) {
-        console.log("❌ Client not found for waba_id:", waba_id);
-        return res.status(400).json({ error: "Client not found" });
-      }
+    const employee = await Employee.findById(agentObjectId);
+    console.log("👨‍💼 Fetched Agent/Employee:", employee);
 
-      const employee = await Employee.findOne({ employeeID: agent_id });
-      if (!employee) {
-        console.log("❌ Agent not found in system");
-        return res.status(400).json({ error: "Agent not found" });
-      }
+    if (!employee) {
+      console.warn("❌ Agent not found");
+      return res.status(400).json({ error: "Agent not found" });
+    }
 
-      // ✅ Send the message via WhatsApp API
+    ticket.status = "accepted";
+    ticket.agent_id = agentObjectId;
+    await ticket.save();
+    console.log(`✅ Ticket ${ticket_id} status updated to accepted.`);
+
+    const updatedUser = await User.findOneAndUpdate(
+      { user_id: ticket.user_id },
+      { status: "human", assignedAgent: agentObjectId },
+      { new: true }
+    );
+    console.log(`✅ Updated User:`, updatedUser);
+
+    const chatHistory = await Chat.findOne({ user_id: ticket.user_id });
+    console.log(`🗂️ Chat history fetched`);
+
+    res.json({
+      message: "Ticket accepted",
+      ticket,
+      chatHistory,
+      agent: employee
+    });
+  } catch (error) {
+    console.error("❌ Internal server error in /accept:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// =====================================================
+// ✅ SEND MESSAGE (Agent or Customer)
+// =====================================================
+router.post("/send", async (req, res) => {
+  console.log("➡️ [POST] /ticket/send called");
+
+  const { agent_id, user_id, message, waba_id, sender_type } = req.body;
+  console.log(`📦 Received Payload ➡️ agent_id: ${agent_id}, user_id: ${user_id}, message: "${message}", waba_id: ${waba_id}, sender_type: ${sender_type}`);
+
+  try {
+    const client = await Client.findOne({ waba_id });
+    console.log("🏢 Fetched Client:", client);
+
+    if (!client) {
+      console.warn("❌ Client not found for waba_id:", waba_id);
+      return res.status(400).json({ error: "Client not found" });
+    }
+
+    // ✅ Send message on WhatsApp (if agent)
+    if (sender_type === "agent") {
+      console.log(`📤 Sending message from agent ${agent_id} to user ${user_id}`);
       await sendWhatsAppMessage(client, user_id, message);
+      console.log("✅ WhatsApp message sent successfully.");
+    }
 
-      // ✅ Save the message in DB (agent's response)
-      const newChat = await Chat.create({
+    // ✅ Find or Create Chat Document
+    let chat = await Chat.findOne({ user_id });
+    if (!chat) {
+      console.log("⚠️ No chat found. Creating a new one.");
+      chat = new Chat({
         user_id,
-        user_message: [],
-        bot_response: [message],
-        model: "human",
+        messages: [],
+        model: sender_type === "agent" ? "human" : "bot"
       });
-
-      console.log("✅ Message saved & emitting to agent & user rooms");
-
-      // ✅ Emit message back to agent and user rooms
-      io.to(agent_id).emit("sendMessage", { user_id, message });
-      io.to(user_id).emit("newMessage", {
-        user_id,
-        sender: 'agent',
-        message
-      });
-
-      res.json({ message: "Message sent successfully" });
-    } catch (error) {
-      console.error("❌ Error in /ticket/send:", error.message);
-      res.status(500).json({ error: "Failed to send message" });
     }
-  });
 
-  /**
-   * ✅ End Chat Session
-   */
-  router.post("/end-session", async (req, res) => {
-    console.log("➡️ POST /ticket/end-session called");
-    const { user_id, agent_id } = req.body;
+    // ✅ Append message in the messages array
+    const newMessage = {
+      sender: sender_type === "customer" ? "user" : "agent",
+      message,
+      timestamp: new Date()
+    };
 
-    try {
-      await User.findOneAndUpdate(
-        { user_id },
-        { status: "bot", assignedAgent: null }
-      );
+    chat.messages.push(newMessage);
+    await chat.save();
+    console.log("✅ Chat updated successfully:", chat);
 
-      const updatedTicket = await Ticket.findOneAndUpdate(
-        { user_id, status: "accepted" },
-        { status: "closed" }
-      );
+    res.json({ message: "Message saved", chat });
+  } catch (error) {
+    console.error("❌ Failed to send message:", error);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
 
-      console.log("✅ Session ended, bot resumed & ticket closed");
+// =====================================================
+// ✅ END SESSION
+// =====================================================
+router.post("/end-session", async (req, res) => {
+  console.log("➡️ [POST] /ticket/end-session called");
 
-      io.to(agent_id).emit("closeTicketPopup", { ticketId: user_id });
+  const { user_id, agent_id } = req.body;
+  console.log(`📦 Received Payload ➡️ user_id: ${user_id}, agent_id: ${agent_id}`);
 
-      res.json({ message: "Session ended successfully" });
-    } catch (error) {
-      console.error("❌ Error in /ticket/end-session:", error.message);
-      res.status(500).json({ error: "Failed to end session" });
-    }
-  });
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      { user_id },
+      { status: "bot", assignedAgent: null },
+      { new: true }
+    );
+    console.log("✅ User status updated back to bot:", updatedUser);
 
-  /**
-   * ✅ Create Chatbot User
-   */
-  router.post("/chatbot", async (req, res) => {
-    console.log("➡️ POST /ticket/chatbot called");
-    try {
-      const chat = await User.create(req.body);
-      console.log("✅ Chatbot user created:", chat);
-      res.status(201).json(chat);
-    } catch (error) {
-      console.error("❌ Error in POST /ticket/chatbot:", error.message);
-      res.status(400).json({ error: error.message });
-    }
-  });
+    const updatedTicket = await Ticket.findOneAndUpdate(
+      { user_id, status: "accepted" },
+      { status: "closed" },
+      { new: true }
+    );
+    console.log("✅ Ticket closed:", updatedTicket);
 
-  /**
-   * ✅ Get All Chatbot Users
-   */
-  router.get("/chatbot", async (req, res) => {
-    console.log("➡️ GET /ticket/chatbot called");
-    try {
-      const chats = await User.find();
-      console.log("✅ Chatbot users fetched");
-      res.json(chats);
-    } catch (error) {
-      console.error("❌ Error in GET /ticket/chatbot:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
+    res.json({ message: "Session ended", updatedTicket, updatedUser });
+  } catch (error) {
+    console.error("❌ Failed to end session:", error);
+    res.status(500).json({ error: "Failed to end session" });
+  }
+});
 
-  /**
-   * ✅ Get Unique Users
-   */
-  router.get("/chatbot/unique-users", async (req, res) => {
-    console.log("➡️ GET /ticket/chatbot/unique-users called");
-    try {
-      const uniqueUsers = await User.distinct("user_id");
-      console.log("✅ Unique users fetched:", uniqueUsers.length);
-      res.json(uniqueUsers);
-    } catch (error) {
-      console.error("❌ Error in GET /ticket/chatbot/unique-users:", error.message);
-      res.status(500).json({ error: error.message });
-    }
-  });
+// =====================================================
+// ✅ GET ALL CHATBOT USERS
+// =====================================================
+router.get("/chatbot", async (req, res) => {
+  console.log("➡️ [GET] /ticket/chatbot called");
 
-  return router;
-};
+  try {
+    const chats = await Chat.find();
+    console.log(`✅ Retrieved ${chats.length} chatbot sessions`);
+
+    res.json(chats);
+  } catch (error) {
+    console.error("❌ Error fetching chatbot users:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// ✅ GET UNIQUE USERS
+// =====================================================
+router.get("/chatbot/unique-users", async (req, res) => {
+  console.log("➡️ [GET] /ticket/chatbot/unique-users called");
+
+  try {
+    // Fetch user_id and waba_id, exclude _id if not needed
+    const uniqueUsers = await User.find({}, { user_id: 1, waba_id: 1, _id: 0 });
+
+    console.log(`✅ Retrieved ${uniqueUsers.length} unique users with waba_id`);
+
+    res.json(uniqueUsers);
+  } catch (error) {
+    console.error("❌ Error fetching unique users with waba_id:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// =====================================================
+// ✅ GET PENDING TICKETS
+// =====================================================
+router.get("/pending-tickets", async (req, res) => {
+  console.log("➡️ [GET] /ticket/pending-tickets called");
+
+  try {
+    const pendingTickets = await Ticket.find({ status: "pending" });
+    console.log(`✅ Retrieved ${pendingTickets.length} pending tickets`);
+
+    res.json(pendingTickets);
+  } catch (error) {
+    console.error("❌ Error fetching pending tickets:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// =====================================================
+// ✅ GET ACCEPTED TICKETS FOR SPECIFIC AGENT
+// =====================================================
+router.get("/accepted-tickets/:agent_id", async (req, res) => {
+  const { agent_id } = req.params;
+  console.log(`➡️ [GET] /ticket/accepted-tickets/${agent_id} called`);
+
+  try {
+    const acceptedTickets = await Ticket.find({ status: "accepted", agent_id });
+    console.log(`✅ Retrieved ${acceptedTickets.length} accepted tickets for agent_id ${agent_id}`);
+
+    res.json(acceptedTickets);
+  } catch (error) {
+    console.error("❌ Error fetching accepted tickets:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;

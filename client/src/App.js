@@ -43,6 +43,7 @@ import MetaClient from "./component/clients/Metasignup/MetaClient";
 import MetaMessage from "./component/clients/Metasignup/MetaMessage";
 import MetaTemplate from "./component/clients/Metasignup/MetaTemplate";
 import ChatRoomUI from "./component/clients/Chats/ChatRoomUI";
+import Sites from "./component/clients/HRM/Sites/Sites";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -104,6 +105,7 @@ const App = () => {
         <Route path="/metaclient" element={<MetaClient />} />
         <Route path="/metamessage" element={<MetaMessage />} />
         <Route path="/metatemplate" element={<MetaTemplate />} />
+        <Route path="/sites" element={<Sites />} />
       </Routes>
     </div>
   );

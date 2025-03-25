@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Sidebar from "../../Sidebar/Sidebar";
+import Navbar from "../../Navbar/Navbar";
+import "./formbuilder.css";
 
 const FormBuilder = () => {
   const [clientId, setClientId] = useState(null);
@@ -7,10 +10,15 @@ const FormBuilder = () => {
   const [buttonConfig, setButtonConfig] = useState({
     text: "Submit",
     link: "",
-    bgColor: "#007bff",
+    bgColor: "#0D6E6E",
     textColor: "#ffffff",
   });
   const [formTitle, setFormTitle] = useState("");
+  const role = localStorage.getItem("role");
+  const [customPermissions, setCustomPermissions] = useState(() => {
+    const storedPermissions = localStorage.getItem("permissions");
+    return storedPermissions ? JSON.parse(storedPermissions) : {};
+  });
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -24,7 +32,6 @@ const FormBuilder = () => {
     setClientId(userId);
   }, []);
 
-  // Add a new field
   const addField = () => {
     setFields([
       ...fields,
@@ -37,19 +44,16 @@ const FormBuilder = () => {
     ]);
   };
 
-  // Remove a field
   const removeField = (index) => {
     setFields(fields.filter((_, i) => i !== index));
   };
 
-  // Update a field
   const updateField = (index, key, value) => {
     const newFields = [...fields];
     newFields[index][key] = value;
     setFields(newFields);
   };
 
-  // Add an option to a field
   const addOption = (index) => {
     const newFields = [...fields];
     newFields[index].options.push(
@@ -58,21 +62,18 @@ const FormBuilder = () => {
     setFields(newFields);
   };
 
-  // Update an option
   const updateOption = (fieldIndex, optionIndex, value) => {
     const newFields = [...fields];
     newFields[fieldIndex].options[optionIndex] = value;
     setFields(newFields);
   };
 
-  // Remove an option
   const removeOption = (fieldIndex, optionIndex) => {
     const newFields = [...fields];
     newFields[fieldIndex].options.splice(optionIndex, 1);
     setFields(newFields);
   };
 
-  // Save the form
   const saveForm = async () => {
     if (!formTitle) {
       alert("Form title is required");
@@ -85,7 +86,7 @@ const FormBuilder = () => {
     }
 
     const formData = {
-      clientId, // 🔥 Pass the logged-in client ID here
+      clientId,
       fields,
       buttons: {
         BackgroundColor: buttonConfig.bgColor,
@@ -124,7 +125,6 @@ const FormBuilder = () => {
     }
   };
 
-  // Render field preview
   const renderFieldPreview = (field) => {
     switch (field.type) {
       case "text":
@@ -184,258 +184,396 @@ const FormBuilder = () => {
   };
 
   return (
-    <div className="container-fluid mt-4">
-      <div className="d-flex bg-warning mb-4">
-        <h2 className="text-center">Form Builder</h2>
-        <button className="btn-sm btn-light me-0 ms-auto" onClick={saveForm}>
-          <i className="bi bi-plus-circle"></i> Save form
-        </button>
-      </div>
-
-      <div className="row">
-        <div className="col-md-6">
-          <div className="card mb-4">
-            <div className="card-header bg-primary text-white">
-              <h4 className="m-0">Form Configuration</h4>
-            </div>
-            <div className="card-body">
-              <div className="mb-3">
-                <label className="form-label">Form Title</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                />
-              </div>
-            </div>
+    <>
+      <Sidebar role={role} customPermissions={customPermissions} />
+      <Navbar />
+      <div className="main-formbuilder">
+        <div className="container-fluid mt-4">
+          <div className="d-flex mb-4" style={{ borderRadius: "var(--border-radius)" }}>
+            <h2 className="text-center" style={{ color: "var(--primary-color)" }}>Form Builder</h2>
+            <button
+              className="btn-sm me-0 ms-auto"
+              style={{ 
+                backgroundColor: "var(--primary-color)", 
+                color: "var(--white)",
+                borderRadius: "var(--border-radius)",
+                border: "none",
+                padding: "8px 16px"
+              }}
+              onClick={saveForm}
+            >
+              <i className="bi bi-save"></i> Save form
+            </button>
           </div>
 
-          <div className="card mb-4">
-            <div className="card-header bg-primary text-white">
-              <h4 className="m-0">Button Configuration</h4>
-            </div>
-            <div className="card-body">
-              <div className="row mb-3">
-                <div className="col-6">
-                  <label className="form-label">Button Text</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={buttonConfig.text}
-                    onChange={(e) =>
-                      setButtonConfig({ ...buttonConfig, text: e.target.value })
-                    }
-                  />
+          <div className="row">
+            <div className="col-md-6">
+              <div className="card mb-4" style={{ 
+                boxShadow: "var(--box-shadow-primary)",
+                borderRadius: "var(--border-radius)"
+              }}>
+                <div
+                  className="card-header"
+                  style={{ 
+                    backgroundColor: "var(--primary-color)", 
+                    color: "var(--white)",
+                    borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                  }}
+                >
+                  <h4 className="m-0">Form Configuration</h4>
                 </div>
-                <div className="col-6">
-                  <label className="form-label">Redirect Link</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={buttonConfig.link}
-                    onChange={(e) =>
-                      setButtonConfig({ ...buttonConfig, link: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="row mb-2">
-                <div className="col-6">
-                  <label className="form-label">Background Color</label>
-                  <input
-                    type="color"
-                    className="form-control form-control-color w-100"
-                    value={buttonConfig.bgColor}
-                    onChange={(e) =>
-                      setButtonConfig({
-                        ...buttonConfig,
-                        bgColor: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="col-6">
-                  <label className="form-label">Text Color</label>
-                  <input
-                    type="color"
-                    className="form-control form-control-color w-100"
-                    value={buttonConfig.textColor}
-                    onChange={(e) =>
-                      setButtonConfig({
-                        ...buttonConfig,
-                        textColor: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card mb-4">
-            <div className="card-header d-flex justify-content-between align-items-center bg-primary text-white">
-              <h4 className="m-0">Custom Fields</h4>
-              <button className="btn btn-light" onClick={addField}>
-                <i className="bi bi-plus-circle"></i> Add Field
-              </button>
-            </div>
-            <div className="card-body">
-              {fields.map((field, index) => (
-                <div key={index} className="card mb-3">
-                  <div className="card-header d-flex justify-content-between align-items-center bg-light">
-                    <h5 className="m-0">{field.label || "New Field"}</h5>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => removeField(index)}
-                    >
-                      <i className="bi bi-trash"></i> Remove
-                    </button>
+                <div className="card-body" style={{ backgroundColor: "var(--gray)" }}>
+                  <div className="mb-3">
+                    <label className="form-label" style={{ color: "var(--primary-dark)" }}>Form Title*</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      style={{ borderRadius: "var(--border-radius)" }}
+                    />
                   </div>
-                  <div className="card-body">
-                    <div className="row align-items-center mb-3">
-                      <div className="col-5">
-                        <label className="form-label mb-0">Field Label</label>
+                </div>
+              </div>
+
+              <div className="card mb-4" style={{ 
+                boxShadow: "var(--box-shadow-primary)",
+                borderRadius: "var(--border-radius)"
+              }}>
+                <div className="card-header" style={{ 
+                  backgroundColor: "var(--primary-color)", 
+                  color: "var(--white)",
+                  borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                }}>
+                  <h4 className="m-0">Button Configuration</h4>
+                </div>
+                <div className="card-body" style={{ backgroundColor: "var(--gray)" }}>
+                  <div className="row mb-3">
+                    <div className="col-6">
+                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Button Text</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={buttonConfig.text}
+                        onChange={(e) =>
+                          setButtonConfig({
+                            ...buttonConfig,
+                            text: e.target.value,
+                          })
+                        }
+                        style={{ borderRadius: "var(--border-radius)" }}
+                      />
+                    </div>
+                    <div className="col-6">
+                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Redirect Link</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={buttonConfig.link}
+                        onChange={(e) =>
+                          setButtonConfig({
+                            ...buttonConfig,
+                            link: e.target.value,
+                          })
+                        }
+                        style={{ borderRadius: "var(--border-radius)" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="row mb-2">
+                    <div className="col-6">
+                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Background Color</label>
+                      <div className="d-flex align-items-center">
                         <input
-                          type="text"
-                          className="form-control"
-                          value={field.label}
+                          type="color"
+                          className="form-control form-control-color"
+                          value={buttonConfig.bgColor}
                           onChange={(e) =>
-                            updateField(index, "label", e.target.value)
+                            setButtonConfig({
+                              ...buttonConfig,
+                              bgColor: e.target.value,
+                            })
                           }
+                          style={{ 
+                            width: "50px",
+                            height: "38px",
+                            borderRadius: "var(--border-radius)"
+                          }}
                         />
-                      </div>
-                      <div className="col-5">
-                        <label className="form-label mb-0">Field Type</label>
-                        <select
-                          className="form-select"
-                          value={field.type}
-                          onChange={(e) =>
-                            updateField(index, "type", e.target.value)
-                          }
-                        >
-                          <option value="text">Text</option>
-                          <option value="email">Email</option>
-                          <option value="password">Password</option>
-                          <option value="number">Number</option>
-                          <option value="date">Date</option>
-                          <option value="checkbox">Checkbox</option>
-                          <option value="radio">Radio Button</option>
-                          <option value="select">Dropdown</option>
-                        </select>
-                      </div>
-                      <div className="col-2">
-                        <div className="form-check mt-4">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id={`required-${index}`}
-                            checked={field.required}
-                            onChange={() =>
-                              updateField(index, "required", !field.required)
-                            }
-                          />
-                          <label
-                            className="form-check-label"
-                            htmlFor={`required-${index}`}
-                          >
-                            Required
-                          </label>
-                        </div>
+                        <span className="ms-2">{buttonConfig.bgColor}</span>
                       </div>
                     </div>
+                    <div className="col-6">
+                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Text Color</label>
+                      <div className="d-flex align-items-center">
+                        <input
+                          type="color"
+                          className="form-control form-control-color"
+                          value={buttonConfig.textColor}
+                          onChange={(e) =>
+                            setButtonConfig({
+                              ...buttonConfig,
+                              textColor: e.target.value,
+                            })
+                          }
+                          style={{ 
+                            width: "50px",
+                            height: "38px",
+                            borderRadius: "var(--border-radius)"
+                          }}
+                        />
+                        <span className="ms-2">{buttonConfig.textColor}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                    {["radio", "select"].includes(field.type) && (
-                      <div className="mb-2">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <label className="form-label mb-0">Options</label>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => addOption(index)}
-                          >
-                            <i className="bi bi-plus-circle"></i> Add Option
-                          </button>
-                        </div>
-                        <div>
-                          {field.options.map((option, i) => (
-                            <div key={i} className="input-group mb-2">
+              <div className="card mb-4" style={{ 
+                boxShadow: "var(--box-shadow-primary)",
+                borderRadius: "var(--border-radius)"
+              }}>
+                <div 
+                  className="card-header d-flex justify-content-between align-items-center" 
+                  style={{ 
+                    backgroundColor: "var(--primary-color)", 
+                    color: "var(--white)",
+                    borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                  }}
+                >
+                  <h4 className="m-0">Custom Fields</h4>
+                  <button 
+                    className="btn btn-light" 
+                    onClick={addField}
+                    style={{ 
+                      backgroundColor: "var(--white)",
+                      color: "var(--primary-color)",
+                      borderRadius: "var(--border-radius)"
+                    }}
+                  >
+                    <i className="bi bi-plus-circle"></i> Add Field
+                  </button>
+                </div>
+                <div className="card-body" style={{ backgroundColor: "var(--gray)" }}>
+                  {fields.map((field, index) => (
+                    <div 
+                      key={index} 
+                      className="card mb-3"
+                      style={{ 
+                        borderRadius: "var(--border-radius)",
+                        border: "1px solid var(--primary-light)"
+                      }}
+                    >
+                      <div 
+                        className="card-header d-flex justify-content-between align-items-center"
+                        style={{ 
+                          backgroundColor: "var(--primary-light)",
+                          borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                        }}
+                      >
+                        <h5 className="m-0" style={{ color: "var(--primary-dark)" }}>{field.label || "New Field"}</h5>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => removeField(index)}
+                          style={{ 
+                            backgroundColor: "var(--white)",
+                            color: "var(--primary-color)",
+                            borderRadius: "var(--border-radius)"
+                          }}
+                        >
+                          <i className="bi bi-trash"></i> Remove
+                        </button>
+                      </div>
+                      <div className="card-body" style={{ backgroundColor: "var(--white)" }}>
+                        <div className="row align-items-center mb-3">
+                          <div className="col-5">
+                            <label className="form-label mb-0" style={{ color: "var(--primary-dark)" }}>
+                              Field Label
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={field.label}
+                              onChange={(e) =>
+                                updateField(index, "label", e.target.value)
+                              }
+                              style={{ borderRadius: "var(--border-radius)" }}
+                            />
+                          </div>
+                          <div className="col-5">
+                            <label className="form-label mb-0" style={{ color: "var(--primary-dark)" }}>
+                              Field Type
+                            </label>
+                            <select
+                              className="form-select"
+                              value={field.type}
+                              onChange={(e) =>
+                                updateField(index, "type", e.target.value)
+                              }
+                              style={{ borderRadius: "var(--border-radius)" }}
+                            >
+                              <option value="text">Text</option>
+                              <option value="email">Email</option>
+                              <option value="password">Password</option>
+                              <option value="number">Number</option>
+                              <option value="date">Date</option>
+                              <option value="checkbox">Checkbox</option>
+                              <option value="radio">Radio Button</option>
+                              <option value="select">Dropdown</option>
+                            </select>
+                          </div>
+                          <div className="col-2">
+                            <div className="form-check mt-4">
                               <input
-                                type="text"
-                                className="form-control"
-                                value={option}
-                                onChange={(e) =>
-                                  updateOption(index, i, e.target.value)
+                                type="checkbox"
+                                className="form-check-input"
+                                id={`required-${index}`}
+                                checked={field.required}
+                                onChange={() =>
+                                  updateField(
+                                    index,
+                                    "required",
+                                    !field.required
+                                  )
                                 }
                               />
-                              <button
-                                className="btn btn-outline-danger"
-                                onClick={() => removeOption(index, i)}
-                                disabled={field.options.length <= 1}
+                              <label
+                                className="form-check-label"
+                                htmlFor={`required-${index}`}
+                                style={{ color: "var(--primary-dark)" }}
                               >
-                                <i className="bi bi-trash"></i>
+                                Required
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {["radio", "select"].includes(field.type) && (
+                          <div className="mb-2">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <label className="form-label mb-0" style={{ color: "var(--primary-dark)" }}>Options</label>
+                              <button
+                                className="btn btn-sm"
+                                onClick={() => addOption(index)}
+                                style={{ 
+                                  backgroundColor: "var(--primary-color)",
+                                  color: "var(--white)",
+                                  borderRadius: "var(--border-radius)"
+                                }}
+                              >
+                                <i className="bi bi-plus-circle"></i> Add Option
                               </button>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-6">
-          <div className="card">
-            <div className="card-header bg-success text-white">
-              <h4 className="m-0">Live Preview</h4>
-            </div>
-            <div className="card-body">
-              {fields.length === 0 ? (
-                <div className="text-center text-muted py-5">
-                  <h5>Your form preview will appear here</h5>
-                  <p>Add fields to see how your form will look</p>
-                </div>
-              ) : (
-                <form>
-                  {fields.map((field, index) => (
-                    <div key={index} className="mb-3">
-                      <label className="form-label">
-                        {field.label || "New Field"}
-                        {field.required && (
-                          <span className="text-danger ms-1">*</span>
+                            <div>
+                              {field.options.map((option, i) => (
+                                <div key={i} className="input-group mb-2">
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    value={option}
+                                    onChange={(e) =>
+                                      updateOption(index, i, e.target.value)
+                                    }
+                                    style={{ borderRadius: "var(--border-radius)" }}
+                                  />
+                                  <button
+                                    className="btn btn-outline-danger"
+                                    onClick={() => removeOption(index, i)}
+                                    disabled={field.options.length <= 1}
+                                    style={{ 
+                                      borderRadius: "0 var(--border-radius) var(--border-radius) 0",
+                                      borderColor: "var(--primary-color)",
+                                      color: "var(--primary-color)"
+                                    }}
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         )}
-                      </label>
-                      {renderFieldPreview(field)}
+                      </div>
                     </div>
                   ))}
-                  <div className="d-grid mt-4 mb-4">
-                    <button
-                      type="submit"
-                      className="btn btn-lg"
-                      style={{
-                        backgroundColor: buttonConfig.bgColor,
-                        color: buttonConfig.textColor,
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (buttonConfig.link) {
-                          window.open(buttonConfig.link, "_blank");
-                        }
-                      }}
-                    >
-                      {buttonConfig.text || "Submit"}
-                    </button>
-                  </div>
-                </form>
-              )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div 
+                className="card" 
+                style={{ 
+                  boxShadow: "var(--box-shadow-primary)",
+                  borderRadius: "var(--border-radius)"
+                }}
+              >
+                <div 
+                  className="card-header" 
+                  style={{ 
+                    backgroundColor: "var(--primary-color)", 
+                    color: "var(--white)",
+                    borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                  }}
+                >
+                  <h4 className="m-0">Live Preview</h4>
+                </div>
+                <div 
+                  className="card-body" 
+                  style={{ 
+                    backgroundColor: "var(--gray)",
+                    minHeight: "500px"
+                  }}
+                >
+                  {fields.length === 0 ? (
+                    <div className="text-center text-muted py-5">
+                      <h5 style={{ color: "var(--primary-dark)" }}>Your form preview will appear here</h5>
+                      <p style={{ color: "var(--text-medium)" }}>Add fields to see how your form will look</p>
+                    </div>
+                  ) : (
+                    <form>
+                      <h4 style={{ color: "var(--primary-dark)", marginBottom: "20px" }}>{formTitle || "Untitled Form"}</h4>
+                      {fields.map((field, index) => (
+                        <div key={index} className="mb-3">
+                          <label className="form-label" style={{ color: "var(--primary-dark)" }}>
+                            {field.label || "New Field"}
+                            {field.required && (
+                              <span className="text-danger ms-1">*</span>
+                            )}
+                          </label>
+                          {renderFieldPreview(field)}
+                        </div>
+                      ))}
+                      <div className="d-grid mt-4 mb-4">
+                        <button
+                          type="submit"
+                          className="btn btn-lg"
+                          style={{ 
+                            backgroundColor: buttonConfig.bgColor, 
+                            color: buttonConfig.textColor,
+                            borderRadius: "var(--border-radius)",
+                            border: "none"
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (buttonConfig.link) {
+                              window.open(buttonConfig.link, "_blank");
+                            }
+                          }}
+                        >
+                          {buttonConfig.text || "Submit"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./addTask.css"; // Ensure this file is linked to apply styles
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../Sidebar/Sidebar";
+import Navbar from "../../../Navbar/Navbar";
+import { FiX, FiPlus } from "react-icons/fi";
+import "./addTask.css";
+
 const AddTask = () => {
   const [task, setTask] = useState({
     taskName: "",
@@ -12,7 +15,13 @@ const AddTask = () => {
     plannedDate: "",
   });
   const [employees, setEmployees] = useState([]);
-  const navigate = useNavigate();  
+  const navigate = useNavigate();
+  const role = localStorage.getItem("role");
+  const [customPermissions, setCustomPermissions] = useState(() => {
+    const storedPermissions = localStorage.getItem("permissions");
+    return storedPermissions ? JSON.parse(storedPermissions) : {};
+  });
+
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
@@ -24,6 +33,7 @@ const AddTask = () => {
     };
     fetchEmployees();
   }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setTask((prevTask) => ({
@@ -45,12 +55,13 @@ const AddTask = () => {
       }
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks/add`, task);
       alert("Task added successfully!");
-      navigate("/check-tasklist")
+      navigate("/check-tasklist");
       setTask({
         taskName: "",
         doerName: "",
@@ -63,60 +74,122 @@ const AddTask = () => {
       alert("Failed to add task.");
     }
   };
+
+  const handleCancel = () => {
+    navigate("/check-tasklist");
+  };
+
   return (
     <>
-    <div className="taskform-overlay">
-      <div className="taskform-container">
-        <button className="taskform-close-btn">&times;</button>
-        <h2 className="taskform-title">Add Task</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="taskform-field">
-            <label>Task Name</label>
-            <input type="text" name="taskName" value={task.taskName} onChange={handleChange} required />
+      <Sidebar role={role} customPermissions={customPermissions} />
+      <Navbar />
+      <div className="add-task-container">
+        <div className="add-task-card">
+          <div className="add-task-header">
+            <h2 className="add-task-title">Add New Task</h2>
+            <button className="add-task-close-btn" onClick={handleCancel}>
+              <FiX />
+            </button>
           </div>
-          <div className="taskform-field">
-            <label>Doer Name</label>
-            <select name="doerName" value={task.doerName} onChange={handleChange} required>
-              <option value="">Select Doer</option>
-              {employees.map((employee) => (
-                <option key={employee._id} value={employee.fullName}>{employee.fullName}</option>
-              ))}
-            </select>
-          </div>
-          <div className="taskform-field">
-            <label>Department (Designation)</label>
-            <input type="text" name="department" value={task.department} readOnly />
-          </div>
-          <div className="taskform-field">
-            <label>Frequency</label>
-            <select name="frequency" value={task.frequency} onChange={handleChange} required>
-              <option value="">Select Frequency</option>
-              <option value="Daily">Daily</option>
-              <option value="Alternate Days">Alternate Days</option>
-              <option value="Weekly">Weekly</option>
-              <option value="Fortnightly">Fortnightly</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Quarterly">Quarterly</option>
-              <option value="Half-yearly">Half-yearly</option>
-              <option value="Yearly">Yearly</option>
-              <option value="First of every month">First of every month</option>
-              <option value="Second of every month">Second of every month</option>
-              <option value="Third of every month">Third of every month</option>
-              <option value="Fourth of every month">Fourth of every month</option>
-            </select>
-          </div>
-          <div className="taskform-field">
-            <label>Planned Date</label>
-            <input type="date" name="plannedDate" value={task.plannedDate} onChange={handleChange} required />
-          </div>
-          <div className="taskform-actions">
-            <button type="button" className="cancel-btn">Cancel</button>
-            <button type="submit" className="save-btn">Add Task</button>
-          </div>
-        </form>
+
+          <form onSubmit={handleSubmit} className="add-task-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Task Name</label>
+                <input
+                  type="text"
+                  name="taskName"
+                  value={task.taskName}
+                  onChange={handleChange}
+                  className="form-input"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Doer Name</label>
+                <select
+                  name="doerName"
+                  value={task.doerName}
+                  onChange={handleChange}
+                  className="form-input"
+                  required
+                >
+                  <option value="">Select Doer</option>
+                  {employees.map((employee) => (
+                    <option key={employee._id} value={employee.fullName}>
+                      {employee.fullName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Department (Designation)</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={task.department}
+                  className="form-input"
+                  readOnly
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Frequency</label>
+                <select
+                  name="frequency"
+                  value={task.frequency}
+                  onChange={handleChange}
+                  className="form-input"
+                  required
+                >
+                  <option value="">Select Frequency</option>
+                  <option value="Daily">Daily</option>
+                  <option value="Alternate Days">Alternate Days</option>
+                  <option value="Weekly">Weekly</option>
+                  <option value="Fortnightly">Fortnightly</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Half-yearly">Half-yearly</option>
+                  <option value="Yearly">Yearly</option>
+                  <option value="First of every month">First of every month</option>
+                  <option value="Second of every month">Second of every month</option>
+                  <option value="Third of every month">Third of every month</option>
+                  <option value="Fourth of every month">Fourth of every month</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Planned Date</label>
+                <input
+                  type="date"
+                  name="plannedDate"
+                  value={task.plannedDate}
+                  onChange={handleChange}
+                  className="form-input"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button type="button" className="cancel-btn" onClick={handleCancel}>
+                Cancel
+              </button>
+              <button type="submit" className="submit-btn">
+                <FiPlus /> Add Task
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-              </>
+    </>
   );
 };
+
 export default AddTask;

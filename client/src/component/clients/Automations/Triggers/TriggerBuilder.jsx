@@ -3,59 +3,51 @@ import axios from "axios";
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
 import "./triggerbuilder.css";
+import { FiPlus, FiTrash2, FiChevronDown, FiChevronUp, FiSave } from "react-icons/fi";
+
 const TriggerBuilder = () => {
   const [triggerData, setTriggerData] = useState({
+    name: "",
+    description: "",
     event_source: "",
     conditions: { form_id: "" },
     action: { move_to_stage: "" },
+    is_active: true
   });
 
-  const [forms, setForms] = useState([]); // State to store form IDs
-  const [stages, setStages] = useState([]); // State to store stage names
-  const [eventSources, setEventSources] = useState([]); // State to store event sources
-  const [predefinedTriggers, setPredefinedTriggers] = useState([]); // State to store predefined triggers
+  const [forms, setForms] = useState([]);
+  const [stages, setStages] = useState([]);
+  const [eventSources, setEventSources] = useState([]);
+  const [predefinedTriggers, setPredefinedTriggers] = useState([]);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedPredefinedTrigger, setSelectedPredefinedTrigger] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
   const role = localStorage.getItem("role");
   const [customPermissions, setCustomPermissions] = useState(() => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
 
-  // Fetch form IDs, stage names, event sources, and predefined triggers from the backend
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch forms
-        const formsResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/form/forms`
-        );
-        console.log("Forms response:", formsResponse.data);
+        setIsLoading(true);
+        const [formsResponse, stagesResponse, eventSourcesResponse, predefinedTriggersResponse] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/form/forms`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/stages/list`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/event-sources`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/predefined`)
+        ]);
+
         setForms(formsResponse.data);
-
-        // Fetch stages
-        const stagesResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/stages/list`
-        );
-        console.log("Stages response:", stagesResponse.data);
         setStages(stagesResponse.data);
-
-        // Fetch event sources from the Trigger collection
-        const eventSourcesResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/triggers/event-sources`
-        );
-        console.log("Event sources response:", eventSourcesResponse.data);
         setEventSources(eventSourcesResponse.data);
-
-        // Fetch predefined triggers
-        const predefinedTriggersResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/triggers/predefined`
-        );
-        console.log(
-          "Predefined triggers response:",
-          predefinedTriggersResponse.data
-        );
         setPredefinedTriggers(predefinedTriggersResponse.data);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -65,88 +57,246 @@ const TriggerBuilder = () => {
   const handleCreateTrigger = async (e) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/triggers/create`,
         triggerData
       );
       alert(response.data.message);
+      // Reset form after successful creation
+      setTriggerData({
+        name: "",
+        description: "",
+        event_source: "",
+        conditions: { form_id: "" },
+        action: { move_to_stage: "" },
+        is_active: true
+      });
     } catch (error) {
       console.error("Error creating trigger:", error);
+      alert("Failed to create trigger. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleUsePredefinedTrigger = (trigger) => {
+    setSelectedPredefinedTrigger(trigger);
+    setTriggerData({
+      ...triggerData,
+      event_source: trigger.event_source,
+      conditions: trigger.conditions,
+      action: trigger.action
+    });
+  };
+
+  const addCondition = () => {
+    setTriggerData({
+      ...triggerData,
+      conditions: {
+        ...triggerData.conditions,
+        // Add new condition field here
+      }
+    });
+  };
+
+  const removeCondition = (conditionKey) => {
+    const newConditions = { ...triggerData.conditions };
+    delete newConditions[conditionKey];
+    setTriggerData({
+      ...triggerData,
+      conditions: newConditions
+    });
+  };
+
   return (
-    <>
+    <div className="trigger-builder-container">
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
-      <form className="trigger-form" onSubmit={handleCreateTrigger}>
-        <select
-          value={triggerData.event_source}
-          onChange={(e) =>
-            setTriggerData({ ...triggerData, event_source: e.target.value })
-          }
-        >
-          <option value="">Select Event Source</option>
-          {eventSources.map((eventSource, index) => (
-            <option key={index} value={eventSource}>
-              {eventSource}
-            </option>
-          ))}
-        </select>
-        <select
-          value={triggerData.conditions.form_id}
-          onChange={(e) =>
-            setTriggerData({
-              ...triggerData,
-              conditions: {
-                ...triggerData.conditions,
-                form_id: e.target.value,
-              },
-            })
-          }
-        >
-          <option value="">Select Form ID</option>
-          {forms.map((form) => (
-            <option key={form._id} value={form.form_id}>
-              {form.form_name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={triggerData.action.move_to_stage}
-          onChange={(e) =>
-            setTriggerData({
-              ...triggerData,
-              action: { ...triggerData.action, move_to_stage: e.target.value },
-            })
-          }
-        >
-          <option value="">Select Stage</option>
-
-          {stages.map((pipeline) =>
-            pipeline.stages.map((stage) => (
-              <option key={stage._id} value={stage._id}>
-                {stage.stageName} {/* ✅ Correct property */}
-              </option>
-            ))
-          )}
-        </select>
-        <button type="submit">Create Trigger</button>
-
-        {/* Display predefined triggers */}
-        <div>
-          <h3>Predefined Triggers</h3>
-          {Array.isArray(predefinedTriggers) &&
-            predefinedTriggers.map((trigger) => (
-              <div key={trigger._id}>
-                <p>Event Source: {trigger.event_source}</p>
-                <p>Conditions: {JSON.stringify(trigger.conditions)}</p>
-                <p>Action: {JSON.stringify(trigger.action)}</p>
+      
+      <div className="trigger-builder-content">
+        <h1 className="trigger-builder-title">Automation Trigger Builder</h1>
+        <p className="trigger-builder-subtitle">Create automated workflows based on form submissions and other events</p>
+        
+        <div className="trigger-builder-grid">
+          {/* Main Trigger Builder Form */}
+          <div className="trigger-form-card">
+            <div className="card-header">
+              <h2>Create New Trigger</h2>
+              <div className="toggle-switch">
+                <label>
+                  Active
+                  <input 
+                    type="checkbox" 
+                    checked={triggerData.is_active}
+                    onChange={(e) => setTriggerData({...triggerData, is_active: e.target.checked})}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
-            ))}
+            </div>
+            
+            <form className="trigger-form" onSubmit={handleCreateTrigger}>
+              <div className="form-group">
+                <label>Trigger Name*</label>
+                <input
+                  type="text"
+                  value={triggerData.name}
+                  onChange={(e) => setTriggerData({...triggerData, name: e.target.value})}
+                  placeholder="e.g., Move to Qualification Stage"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Description</label>
+                <textarea
+                  value={triggerData.description}
+                  onChange={(e) => setTriggerData({...triggerData, description: e.target.value})}
+                  placeholder="Describe what this trigger does..."
+                  rows="3"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>When this happens*</label>
+                <select
+                  value={triggerData.event_source}
+                  onChange={(e) => setTriggerData({...triggerData, event_source: e.target.value})}
+                  required
+                >
+                  <option value="">Select an event...</option>
+                  {eventSources.map((eventSource, index) => (
+                    <option key={index} value={eventSource}>
+                      {eventSource.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="conditions-section">
+                <div className="section-header">
+                  <h3>Conditions</h3>
+                  <button type="button" className="add-button" onClick={addCondition}>
+                    <FiPlus /> Add Condition
+                  </button>
+                </div>
+                
+                <div className="form-group">
+                  <label>Form</label>
+                  <select
+                    value={triggerData.conditions.form_id}
+                    onChange={(e) =>
+                      setTriggerData({
+                        ...triggerData,
+                        conditions: {
+                          ...triggerData.conditions,
+                          form_id: e.target.value,
+                        },
+                      })
+                    }
+                  >
+                    <option value="">Select a form...</option>
+                    {forms.map((form) => (
+                      <option key={form._id} value={form.form_id}>
+                        {form.form_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Additional conditions can be added here */}
+              </div>
+              
+              <div className="action-section">
+                <h3>Then do this</h3>
+                <div className="form-group">
+                  <label>Move to Stage</label>
+                  <select
+                    value={triggerData.action.move_to_stage}
+                    onChange={(e) =>
+                      setTriggerData({
+                        ...triggerData,
+                        action: { ...triggerData.action, move_to_stage: e.target.value },
+                      })
+                    }
+                  >
+                    <option value="">Select a stage...</option>
+                    {stages.map((pipeline) => (
+                      <div key={pipeline._id}>
+                        <optgroup label={pipeline.pipelineName}>
+                          {pipeline.stages.map((stage) => (
+                            <option key={stage._id} value={stage._id}>
+                              {stage.stageName}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </div>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-actions">
+                <button type="submit" className="save-button" disabled={isLoading}>
+                  <FiSave /> {isLoading ? 'Saving...' : 'Save Trigger'}
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          {/* Predefined Triggers Panel */}
+          <div className="predefined-triggers-card">
+            <div className="card-header">
+              <h2>Predefined Triggers</h2>
+              <button 
+                className="toggle-button" 
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+              </button>
+            </div>
+            
+            {isExpanded && (
+              <div className="predefined-triggers-list">
+                {isLoading ? (
+                  <div className="loading-spinner">Loading triggers...</div>
+                ) : (
+                  <>
+                    {predefinedTriggers.length === 0 ? (
+                      <div className="empty-state">No predefined triggers available</div>
+                    ) : (
+                      predefinedTriggers.map((trigger) => (
+                        <div 
+                          key={trigger._id} 
+                          className={`trigger-item ${selectedPredefinedTrigger?._id === trigger._id ? 'selected' : ''}`}
+                          onClick={() => handleUsePredefinedTrigger(trigger)}
+                        >
+                          <h4>{trigger.name || "Unnamed Trigger"}</h4>
+                          <p className="trigger-description">
+                            {trigger.description || "No description provided"}
+                          </p>
+                          <div className="trigger-details">
+                            <span className="event-source">
+                              {trigger.event_source.replace(/_/g, ' ')}
+                            </span>
+                            <span className="action">
+                              Moves to: {stages.find(p => 
+                                p.stages.some(s => s._id === trigger.action.move_to_stage)
+                              )?.stages.find(s => s._id === trigger.action.move_to_stage)?.stageName || "Unknown stage"}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </form>
-    </>
+      </div>
+    </div>
   );
 };
 

@@ -1,8 +1,8 @@
-// ChatRoomUI Component
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import ChatWindow from "./ChatWindow";
 import ProfileSidebar from "./ProfileSidebar";
+import axios from "axios";
 
 function ChatRoomUI() {
   const [chatUsers, setChatUsers] = useState([]);
@@ -11,49 +11,53 @@ function ChatRoomUI() {
   const [agentId, setAgentId] = useState(null);
 
   useEffect(() => {
-    // Example of fetching agentId from localStorage or an API
     const storedAgentId = localStorage.getItem("userId");
+
     if (storedAgentId) {
       setAgentId(storedAgentId);
     } else {
-      // fallback or fetch logic here
-      console.error("Agent ID not found");
+      console.error("❌ Agent ID not found in localStorage.");
     }
+
     fetchActiveChatUsers();
   }, []);
 
+  // ✅ Fetch all users (OPTIONAL if you want a sidebar list)
   const fetchActiveChatUsers = async () => {
     try {
-      const res = await fetch(
+      const res = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/ticket/chatbot/unique-users`
       );
-
-      const text = await res.text(); // <-- get raw response text
-      console.log("Raw response:", text);
-
-      const data = JSON.parse(text); // <-- convert to JSON manually
-
-      const usersData = data.map((userId, index) => ({
-        id: userId,
-        user_id: userId,
-        waba_id: "yourWabaId",
-        name: `${userId}`,
+  
+      const data = res.data;
+      console.log("customer data", res.data);
+  
+      const usersData = data.map((user) => ({
+        id: user.user_id,          // ✅ Correct
+        user_id: user.user_id,     // ✅ Correct
+        waba_id: user.waba_id,     // ✅ Correct
+        name: user.user_id,        // ✅ Correct display
         avatar: null,
         status: "Hey there! I am using WhatsApp.",
         online: Math.random() > 0.5,
         lastSeen: new Date().toLocaleString(),
       }));
-
+  
       setChatUsers(usersData);
-      if (usersData.length > 0) setActiveUser(usersData[0]);
+  
+      if (usersData.length > 0) {
+        setActiveUser(usersData[0]);
+      }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("❌ Error fetching active users:", error);
     }
   };
+  
 
+  // ✅ Update user profile (Sidebar & ChatWindow)
   const updateChatUserProfile = (id, updates) => {
-    setChatUsers(
-      chatUsers.map((user) => (user.id === id ? { ...user, ...updates } : user))
+    setChatUsers((prev) =>
+      prev.map((user) => (user.id === id ? { ...user, ...updates } : user))
     );
     setActiveUser((prev) =>
       prev && prev.id === id ? { ...prev, ...updates } : prev
@@ -70,11 +74,12 @@ function ChatRoomUI() {
           setIsProfileVisible(false);
         }}
       />
+
       <ChatWindow
         selectedUser={activeUser}
         agentId={agentId}
         onProfileClick={() => setIsProfileVisible(true)}
-        setSelectedUser={setActiveUser} // 👈 Add this line
+        setSelectedUser={setActiveUser}
       />
 
       <ProfileSidebar
@@ -91,7 +96,9 @@ const styles = {
   container: {
     display: "flex",
     height: "100vh",
+    width: "100%",
     overflow: "hidden",
+    backgroundColor: "#f5f5f5",
     fontFamily: "Arial, sans-serif",
   },
 };

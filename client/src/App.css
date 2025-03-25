@@ -7,3 +7,9 @@
   /* background: #f8f9fd; */
   box-sizing: border-box;
 }
+:root {
+  --gray: #f8f8f8;
+  --primary-color: #0D6E6E;
+  --box-shadow-primary: 0px 6px 10px rgba(0, 0, 0, 0.15);
+  --border-radius: 10px;
+}

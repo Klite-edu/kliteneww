@@ -135,7 +135,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import applogo from "../../assets/app-logo.png";
+import applogo from "../../assets/logo.png";
 import { getSidebarOptions } from "../configs/SidebarPermissions";
 import "./sidebar.css";
 import {
@@ -158,10 +158,10 @@ const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location
             {item.icon && (
               <FontAwesomeIcon icon={item.icon} className="label-icon" />
             )}
-            {item.name}
+            <span className="item-name">{item.name}</span>
             <FontAwesomeIcon
               icon={dropdownStates[item.name] ? faAngleUp : faAngleDown}
-              className="rotate"
+              className={`rotate ${dropdownStates[item.name] ? "rotate-open" : ""}`}
             />
           </div>
           <ul
@@ -186,12 +186,13 @@ const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location
       ) : (
         <Link
           to={item.path}
-          className={location.pathname === item.path ? "active" : ""}
+          className={`sidebar-link ${location.pathname === item.path ? "active" : ""}`}
         >
           {item.icon && (
             <FontAwesomeIcon icon={item.icon} className="label-icon" />
           )}
-          {item.name}
+          <span className="item-name">{item.name}</span>
+          {level > 0 && <FontAwesomeIcon icon={faCircle} className="bullet" />}
         </Link>
       )}
     </li>
@@ -220,8 +221,10 @@ const Sidebar = ({ role, customPermissions }) => {
 
   return (
     <div className="sidebar">
-      <img src={applogo} alt="App Logo" />
-      <ul>
+      <div className="sidebar-header">
+        <img src={applogo} alt="App Logo" className="app-logo" />
+      </div>
+      <ul className="sidebar-menu">
         {sidebarOptions.map((item, index) => (
           <SidebarItem
             key={index}

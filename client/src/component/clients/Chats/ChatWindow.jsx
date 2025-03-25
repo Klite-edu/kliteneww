@@ -1,381 +1,705 @@
-import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
-import axios from 'axios';
 
-// Initialize socket connection (autoConnect: false initially)
-const socket = io(process.env.REACT_APP_SOCKET_URL, { autoConnect: false });
+// import React, { useState, useEffect, useRef } from "react";
+// import axios from "axios";
+// import "./chatwindow.css";
 
-const ChatWindow = ({ selectedUser, agentId, onProfileClick, setSelectedUser }) => {
+// const ChatWindow = ({
+//   selectedUser,
+//   agentId,
+//   onProfileClick,
+//   setSelectedUser,
+// }) => {
+//   const [messages, setMessages] = useState([]);
+//   const [input, setInput] = useState("");
+//   const [incomingTickets, setIncomingTickets] = useState([]);
+//   const [chatLocked, setChatLocked] = useState(true); // Default: locked
+
+//   const chatRef = useRef(null);
+
+//   // ✅ On Component Mount
+//   useEffect(() => {
+//     console.log("✅ ChatWindow Mounted");
+
+//     // ✅ Restore locked state from localStorage
+//     const lockedState = localStorage.getItem("chatLocked");
+//     setChatLocked(lockedState === "false" ? false : true);
+
+//     // ✅ Restore selected user if exists
+//     const storedUser = localStorage.getItem("selectedUser");
+//     if (storedUser) {
+//       const parsedUser = JSON.parse(storedUser);
+//       console.log("✅ Restored selected user:", parsedUser);
+//       setSelectedUser(parsedUser);
+//     }
+
+//     fetchIncomingTickets();
+//   }, []);
+
+//   // ✅ On selectedUser change
+//   useEffect(() => {
+//     console.log("👤 selectedUser changed:", selectedUser);
+
+//     if (!selectedUser) return;
+
+//     // ✅ Fetch messages on user select or restore
+//     fetchMessages();
+
+//     // ✅ Save selected user to localStorage
+//     localStorage.setItem("selectedUser", JSON.stringify(selectedUser));
+//   }, [selectedUser]);
+
+//   // ✅ Fetch Pending Tickets
+//   const fetchIncomingTickets = async () => {
+//     console.log("📥 Fetching pending tickets...");
+//     try {
+//       const res = await axios.get(
+//         `${process.env.REACT_APP_API_URL}/api/ticket/pending-tickets`
+//       );
+//       setIncomingTickets(res.data);
+//       console.log("✅ Pending tickets fetched:", res.data);
+//     } catch (error) {
+//       console.error("❌ Error fetching pending tickets:", error);
+//     }
+//   };
+
+//   // ✅ Accept Ticket
+//   const acceptTicket = async (ticket) => {
+//     console.log(`🟢 Accepting ticket: ${ticket._id}`);
+//     try {
+//       const res = await axios.post(
+//         `${process.env.REACT_APP_API_URL}/api/ticket/accept`,
+//         {
+//           ticket_id: ticket._id,
+//           agent_id: agentId,
+//         }
+//       );
+
+//       if (res.data.ticket) {
+//         const selected = {
+//           user_id: res.data.ticket.user_id,
+//           waba_id: res.data.ticket.waba_id,
+//           name: res.data.ticket.user_id,
+//         };
+
+//         console.log("🆕 Selected User:", selected);
+//         setSelectedUser(selected);
+
+//         // ✅ Unlock chat and store lock state
+//         setChatLocked(false);
+//         localStorage.setItem("chatLocked", "false");
+
+//         fetchMessages();
+//         fetchIncomingTickets();
+//       } else {
+//         console.warn("⚠️ Ticket already accepted or failed");
+//       }
+//     } catch (error) {
+//       console.error("❌ Error accepting ticket:", error);
+//     }
+//   };
+
+//   // ✅ Fetch Chat Messages
+//   const fetchMessages = async () => {
+//     if (!selectedUser) return;
+
+//     console.log(`📝 Fetching chat history for user: ${selectedUser.user_id}`);
+//     try {
+//       const res = await axios.get(
+//         `${process.env.REACT_APP_API_URL}/api/ticket/chatbot`
+//       );
+
+//       const userChat = res.data.find(
+//         (chat) => chat.user_id === selectedUser.user_id
+//       );
+
+//       if (!userChat) {
+//         console.warn("⚠️ No chat found for user:", selectedUser.user_id);
+//         setMessages([]);
+//         return;
+//       }
+
+//       const sortedMessages = (userChat.messages || []).sort(
+//         (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+//       );
+
+//       console.log(`✅ Messages fetched: ${sortedMessages.length}`);
+//       setMessages(sortedMessages);
+//     } catch (error) {
+//       console.error("❌ Error fetching messages:", error);
+//     }
+//   };
+
+//   // ✅ Send Message
+//   const sendMessage = async () => {
+//     if (!input.trim() || chatLocked) {
+//       console.warn("⚠️ Cannot send message (locked or empty).");
+//       return;
+//     }
+
+//     const messageText = input.trim();
+//     console.log(`➡️ Sending message: "${messageText}" to user ${selectedUser.user_id}`);
+
+//     const newMessage = {
+//       _id: `agent-${Date.now()}`,
+//       sender: "agent",
+//       message: messageText,
+//       timestamp: new Date(),
+//     };
+
+//     // ✅ Show message instantly in UI
+//     setMessages((prev) => [...prev, newMessage]);
+//     setInput("");
+
+//     try {
+//       await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/send`, {
+//         agent_id: agentId,
+//         user_id: selectedUser.user_id,
+//         message: messageText,
+//         waba_id: selectedUser.waba_id,
+//         sender_type: "agent",
+//       });
+
+//       console.log("✅ Message sent via API.");
+//       fetchMessages(); // optional refresh
+//     } catch (error) {
+//       console.error("❌ Error sending message:", error);
+//     }
+//   };
+
+//   // ✅ End Session (Triggered Only by Button Click)
+//   const endSession = async () => {
+//     if (!selectedUser) return;
+
+//     console.log(`🔚 Ending session for user: ${selectedUser.user_id}`);
+//     try {
+//       await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/end-session`, {
+//         user_id: selectedUser.user_id, // Send only user_id
+//         agent_id: agentId,
+//       });
+
+//       console.log("✅ Session ended");
+
+//       // ✅ Lock chat and clear user session
+//       setChatLocked(true);
+//       localStorage.setItem("chatLocked", "true");
+
+//       setSelectedUser(null);
+//       localStorage.removeItem("selectedUser");
+//       setMessages([]);
+//     } catch (error) {
+//       console.error("❌ Error ending session:", error);
+//     }
+//   };
+
+//   // ✅ Auto-scroll on new message
+//   useEffect(() => {
+//     if (chatRef.current) {
+//       chatRef.current.scrollTop = chatRef.current.scrollHeight;
+//     }
+//   }, [messages]);
+
+//   const formatTime = (timestamp) => {
+//     const date = timestamp ? new Date(timestamp) : new Date();
+//     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+//   };
+
+//   return (
+//     <div className="chat-container">
+//       {/* INCOMING TICKETS */}
+//       <div className="incoming-tickets-section">
+//         <h3>📥 Incoming Tickets</h3>
+//         <button onClick={fetchIncomingTickets} className="refresh-tickets-button">
+//           🔄 Refresh
+//         </button>
+
+//         {incomingTickets.length === 0 ? (
+//           <p>No pending tickets</p>
+//         ) : (
+//           incomingTickets.map((ticket) => (
+//             <div key={ticket._id} className="ticket-item">
+//               <p>User: <strong>{ticket.user_id}</strong></p>
+//               <button onClick={() => acceptTicket(ticket)}>✅ Accept</button>
+//             </div>
+//           ))
+//         )}
+//       </div>
+
+//       {/* CHAT WINDOW */}
+//       {selectedUser ? (
+//         <>
+//           <div className="chat-header">
+//             <div className="chat-user-info" onClick={onProfileClick}>
+//               <div className="avatar">
+//                 {selectedUser.avatar ? (
+//                   <img src={selectedUser.avatar} alt="avatar" className="avatar-img" />
+//                 ) : (
+//                   "👤"
+//                 )}
+//               </div>
+//               <div>
+//                 <div className="user-name">{selectedUser.name || selectedUser.user_id}</div>
+//                 <div className="user-status">{chatLocked ? "Offline" : "Online"}</div>
+//               </div>
+//             </div>
+
+//             <button onClick={endSession} disabled={chatLocked} className="end-session-button">
+//               ⛔ End Session
+//             </button>
+//           </div>
+
+//           {/* CHAT MESSAGES */}
+//           <div className="chat-body" ref={chatRef}>
+//             {messages.length === 0 ? (
+//               <div className="empty-chat">
+//                 <p>No messages yet. Start chatting!</p>
+//               </div>
+//             ) : (
+//               messages.map((msg, idx) => (
+//                 <div
+//                   key={idx}
+//                   className={`message-container ${
+//                     msg.sender === "agent" ? "agent-message" : "customer-message"
+//                   }`}
+//                 >
+//                   <div className="message-content">
+//                     <div>{msg.message}</div>
+//                     <div className="timestamp">{formatTime(msg.timestamp)}</div>
+//                   </div>
+//                 </div>
+//               ))
+//             )}
+//           </div>
+
+//           {/* MESSAGE INPUT */}
+//           <div className="chat-footer">
+//             <input
+//               type="text"
+//               className="input-box"
+//               placeholder={
+//                 chatLocked ? "🔒 Accept ticket to start chatting..." : "Type your message..."
+//               }
+//               value={input}
+//               disabled={chatLocked}
+//               onChange={(e) => setInput(e.target.value)}
+//               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+//             />
+//             <button
+//               onClick={sendMessage}
+//               className="send-button"
+//               disabled={!input.trim() || chatLocked}
+//             >
+//               ➤
+//             </button>
+//           </div>
+//         </>
+//       ) : (
+//         <div className="no-chat-selected">
+//           <h2>📞 Select or accept a ticket to start chatting!</h2>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default ChatWindow;
+
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import "./chatwindow.css";
+
+const ChatWindow = ({
+  selectedUser,
+  agentId,
+  onProfileClick,
+  setSelectedUser,
+}) => {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [showTicketPopup, setShowTicketPopup] = useState(false);
-  const [incomingTicket, setIncomingTicket] = useState(null);
+  const [input, setInput] = useState("");
+  const [incomingTickets, setIncomingTickets] = useState([]);
   const [chatLocked, setChatLocked] = useState(true);
+
+  // Clients and Templates
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState("");
+  const [templates, setTemplates] = useState([]);
+  const [showTemplatePopup, setShowTemplatePopup] = useState(false);
+
   const chatRef = useRef(null);
 
-  console.log("ChatWindow component rendered");
-  console.log("Selected User:", selectedUser);
-  console.log("Agent ID:", agentId);
-
-  // Connect socket when agentId becomes available
   useEffect(() => {
-    if (!agentId) {
-      console.log("No agent ID provided. Skipping socket join.");
-      return;
+    const lockedState = localStorage.getItem("chatLocked");
+    setChatLocked(lockedState === "false" ? false : true);
+
+    const storedUser = localStorage.getItem("selectedUser");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setSelectedUser(parsedUser);
     }
 
-    console.log("Connecting socket...");
-    socket.connect();
+    fetchIncomingTickets();
+  }, []);
 
-    console.log("Joining agent room with ID:", agentId);
-    socket.emit('joinAgentRoom', agentId);
-
-    console.log("Joining agents common room");
-    socket.emit('joinAgentRoom', 'agents');
-
-    return () => {
-      console.log("Disconnecting socket...");
-      socket.disconnect();
-    };
-  }, [agentId]);
-
-  // Setup socket listeners only once
   useEffect(() => {
-    console.log("Setting up socket listeners...");
+    if (!selectedUser) return;
 
-    socket.on('ticketRaised', (ticket) => {
-      console.log('🚨 Ticket Raised:', ticket);
-
-      // If agent has already selected this user, ignore
-      if (selectedUser && selectedUser.user_id === ticket.user_id) {
-        console.log("Ticket for selected user already open");
-        return;
-      }
-
-      setIncomingTicket(ticket);
-      setShowTicketPopup(true);
-    });
-
-    socket.on('closeTicketPopup', ({ ticketId }) => {
-      console.log('❌ Close ticket popup for ticket:', ticketId);
-
-      if (incomingTicket && incomingTicket.ticketId === ticketId) {
-        console.log("Closing popup for ticket:", ticketId);
-        setShowTicketPopup(false);
-        setIncomingTicket(null);
-      }
-    });
-
-    socket.on('chatAssigned', ({ ticket, chatHistory, agent }) => {
-      console.log('✅ Chat Assigned:', ticket);
-      console.log("Chat History:", chatHistory);
-      console.log("Assigned Agent:", agent);
-
-      setIncomingTicket(null);
-      setShowTicketPopup(false);
-      setChatLocked(false);
-
-      const formattedMessages = chatHistory.map((msg, index) => ({
-        _id: index,
-        sender: msg.model === 'human' ? 'agent' : 'bot',
-        message: msg.bot_response.length > 0 ? msg.bot_response[0] : msg.user_message[0],
-        timestamp: new Date()
-      }));
-
-      setMessages(formattedMessages);
-    });
-
-    socket.on('receiveMessage', (data) => {
-      console.log("Received message from user:", data);
-
-      if (selectedUser && data.user_id === selectedUser.user_id) {
-        setMessages(prev => [
-          ...prev,
-          {
-            _id: Date.now(),
-            sender: 'user',
-            message: data.message,
-            timestamp: new Date()
-          }
-        ]);
-      }
-    });
-
-    return () => {
-      console.log("Cleaning up socket listeners...");
-      socket.off('ticketRaised');
-      socket.off('closeTicketPopup');
-      socket.off('chatAssigned');
-      socket.off('receiveMessage');
-    };
-  }, [incomingTicket, selectedUser]);
-
-  // Handle room joining when user selected
-  useEffect(() => {
-    if (selectedUser) {
-      console.log("Selected user changed. Fetching messages and joining room...");
-      fetchMessages();
-      socket.emit('joinRoom', selectedUser.user_id);
-    }
+    fetchMessages();
+    localStorage.setItem("selectedUser", JSON.stringify(selectedUser));
   }, [selectedUser]);
+
+  // Fetch incoming tickets
+  const fetchIncomingTickets = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/ticket/pending-tickets`
+      );
+      setIncomingTickets(res.data);
+    } catch (error) {
+      console.error("❌ Error fetching pending tickets:", error);
+    }
+  };
+
+  const acceptTicket = async (ticket) => {
+    try {
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticket/accept`,
+        {
+          ticket_id: ticket._id,
+          agent_id: agentId,
+        }
+      );
+
+      if (res.data.ticket) {
+        const selected = {
+          user_id: res.data.ticket.user_id,
+          waba_id: res.data.ticket.waba_id,
+          name: res.data.ticket.user_id,
+        };
+
+        setSelectedUser(selected);
+        setChatLocked(false);
+        localStorage.setItem("chatLocked", "false");
+
+        fetchMessages();
+        fetchIncomingTickets();
+      }
+    } catch (error) {
+      console.error("❌ Error accepting ticket:", error);
+    }
+  };
 
   const fetchMessages = async () => {
     if (!selectedUser) return;
 
-    console.log("Fetching messages for user:", selectedUser.user_id);
-
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket/chatbot`);
-      const data = res.data;
-      console.log("Fetched chat data:", data);
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/ticket/chatbot`
+      );
 
-      const userChat = data.find(chat => chat.user_id === selectedUser.user_id);
+      const userChat = res.data.find(
+        (chat) => chat.user_id === selectedUser.user_id
+      );
 
-      if (userChat) {
-        console.log("User chat found:", userChat);
-        const combinedMessages = [];
-
-        const userMessages = userChat.user_message || [];
-        const botResponses = userChat.bot_response || [];
-
-        userMessages.forEach((msg, index) => {
-          combinedMessages.push({
-            _id: `user-${index}`,
-            sender: 'user',
-            message: msg,
-            timestamp: new Date()
-          });
-
-          if (botResponses[index]) {
-            combinedMessages.push({
-              _id: `bot-${index}`,
-              sender: userChat.model === 'human' ? 'agent' : 'bot',
-              message: botResponses[index],
-              timestamp: new Date()
-            });
-          }
-        });
-
-        setMessages(combinedMessages);
-        setChatLocked(false);
-      } else {
-        console.log("No chat found for user.");
+      if (!userChat) {
         setMessages([]);
+        return;
       }
 
+      const sortedMessages = (userChat.messages || []).sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+      );
+
+      setMessages(sortedMessages);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error("❌ Error fetching messages:", error);
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || chatLocked) {
-      console.log("Message input is empty or chat is locked. Skipping send.");
-      return;
+  // Fetch clients for template popup
+  const fetchClients = async () => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/meta/clients`);
+      setClients(res.data);
+    } catch (err) {
+      console.error('❌ Error fetching clients:', err);
     }
+  };
 
-    const tempId = `temp-${Date.now()}`;
+  // Fetch templates of selected client
+  const fetchApprovedTemplates = async (clientId) => {
+    if (!clientId) return;
+
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/meta/templates/${clientId}`
+      );
+
+      const approvedTemplates = res.data.data.filter(
+        (tpl) => tpl.status === "APPROVED"
+      );
+
+      setTemplates(approvedTemplates);
+    } catch (error) {
+      console.error("❌ Error fetching templates:", error);
+    }
+  };
+
+  // Send message manually typed
+  const sendMessage = async () => {
+    if (!input.trim() || chatLocked) return;
+
+    const messageText = input.trim();
+
     const newMessage = {
-      _id: tempId,
-      sender: 'agent',
-      message: input,
-      timestamp: new Date().toISOString()
+      _id: `agent-${Date.now()}`,
+      sender: "agent",
+      message: messageText,
+      timestamp: new Date(),
     };
 
-    console.log("Adding temporary message to UI:", newMessage);
-    setMessages(prev => [...prev, newMessage]);
-    setInput('');
+    setMessages((prev) => [...prev, newMessage]);
+    setInput("");
 
     try {
-      console.log("Sending message to server...");
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/tickets/send`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/send`, {
         agent_id: agentId,
         user_id: selectedUser.user_id,
-        message: input,
-        waba_id: selectedUser.waba_id
+        message: messageText,
+        waba_id: selectedUser.waba_id,
+        sender_type: "agent",
       });
 
-      console.log("Emitting sendMessage event to socket...");
-      socket.emit('sendMessage', {
-        user_id: selectedUser.user_id,
-        sender: 'agent',
-        message: input
-      });
-
+      fetchMessages();
     } catch (error) {
-      console.error('❌ Error sending message:', error);
-      setMessages(prev =>
-        prev.map(msg =>
-          msg._id === tempId
-            ? { ...msg, message: 'Failed to send message.' }
-            : msg
-        )
-      );
+      console.error("❌ Error sending message:", error);
     }
   };
 
-  const acceptTicket = async () => {
-    if (!incomingTicket) {
-      console.log("No incoming ticket to accept.");
+  // Send approved template message
+  const sendTemplateMessage = async (template) => {
+    if (!template || chatLocked) return;
+
+    const bodyComponent = template.components.find((comp) => comp.type === "BODY");
+    if (!bodyComponent) {
+      alert("Template has no body text.");
       return;
     }
 
+    const templateMessage = bodyComponent.text;
+
     try {
-      console.log("Accepting ticket:", incomingTicket);
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tickets/accept`, {
-        ticket_id: incomingTicket.ticketId,
-        agent_id: agentId
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/send`, {
+        agent_id: agentId,
+        user_id: selectedUser.user_id,
+        message: templateMessage,
+        waba_id: selectedUser.waba_id,
+        sender_type: "agent",
       });
 
-      if (res.data.ticket) {
-        console.log('✅ Ticket accepted!');
-        setShowTicketPopup(false);
-        setChatLocked(false);
-        fetchMessages();
-      } else {
-        console.error('❌ Ticket acceptance failed!');
-      }
-
+      setShowTemplatePopup(false);
+      fetchMessages();
     } catch (error) {
-      console.error('❌ Error accepting ticket:', error);
+      console.error("❌ Error sending template message:", error);
     }
   };
 
+  // End chat session
   const endSession = async () => {
     if (!selectedUser) return;
 
-    console.log("Ending session for user:", selectedUser.user_id);
-
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/tickets/end-session`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/end-session`, {
         user_id: selectedUser.user_id,
-        agent_id: agentId
+        agent_id: agentId,
       });
 
-      console.log('✅ Session ended. Bot resumes.');
-
       setChatLocked(true);
+      localStorage.setItem("chatLocked", "true");
 
-      if (setSelectedUser) setSelectedUser(null);
-
-      socket.emit('leaveRoom', selectedUser.user_id);
-
+      setSelectedUser(null);
+      localStorage.removeItem("selectedUser");
+      setMessages([]);
     } catch (error) {
-      console.error('❌ Error ending session:', error);
+      console.error("❌ Error ending session:", error);
     }
   };
 
+  // Auto fetch clients when template popup opens
+  useEffect(() => {
+    if (showTemplatePopup) {
+      fetchClients();
+    }
+  }, [showTemplatePopup]);
+
+  // Scroll to bottom on new messages
   useEffect(() => {
     if (chatRef.current) {
-      console.log("Scrolling chat to the bottom...");
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
 
   const formatTime = (timestamp) => {
     const date = timestamp ? new Date(timestamp) : new Date();
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
-
-  if (!selectedUser) {
-    console.log("No user selected. Rendering placeholder.");
-    return (
-      <div className="no-chat-selected">
-        <h2>Select a user to start chatting!</h2>
-      </div>
-    );
-  }
-
-  console.log("Rendering ChatWindow with messages:", messages);
 
   return (
     <div className="chat-container">
-
-      {/* Ticket Popup */}
-      {showTicketPopup && incomingTicket && (
-        <div className="ticket-popup">
-          <div className="ticket-popup-content">
-            <h3>New Ticket Raised!</h3>
-            <p>Customer <strong>{incomingTicket.userName}</strong> needs support.</p>
-            <button onClick={acceptTicket}>Accept Ticket</button>
-            <button onClick={() => setShowTicketPopup(false)}>Ignore</button>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="chat-header">
-        <div className="chat-user-info" onClick={onProfileClick}>
-          <div className="avatar">
-            {selectedUser.avatar ? (
-              <img src={selectedUser.avatar} alt="avatar" className="avatar-img" />
-            ) : (
-              '👤'
-            )}
-          </div>
-          <div>
-            <div className="user-name">{selectedUser.name}</div>
-            <div className="user-status">
-              {selectedUser.online ? 'Online' : `Last seen: ${selectedUser.lastSeen}`}
-            </div>
-          </div>
-        </div>
-
-        <button onClick={endSession} disabled={chatLocked} className="end-session-button">
-          End Session
+      {/* INCOMING TICKETS */}
+      <div className="incoming-tickets-section">
+        <h3>📥 Incoming Tickets</h3>
+        <button onClick={fetchIncomingTickets} className="refresh-tickets-button">
+          🔄 Refresh
         </button>
-      </div>
 
-      {/* Chat Body */}
-      <div className="chat-body" ref={chatRef}>
-        {messages.length === 0 ? (
-          <div className="empty-chat">
-            <p>No messages yet. Start the conversation!</p>
-          </div>
+        {incomingTickets.length === 0 ? (
+          <p>No pending tickets</p>
         ) : (
-          messages.map((msg) => (
-            <div key={msg._id || msg.timestamp} className="message-container">
-              {msg.sender === 'user' && (
-                <div className="sent-message-wrapper">
-                  <div className="sent-message">
-                    <div>{msg.message}</div>
-                    <div className="timestamp">{formatTime(msg.timestamp)}</div>
-                  </div>
-                </div>
-              )}
-
-              {(msg.sender === 'bot' || msg.sender === 'agent') && (
-                <div className="received-message-wrapper">
-                  <div className="received-message">
-                    <div>{msg.message}</div>
-                    <div className="timestamp">{formatTime(msg.timestamp)}</div>
-                  </div>
-                </div>
-              )}
+          incomingTickets.map((ticket) => (
+            <div key={ticket._id} className="ticket-item">
+              <p>User: <strong>{ticket.user_id}</strong></p>
+              <button onClick={() => acceptTicket(ticket)}>✅ Accept</button>
             </div>
           ))
         )}
       </div>
 
-      {/* Chat Footer */}
-      <div className="chat-footer">
-        <input
-          type="text"
-          className="input-box"
-          placeholder={chatLocked ? "Accept ticket to start chatting..." : "Type a message"}
-          value={input}
-          disabled={chatLocked}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <button
-          onClick={sendMessage}
-          className="send-button"
-          disabled={!input.trim() || chatLocked}
-        >
-          ➤
-        </button>
-      </div>
+      {/* CHAT WINDOW */}
+      {selectedUser ? (
+        <>
+          <div className="chat-header">
+            <div className="chat-user-info" onClick={onProfileClick}>
+              <div className="avatar">
+                {selectedUser.avatar ? (
+                  <img src={selectedUser.avatar} alt="avatar" className="avatar-img" />
+                ) : (
+                  "👤"
+                )}
+              </div>
+              <div>
+                <div className="user-name">{selectedUser.name || selectedUser.user_id}</div>
+                <div className="user-status">{chatLocked ? "Offline" : "Online"}</div>
+              </div>
+            </div>
+
+            <button onClick={endSession} disabled={chatLocked} className="end-session-button">
+              ⛔ End Session
+            </button>
+          </div>
+
+          <div className="chat-body" ref={chatRef}>
+            {messages.length === 0 ? (
+              <div className="empty-chat">
+                <p>No messages yet. Start chatting!</p>
+              </div>
+            ) : (
+              messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`message-container ${msg.sender === "agent" ? "agent-message" : "customer-message"}`}
+                >
+                  <div className="message-content">
+                    <div>{msg.message}</div>
+                    <div className="timestamp">{formatTime(msg.timestamp)}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer Input + Template Button */}
+          <div className="chat-footer">
+            <input
+              type="text"
+              className="input-box"
+              placeholder={chatLocked ? "🔒 Accept ticket to start chatting..." : "Type your message..."}
+              value={input}
+              disabled={chatLocked}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            />
+            <button
+              onClick={sendMessage}
+              className="send-button"
+              disabled={!input.trim() || chatLocked}
+            >
+              ➤
+            </button>
+
+            <button
+              onClick={() => setShowTemplatePopup(true)}
+              className="template-button"
+              disabled={chatLocked}
+              style={{ marginLeft: "5px", padding: "8px" }}
+            >
+              ➕
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="no-chat-selected">
+          <h2>📞 Select or accept a ticket to start chatting!</h2>
+        </div>
+      )}
+
+      {/* TEMPLATE POPUP */}
+      {showTemplatePopup && (
+        <div className="template-popup-overlay">
+          <div className="template-popup">
+            <h3>📄 Approved Templates</h3>
+            <button
+              onClick={() => setShowTemplatePopup(false)}
+              style={{ float: "right" }}
+            >
+              ❌
+            </button>
+
+            {/* Client dropdown */}
+            <select
+              className="p-2 border mb-4"
+              value={selectedClient}
+              onChange={(e) => {
+                setSelectedClient(e.target.value);
+                fetchApprovedTemplates(e.target.value);
+              }}
+            >
+              <option value="">Select Client</option>
+              {clients.map((client) => (
+                <option key={client._id} value={client._id}>
+                  {client.business_name}
+                </option>
+              ))}
+            </select>
+
+            {/* Templates */}
+            {templates.length === 0 ? (
+              <p>No approved templates found</p>
+            ) : (
+              templates.map((tpl, idx) => (
+                <div
+                  key={idx}
+                  className="template-item"
+                  style={{
+                    padding: "10px",
+                    margin: "10px 0",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                  }}
+                >
+                  <p><strong>{tpl.name}</strong></p>
+                  <p>{tpl.components.find(c => c.type === 'BODY')?.text}</p>
+                  <button
+                    className="send-template-btn"
+                    onClick={() => sendTemplateMessage(tpl)}
+                    style={{ marginTop: "5px" }}
+                  >
+                    Send ➤
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

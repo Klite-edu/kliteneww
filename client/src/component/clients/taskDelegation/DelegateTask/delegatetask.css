@@ -1,0 +1,70 @@
+:root {
+    --gray: #f8f8f8;
+    --primary-color: #0D6E6E;
+    --box-shadow-primary: 0px 6px 10px rgba(0, 0, 0, 0.15);
+    --border-radius: 10px;
+  }
+  
+  .delegate-wrapper {
+    margin-left: 18%;
+    padding-top: 100px;
+    padding: 40px;
+    background-color: var(--gray);
+    min-height: 100vh;
+  }
+  
+  .delegate-form {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-primary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .delegate-form h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .delegate-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .delegate-form input,
+  .delegate-form select,
+  .delegate-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+  
+  .delegate-form textarea {
+    height: 100px;
+    resize: vertical;
+  }
+  
+  .delegate-form button {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .delegate-form button:hover {
+    background-color: #0b5e5e;
+  }
+  

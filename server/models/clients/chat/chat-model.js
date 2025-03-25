@@ -23,11 +23,25 @@
 
 const mongoose = require('mongoose');
 
+const messageSchema = new mongoose.Schema({
+  sender: {
+    type: String,
+    required: true,
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+}, { _id: false });
+
 const chatbotSchema = new mongoose.Schema({
   user_id: { type: String, required: true },
-  user_message: { type: [String], required: true },
-  bot_response: { type: [String], required: true },
-  model: { type: String, required: true },
+  messages: [messageSchema], // ✅ All messages in 1 array
+  model: { type: String, default: 'bot' },
 }, { collection: 'chatbot' });
 
 module.exports = mongoose.model('Chat', chatbotSchema);
