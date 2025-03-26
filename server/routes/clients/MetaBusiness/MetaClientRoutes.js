@@ -150,20 +150,15 @@ router.post("/exchangetoken", async (req, res) => {
       }
     );
 
-    const { access_token, expires_in } = response.data;
-    const tokenExpiryDate = new Date();
-    tokenExpiryDate.setSeconds(tokenExpiryDate.getSeconds() + expires_in);
+    const { access_token } = response.data;
 
     console.log("\n✅ SUCCESS: Token exchange response received");
     console.log("🔑 Access Token:", access_token);
-    console.log("⏳ Expires In:", expires_in);
-    console.log("📅 Token Expiry Date:", tokenExpiryDate.toISOString());
     console.log("=== 🟢 TOKEN EXCHANGE COMPLETED ===");
 
     return res.status(200).json({
       success: true,
       access_token,
-      token_expiry: tokenExpiryDate,
     });
   } catch (err) {
     console.error("\n❌ ERROR: Token exchange failed");
@@ -189,7 +184,6 @@ router.post("/savewaba", async (req, res) => {
     waba_id,
     phone_number_id,
     access_token,
-    token_expiry,
     apiKey,
     model,
     instructionFile,
@@ -217,7 +211,6 @@ router.post("/savewaba", async (req, res) => {
       client.business_name = business_name || client.business_name;
       client.phone_number_id = phone_number_id;
       client.access_token = access_token;
-      client.token_expiry = token_expiry;
       client.apiKey = apiKey || client.apiKey;
       client.model = model || client.model;
       client.instructionFile = instructionFile || client.instructionFile;
@@ -228,7 +221,6 @@ router.post("/savewaba", async (req, res) => {
         waba_id,
         phone_number_id,
         access_token,
-        token_expiry,
         apiKey,
         model,
         instructionFile,

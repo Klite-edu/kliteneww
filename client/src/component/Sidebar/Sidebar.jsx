@@ -131,20 +131,15 @@
 
 // export default Sidebar;
 
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import applogo from "../../assets/logo.png";
-import { getSidebarOptions } from "../configs/SidebarPermissions";
 import "./sidebar.css";
-import {
-  faAngleUp,
-  faAngleDown,
-  faCircle
-} from "@fortawesome/free-solid-svg-icons";
+import { getSidebarOptions } from "../configs/SidebarPermissions";
+import { faAngleUp, faAngleDown, faCircle, faBars } from "@fortawesome/free-solid-svg-icons";
 
-const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location }) => {
+const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location, closeSidebar }) => {
   const hasOptions = item.options && item.options.length > 0;
 
   return (
@@ -179,6 +174,7 @@ const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location
                 dropdownStates={dropdownStates}
                 toggleDropdown={toggleDropdown}
                 location={location}
+                closeSidebar={closeSidebar}
               />
             ))}
           </ul>
@@ -187,6 +183,7 @@ const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location
         <Link
           to={item.path}
           className={`sidebar-link ${location.pathname === item.path ? "active" : ""}`}
+          onClick={closeSidebar}
         >
           {item.icon && (
             <FontAwesomeIcon icon={item.icon} className="label-icon" />
@@ -200,9 +197,26 @@ const SidebarItem = ({ item, level = 0, dropdownStates, toggleDropdown, location
 };
 
 const Sidebar = ({ role, customPermissions }) => {
-  console.log("custompermi", customPermissions);
   const [dropdownStates, setDropdownStates] = useState({});
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 992);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location, isMobile]);
 
   if (!role || !customPermissions) {
     console.error("Missing required props: role or customPermissions");
@@ -210,7 +224,6 @@ const Sidebar = ({ role, customPermissions }) => {
   }
 
   const sidebarOptions = getSidebarOptions(role, customPermissions);
-  console.log("sidebaroptions", sidebarOptions);
 
   const toggleDropdown = (key) => {
     setDropdownStates((prevState) => ({
@@ -219,24 +232,43 @@ const Sidebar = ({ role, customPermissions }) => {
     }));
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <img src={applogo} alt="App Logo" className="app-logo" />
+    <>
+      {isMobile && (
+        <button className="mobile-menu-toggle" onClick={toggleSidebar}>
+          <FontAwesomeIcon icon={faBars} />
+        </button>
+      )}
+      
+      <div className={`sidebar ${sidebarOpen ? 'open' : isMobile ? 'closed' : ''}`}>
+        <div className="sidebar-header">
+          <img src={applogo} alt="App Logo" className="app-logo" />
+        </div>
+        <ul className="sidebar-menu">
+          {sidebarOptions.map((item, index) => (
+            <SidebarItem
+              key={index}
+              item={item}
+              level={0}
+              dropdownStates={dropdownStates}
+              toggleDropdown={toggleDropdown}
+              location={location}
+              closeSidebar={closeSidebar}
+            />
+          ))}
+        </ul>
       </div>
-      <ul className="sidebar-menu">
-        {sidebarOptions.map((item, index) => (
-          <SidebarItem
-            key={index}
-            item={item}
-            level={0}
-            dropdownStates={dropdownStates}
-            toggleDropdown={toggleDropdown}
-            location={location}
-          />
-        ))}
-      </ul>
-    </div>
+    </>
   );
 };
 

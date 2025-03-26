@@ -1,31 +1,44 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Navbar from "../../../Navbar/Navbar";
+import Sidebar from "../../../Sidebar/Sidebar";
+import "./delegationlist.css";
 
 const DelegationList = () => {
   const [tasks, setTasks] = useState([]);
-  const [editingTask, setEditingTask] = useState(null); // State to manage editing task
-  const [revisingTask, setRevisingTask] = useState(null); // State to manage revising task
+  const [filteredTasks, setFilteredTasks] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [editingTask, setEditingTask] = useState(null);
+  const [revisingTask, setRevisingTask] = useState(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [ticketData, setTicketData] = useState({
+    title: "",
+    description: "",
+    category: "Delegation",
+    type: "Help",
+    priority: "Medium",
+  });
 
-  // Get role and userId from localStorage
   const role = localStorage.getItem("role");
-  const userId = localStorage.getItem("userId");
+  const userName = localStorage.getItem("userName") || "User";
+  const [customPermissions, setCustomPermissions] = useState(() => {
+    const storedPermissions = localStorage.getItem("permissions");
+    return storedPermissions ? JSON.parse(storedPermissions) : {};
+  });
 
-  // Fetch tasks from the database
   const fetchTasks = async () => {
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/delegation/list`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Send the token in the header
-          },
-          params: {
-            userId: role === "user" ? userId : "", // If the user is a regular user, filter tasks by their userId
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
       setTasks(response.data);
+      setFilteredTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
@@ -33,24 +46,47 @@ const DelegationList = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, []); // Fetch tasks when the component mounts
+  }, []);
 
-  // Handle task deletion
+  const handleSearch = () => {
+    let filtered = [...tasks];
+
+    if (searchTerm) {
+      filtered = filtered.filter((task) =>
+        task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.doer?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (dateRange.from && dateRange.to) {
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+      filtered = filtered.filter((task) => {
+        const dueDate = new Date(task.dueDate);
+        return dueDate >= fromDate && dueDate <= toDate;
+      });
+    }
+
+    setFilteredTasks(filtered);
+  };
+
+  useEffect(() => {
+    handleSearch();
+  }, [searchTerm, dateRange]);
+
   const handleDeleteTask = async (taskId) => {
     try {
-      await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`
-      );
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`);
       alert("Task deleted successfully!");
-      fetchTasks(); // Refresh the task list
+      fetchTasks();
     } catch (error) {
       console.error("Error deleting task:", error);
     }
   };
 
-  // Handle task editing
   const handleEditClick = (task) => {
-    setEditingTask(task); // Set the task to be edited
+    setEditingTask(task);
   };
 
   const handleUpdateTask = async (updatedData) => {
@@ -60,304 +96,235 @@ const DelegationList = () => {
         updatedData
       );
       alert("Task updated successfully!");
-      setEditingTask(null); // Close the modal
-      fetchTasks(); // Refresh the task list
+      setEditingTask(null);
+      fetchTasks();
     } catch (error) {
       console.error("Error updating task:", error);
     }
   };
 
-  // Handle task completion
   const handleCompleteTask = async (taskId) => {
     try {
-      const response = await axios.put(
+      await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/complete/${taskId}`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include the token for authorization
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
       alert("Task marked as completed!");
-      fetchTasks(); // Refresh the task list
+      fetchTasks();
     } catch (error) {
       console.error("Error completing task:", error);
     }
   };
 
-  // Handle task revision
   const handleReviseTask = async (taskId, revisedData) => {
     try {
-      const response = await axios.put(
+      await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/revise/${taskId}`,
         revisedData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include the token for authorization
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
       alert("Task revised successfully!");
-      setRevisingTask(null); // Close the modal
-      fetchTasks(); // Refresh the task list
+      setRevisingTask(null);
+      fetchTasks();
     } catch (error) {
       console.error("Error revising task:", error);
     }
   };
 
+  const handleTicketSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      ...ticketData,
+      employeeName: userName,
+      date: new Date().toISOString().split("T")[0],
+      status: "Pending",
+    };
+
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticketRaise/add`, payload);
+      alert("Ticket raised successfully!");
+      setShowTicketModal(false);
+      setTicketData({ 
+        title: "", 
+        description: "", 
+        category: "Delegation", 
+        type: "Help", 
+        priority: "Medium" 
+      });
+    } catch (error) {
+      console.error("Error submitting ticket:", error);
+    }
+  };
+
   return (
     <>
+      <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
-      <div>
-        {tasks.length > 0 ? (
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              marginTop: "200px",
-            }}
-          >
-            <thead>
-              <tr
-                style={{
-                  backgroundColor: "#f4f4f9",
-                  borderBottom: "2px solid #ccc",
-                }}
-              >
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Task Name
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Task Description
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Assigned To
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>Due Date</th>
-                <th style={{ padding: "10px", textAlign: "left" }}>Time</th>
-                <th style={{ padding: "10px", textAlign: "left" }}>Status</th>
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Completed At
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Revised Date
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Revised Time
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>
-                  Revised Reason
-                </th>
-                <th style={{ padding: "10px", textAlign: "left" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks.map((task) => (
-                <tr key={task._id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "10px" }}>{task.name}</td>
-                  <td style={{ padding: "10px" }}>{task.description}</td>
-                  <td style={{ padding: "10px" }}>{task.doer.fullName}</td>
-                  <td style={{ padding: "10px" }}>
-                    {new Date(task.dueDate).toLocaleDateString()}
-                  </td>
-                  <td style={{ padding: "10px" }}>{task.time}</td>
-                  <td style={{ padding: "10px" }}>
-                    {task.status || "Pending"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {task.completedAt
-                      ? new Date(task.completedAt).toLocaleString()
-                      : "N/A"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {task.revisedDate
-                      ? new Date(task.revisedDate).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {task.revisedTime || "N/A"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {task.revisedReason || "N/A"}
-                  </td>
-                  <td style={{ padding: "10px" }}>
-                    {role === "user" ? (
-                      <>
-                        <button
-                          onClick={() => handleCompleteTask(task._id)}
-                          style={{
-                            backgroundColor: "#4CAF50",
-                            color: "white",
-                            border: "none",
-                            padding: "5px 10px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            marginRight: "5px",
-                          }}
-                        >
-                          Complete
-                        </button>
-                        {/* Conditionally render the "Revised" button */}
-                        {task.status !== "Completed" && (
-                          <button
-                            onClick={() => setRevisingTask(task)}
-                            style={{
-                              backgroundColor: "#2196F3",
-                              color: "white",
-                              border: "none",
-                              padding: "5px 10px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            Revised
-                          </button>
-                        )}
-                      </>
-                    ) : role === "client" ? (
-                      <>
-                        <button
-                          onClick={() => handleEditClick(task)}
-                          style={{
-                            backgroundColor: "#4CAF50",
-                            color: "white",
-                            border: "none",
-                            padding: "5px 10px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            marginRight: "5px",
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTask(task._id)}
-                          style={{
-                            backgroundColor: "#f44336",
-                            color: "white",
-                            border: "none",
-                            padding: "5px 10px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No tasks available.</p>
-        )}
+      <div className="delegation-wrapper">
+        <h2 className="title">Task Delegation List</h2>
 
-        {/* Modal for editing the task */}
-        {editingTask && (
-          <div style={styles.modal}>
-            <h2>Edit Task</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleUpdateTask({
-                  name: e.target.taskName.value,
-                  description: e.target.taskDescription.value,
-                  dueDate: e.target.dueDate.value,
-                  time: e.target.time.value,
-                  doer: e.target.doer.value,
-                });
-              }}
+        {role === "user" && (
+          <div style={{ textAlign: "right", marginBottom: "15px" }}>
+            <button 
+              className="btn blue" 
+              onClick={() => setShowTicketModal(true)}
             >
-              <input
-                type="text"
-                name="taskName"
-                defaultValue={editingTask.name}
-                required
-              />
-              <textarea
-                name="taskDescription"
-                defaultValue={editingTask.description}
-                required
-              />
-              <input
-                type="date"
-                name="dueDate"
-                defaultValue={editingTask.dueDate}
-                required
-              />
-              <input
-                type="time"
-                name="time"
-                defaultValue={editingTask.time}
-                required
-              />
-              <select name="doer" defaultValue={editingTask.doer._id} required>
-                {tasks
-                  .filter((task) => task.doer)
-                  .map((task) => (
-                    <option key={task._id} value={task.doer._id}>
-                      {task.doer.fullName}
-                    </option>
-                  ))}
-              </select>
-              <button type="submit">Save</button>
-              <button type="button" onClick={() => setEditingTask(null)}>
-                Cancel
-              </button>
-            </form>
+              Raise Ticket
+            </button>
           </div>
         )}
 
-        {/* Modal for revising the task */}
-        {revisingTask && (
-          <div style={styles.modal}>
-            <h2>Revise Task</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleReviseTask(revisingTask._id, {
-                  revisedDate: e.target.revisedDate.value,
-                  revisedTime: e.target.revisedTime.value,
-                  revisedReason: e.target.revisedReason.value,
-                });
-              }}
-            >
-              <label htmlFor="revisedDate">Revised Date:</label>
-              <input type="date" id="revisedDate" name="revisedDate" required />
-              <br />
-              <label htmlFor="revisedTime">Revised Time:</label>
-              <input type="time" id="revisedTime" name="revisedTime" required />
-              <br />
-              <label htmlFor="revisedReason">Reason for Revision:</label>
-              <textarea id="revisedReason" name="revisedReason" required />
-              <br />
-              <button type="submit">Submit</button>
-              <button type="button" onClick={() => setRevisingTask(null)}>
-                Cancel
-              </button>
-            </form>
+        <div className="filters">
+          <input
+            type="text"
+            placeholder="Search task or assignee..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <input
+            type="date"
+            value={dateRange.from}
+            onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+          />
+          <input
+            type="date"
+            value={dateRange.to}
+            onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+          />
+        </div>
+
+        {filteredTasks.length > 0 ? (
+          <div className="task-table-container">
+            <table className="task-table">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Description</th>
+                  <th>Assigned To</th>
+                  <th>Due Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th>Completed At</th>
+                  <th>Revised Date</th>
+                  <th>Revised Time</th>
+                  <th>Reason</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTasks.map((task) => (
+                  <tr key={task._id}>
+                    <td>{task.name}</td>
+                    <td>{task.description}</td>
+                    <td>{task.doer.fullName}</td>
+                    <td>{new Date(task.dueDate).toLocaleDateString()}</td>
+                    <td>{task.time}</td>
+                    <td>{task.status || "Pending"}</td>
+                    <td>
+                      {task.completedAt
+                        ? new Date(task.completedAt).toLocaleString()
+                        : "N/A"}
+                    </td>
+                    <td>
+                      {task.revisedDate
+                        ? new Date(task.revisedDate).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td>{task.revisedTime || "N/A"}</td>
+                    <td>{task.revisedReason || "N/A"}</td>
+                    <td>
+                      {role === "user" ? (
+                        <>
+                          <button className="btn green" onClick={() => handleCompleteTask(task._id)}>
+                            Complete
+                          </button>
+                          {task.status !== "Completed" && (
+                            <button className="btn blue" onClick={() => setRevisingTask(task)}>
+                              Revise
+                            </button>
+                          )}
+                        </>
+                      ) : role === "client" ? (
+                        <>
+                          <button className="btn green" onClick={() => handleEditClick(task)}>
+                            Edit
+                          </button>
+                          <button className="btn red" onClick={() => handleDeleteTask(task._id)}>
+                            Delete
+                          </button>
+                        </>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="no-tasks">No tasks available.</p>
+        )}
+
+        {showTicketModal && (
+          <div className="modal">
+            <div className="modal-content">
+              <h3>Raise Ticket</h3>
+              <form onSubmit={handleTicketSubmit}>
+                <div className="form-group">
+                  <label>Title</label>
+                  <input
+                    type="text"
+                    placeholder="Ticket Title"
+                    value={ticketData.title}
+                    onChange={(e) => setTicketData({ ...ticketData, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    placeholder="Describe your issue..."
+                    value={ticketData.description}
+                    onChange={(e) => setTicketData({ ...ticketData, description: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Priority</label>
+                  <select
+                    value={ticketData.priority}
+                    onChange={(e) => setTicketData({ ...ticketData, priority: e.target.value })}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+                <div className="modal-buttons">
+                  <button type="submit" className="btn green">Submit</button>
+                  <button 
+                    type="button" 
+                    className="btn red" 
+                    onClick={() => setShowTicketModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>
     </>
   );
-};
-
-const styles = {
-  modal: {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "10px",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    zIndex: 1000,
-  },
 };
 
 export default DelegationList;

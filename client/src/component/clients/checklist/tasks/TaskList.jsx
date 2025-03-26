@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FiEdit, FiTrash2, FiCheckCircle, FiCalendar, FiFilter, FiChevronDown } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiCheckCircle, FiCalendar, FiFilter, FiChevronDown, FiSearch, FiSave, FiX } from "react-icons/fi";
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
 import "./tasklist.css";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
+  const [filteredTasks, setFilteredTasks] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
   const [updatedTask, setUpdatedTask] = useState({});
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,8 @@ const TaskList = () => {
   const [endDate, setEndDate] = useState(null);
   const [userRole, setUserRole] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [employees, setEmployees] = useState([]);
   const role = localStorage.getItem("role");
   const [customPermissions, setCustomPermissions] = useState(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -30,11 +33,23 @@ const TaskList = () => {
   
     setUserRole(storedRole);
     fetchServerDate();
+    fetchEmployees();
   
     if (storedUserId && storedRole) {
       fetchTasks(storedUserId, storedRole);
     }
   }, [sorting, startDate, endDate]);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredTasks(tasks);
+    } else {
+      const filtered = tasks.filter(task => 
+        task.doer?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredTasks(filtered);
+    }
+  }, [searchQuery, tasks]);
 
   const fetchServerDate = async () => {
     try {
@@ -42,6 +57,17 @@ const TaskList = () => {
       setServerDate(new Date(res.data.currentDate));
     } catch (error) {
       console.error("Error Fetching Server Date:", error);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/contactinfo`);
+      setEmployees(res.data);
+      console.log("employee data", res.data);
+      
+    } catch (error) {
+      console.error("Error fetching employees:", error);
     }
   };
 
@@ -68,23 +94,69 @@ const TaskList = () => {
       });
   
       setTasks(res.data);
+      setFilteredTasks(res.data);
     } catch (error) {
       console.error("Error Fetching Tasks:", error);
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
   const handleEditClick = (task) => {
     setEditingTask(task._id);
-    setUpdatedTask({ ...task });
+    setUpdatedTask({ 
+      ...task,
+      doerName: task.doer?.fullName || ""
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTask(null);
+    setUpdatedTask({});
+  };
+
+  const handleUpdateChange = (e) => {
+    const { name, value } = e.target;
+    setUpdatedTask(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleDateChange = (date, field) => {
+    setUpdatedTask(prev => ({
+      ...prev,
+      [field]: date
+    }));
   };
 
   const handleUpdateTask = async () => {
     try {
       setLoading(true);
-      await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/update/${editingTask}`, updatedTask);
+      
+      // Find the employee ID based on the selected name
+      const employee = employees.find(emp => emp.fullName === updatedTask.doerName);
+      if (!employee && updatedTask.doerName) {
+        alert("Selected employee not found");
+        return;
+      }
+
+      const taskData = {
+        ...updatedTask,
+        doer: employee?._id || null
+      };
+
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/update/${editingTask}`, taskData);
       alert("Task updated successfully!");
       setEditingTask(null);
-      fetchTasks();
+      setUpdatedTask({});
+      
+      // Refresh the task list
+      const storedUserId = localStorage.getItem("userId");
+      const storedRole = localStorage.getItem("role");
+      fetchTasks(storedUserId, storedRole);
     } catch (error) {
       console.error("Error updating task:", error);
       alert("Failed to update task.");
@@ -99,7 +171,11 @@ const TaskList = () => {
     try {
       await axios.delete(`${process.env.REACT_APP_API_URL}/api/tasks/delete/${taskId}`);
       alert("Task deleted successfully!");
-      fetchTasks();
+      
+      // Refresh the task list
+      const storedUserId = localStorage.getItem("userId");
+      const storedRole = localStorage.getItem("role");
+      fetchTasks(storedUserId, storedRole);
     } catch (error) {
       console.error("Error deleting task:", error);
       alert("Failed to delete task.");
@@ -123,7 +199,11 @@ const TaskList = () => {
     try {
       await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/markCompleted/${taskId}`, { selectedDate: selectedDate.toISOString() });
       alert("Task marked as completed!");
-      fetchTasks();
+      
+      // Refresh the task list
+      const storedUserId = localStorage.getItem("userId");
+      const storedRole = localStorage.getItem("role");
+      fetchTasks(storedUserId, storedRole);
     } catch (error) {
       console.error("Error marking task as completed:", error);
       alert("Failed to update status.");
@@ -177,6 +257,18 @@ const TaskList = () => {
 
         <div className="task-list-controls">
           <div className="controls-left">
+            <div className="search-control">
+              <div className="search-input-container">
+                <FiSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search by employee name..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="search-input"
+                />
+              </div>
+            </div>
             <div className="sort-control">
               <label>Sort By:</label>
               <div className="custom-select">
@@ -250,71 +342,65 @@ const TaskList = () => {
               </tr>
             </thead>
             <tbody>
-              {tasks.length > 0 ? (
-                tasks.map((task) => {
-                  const isToday =
-                    serverDate && new Date(task.nextDueDate).toDateString() === serverDate.toDateString();
-
-                  return (
-                    <tr key={task._id} className={isToday ? "today-task" : ""}>
-                      <td>{task.taskName}</td>
-                      <td>{task.doer?.fullName || "Unassigned"}</td>
-                      <td>{task.department}</td>
-                      <td>{task.frequency}</td>
-                      <td>{new Date(task.plannedDate).toLocaleDateString()}</td>
-                      <td>
-                        <div className="due-date-cell">
-                          {new Date(task.nextDueDate).toLocaleDateString()}
-                          {isToday && <span className="today-badge">Today</span>}
-                        </div>
-                      </td>
-                      <td><StatusBadge status={task.status} /></td>
-                      <td>
-                        <div className="action-buttons">
+            {filteredTasks.length > 0 ? filteredTasks.map(task => {
+              const isToday = serverDate && new Date(task.nextDueDate).toDateString() === serverDate.toDateString();
+              const isEditing = editingTask === task._id;
+              return (
+                <tr key={task._id} className={isToday ? "today-task" : ""}>
+                  <td>{isEditing ? <input type="text" name="taskName" value={updatedTask.taskName || ""} onChange={handleUpdateChange} className="edit-input" /> : task.taskName}</td>
+                  <td>{task.doer?.fullName || "Unassigned"}</td> {/* 🔒 Not Editable */}
+                  <td>{isEditing ? <input type="text" name="department" value={updatedTask.department || ""} onChange={handleUpdateChange} className="edit-input" /> : task.department}</td>
+                  <td>{isEditing ? (
+                    <select name="frequency" value={updatedTask.frequency || ""} onChange={handleUpdateChange} className="edit-select">
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  ) : task.frequency}</td>
+                  <td>{isEditing ? (
+                    <DatePicker selected={updatedTask.plannedDate ? new Date(updatedTask.plannedDate) : null} onChange={(date) => handleDateChange(date, "plannedDate")} className="edit-date-picker" />
+                  ) : new Date(task.plannedDate).toLocaleDateString()}</td>
+                  <td><div className="due-date-cell">{new Date(task.nextDueDate).toLocaleDateString()}{isToday && <span className="today-badge">Today</span>}</div></td>
+                  <td><StatusBadge status={task.status} /></td>
+                  <td>
+                    <div className="action-buttons">
+                      {isEditing ? (
+                        <>
+                          <button className="save-btn" onClick={handleUpdateTask}><FiSave /> Save</button>
+                          <button className="cancel-btn" onClick={handleCancelEdit}><FiX /> Cancel</button>
+                        </>
+                      ) : (
+                        <>
                           {userRole === "client" && (
                             <>
-                              <button 
-                                className="edit-btn"
-                                onClick={() => handleEditClick(task)}
-                              >
-                                <FiEdit />
-                              </button>
-                              <button 
-                                className="delete-btn"
-                                onClick={() => handleDeleteTask(task._id)}
-                              >
-                                <FiTrash2 />
-                              </button>
+                              <button className="edit-btn" onClick={() => handleEditClick(task)}><FiEdit /></button>
+                              <button className="delete-btn" onClick={() => handleDeleteTask(task._id)}><FiTrash2 /></button>
                             </>
                           )}
                           {userRole === "user" && (
-                            <button
-                              className={`complete-btn ${!isToday ? 'disabled' : ''}`}
-                              onClick={() => isToday && handleMarkCompleted(task._id, task.nextDueDate)}
-                            >
+                            <button className={`complete-btn ${!isToday ? 'disabled' : ''}`} onClick={() => isToday && handleMarkCompleted(task._id, task.nextDueDate)}>
                               <FiCheckCircle /> Complete
                             </button>
                           )}
-                        </div>
-                      </td>
-                      <td>
-                        {task.completedDate ? 
-                          new Date(task.completedDate).toLocaleString() : 
-                          <span className="not-completed">-</span>}
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr className="no-tasks-row">
-                  <td colSpan="9">
-                    <div className="no-tasks-message">
-                      No tasks found. Try adjusting your filters.
+                        </>
+                      )}
                     </div>
                   </td>
+                  <td>{task.completedDate ? new Date(task.completedDate).toLocaleString() : <span className="not-completed">-</span>}</td>
                 </tr>
-              )}
-            </tbody>
+              );
+            }) : (
+              <tr className="no-tasks-row">
+                <td colSpan="9">
+                  <div className="no-tasks-message">
+                    {searchQuery.trim() ? `No tasks found for employee "${searchQuery}". Try a different name.` : "No tasks found. Try adjusting your filters."}
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
           </table>
         </div>
 

@@ -7,13 +7,10 @@ import "react-circular-progressbar/dist/styles.css";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import axios from "axios";
 
+const ClientDashboard = () => {
 
-const AdminDashboard = () => {
-
-  const [totalClients, setTotalClients] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [activeClients, setActiveClients] = useState(0);
-  const [activeUsers, setActiveUsers] = useState(0);
+  const [totalEmployee, setTotalEmployee] = useState(0);
+  const [activeEmployee, setActiveEmployee] = useState(0);
   const [revenueData, setRevenueData] = useState([]);
   const [subscriptionDataBar, setSubscriptionDataBar] = useState([]);
   const [totalImpressions, setTotalImpressions] = useState(0);
@@ -24,13 +21,13 @@ const AdminDashboard = () => {
 
   const loggedInEmail = localStorage.getItem("email");
 
-  useEffect(() => {
+  useEffect(() => { 
     // Fetch total clients and active clients data from the backend
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/clients/total-clients`);
-        setTotalClients(response.data.totalClients);
-        setActiveClients(response.data.activeClients);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`);
+        setTotalEmployee(response.data.totalEmployee);
+        setActiveEmployee(response.data.activeEmployee);
       } catch (error) {
         console.error("Error fetching total clients:", error);
       }
@@ -113,43 +110,24 @@ const AdminDashboard = () => {
   }, []);
 
   const data = [
-    { label: "Total Clients", value: totalClients, icon: faBuilding },
-    { label: "Active Clients", value: activeClients, icon: faBuilding },
-    { label: "Total Users", value: totalUsers, icon: faUsers },
-    { label: "Active Users", value: activeUsers, icon: faUsers },
+    { label: "Total Employee", value: totalEmployee, icon: faBuilding },
+    { label: "Active Employee", value: activeEmployee, icon: faBuilding },
+    { label: "Triggers", value: activeEmployee, icon: faBuilding },
+    { label: "FMS/Pipeline", value: activeEmployee, icon: faBuilding },
   ];
 
   const subscriptionData = [
-    { month: "Jan", newSubs: 500, refund: 200 },
-    { month: "Feb", newSubs: 700, refund: 300 },
-    { month: "Mar", newSubs: 800, refund: 250 },
-    { month: "Apr", newSubs: 650, refund: 400 },
-    { month: "May", newSubs: 900, refund: 350 },
+    { month: "Jan", losses: 500, profit: 200 },
+    { month: "Feb", losses: 700, profit: 300 },
+    { month: "Mar", losses: 800, profit: 250 },
+    { month: "Apr", losses: 650, profit: 400 },
+    { month: "May", losses: 900, profit: 350 },
   ];
 
   const systemUsageData = {
     totalTenants: 50,
     activeTenants: 40,
-    inactiveTenants: 10,
-    apiCallsToday: 12000,
-    storageUsed: "750GB / 1TB",
     topUsedModule: "Billing",
-    apiTrends: [
-      { day: "Mon", calls: 4000 },
-      { day: "Tue", calls: 6000 },
-      { day: "Wed", calls: 7000 },
-      { day: "Thu", calls: 8000 },
-      { day: "Fri", calls: 5000 },
-      { day: "Sat", calls: 3000 },
-      { day: "Sun", calls: 4500 },
-    ],
-    storageConsumption: [
-      { tenant: "Tenant A", usage: 120 },
-      { tenant: "Tenant B", usage: 180 },
-      { tenant: "Tenant C", usage: 90 },
-      { tenant: "Tenant D", usage: 240 },
-      { tenant: "Tenant E", usage: 160 },
-    ],
     mostUsedModules: [
       { module: "Billing", percentage: 35 },
       { module: "User Management", percentage: 25 },
@@ -164,7 +142,6 @@ const AdminDashboard = () => {
       { id: 4, name: "Delta Ltd.", status: "Active", apiCalls: 4000, storage: "180GB", topModule: "Notifications" },
     ]
   };
-
 
   const [issues, setIssues] = useState([
     {
@@ -218,7 +195,7 @@ const AdminDashboard = () => {
       {/* Revenue Bar Chart */}
       <div className="revenue-subCancel">
         <div className="revenue-chart">
-          <h3>Monthly Revenue</h3>
+          <h3>Monthly Losses</h3>
           <div className="revenue-container">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueData}>
@@ -231,7 +208,7 @@ const AdminDashboard = () => {
           </div>
         </div>
         <div className="subscription-chart">
-          <h3>New Subscriptions vs refund</h3>
+          <h3>Losses vs Profits</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={subscriptionData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -239,15 +216,15 @@ const AdminDashboard = () => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="newSubs" fill="#4CAF50" name="New Subscriptions" barSize={50} />
-              <Bar dataKey="refund " fill="#F44336" name="refund" barSize={50} />
+              <Bar dataKey="losses" fill="#F44336" name="Losses" barSize={50} />
+              <Bar dataKey="profit" fill="#4CAF50" name="Profit" barSize={50} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
       <div className="admin-sub-recent">
         <div className="top-subscription-chart">
-          <h3>Most Purchased Subscription Plans</h3>
+          <h3>Most Used</h3>
           <PieChart width={300} height={300}>
             <Pie
               data={subscriptionDataBar}
@@ -269,7 +246,7 @@ const AdminDashboard = () => {
         </div>
         <div className="transaction-table">
           <div className="recent-transHead">
-            <h3>Recent Transactions</h3>
+            <h3>Task Delegated</h3>
             <button>View All</button>
           </div>
           <hr style={{ marginBottom: "0" }} />
@@ -293,118 +270,11 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-      <div className="subscription-container">
-        <h3>Subscription Expirations & Renewals</h3>
-        {clientData.map((sub) => (
-          <div className={`subscription-entry ${sub.status.toLowerCase()}`} key={sub.id}>
-            <p>{sub.id}</p>
-            <div className="client-info">
-              <h5>{sub.fullName}</h5>
-              <p>{sub.subscription.endDate}</p>
-            </div>
-            <div className="plan-details">
-              <p>{sub.selectedPlan}</p>
-              <p>{sub.planPrice}</p>
-            </div>
-            <span className={`status-badge ${sub.status.toLowerCase()}`}>{sub.subscription.status}</span>
-          </div>
-        ))}
-      </div>
       <div className="analytics-container">
         {/* KPI Cards */}
-        <div className="kpi-cards">
-          <div className="kpi-card">
-            <h4>Impressions</h4>
-            <p>{totalImpressions}</p>
-          </div>
-          <div className="kpi-card">
-            <h4>Active Tenants</h4>
-            <p>{systemUsageData.activeTenants} / {systemUsageData.totalTenants}</p>
-          </div>
-          <div className="kpi-card">
-            <h4>API Calls Today</h4>
-            <p>{systemUsageData.apiCallsToday}</p>
-          </div>
-          <div className="kpi-card">
-            <h4>Storage Used</h4>
-            <p>{systemUsageData.storageUsed}</p>
-          </div>
-        </div>
-
-        <div className="api-store">
-          <div className="api-container">
-            <h3>API Calls Trend</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={systemUsageData.apiTrends}>
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="calls" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Storage Consumption Chart */}
-          <div className="api-container">
-            <h3>Storage Consumption</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={systemUsageData.storageConsumption}>
-                <XAxis dataKey="tenant" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="usage" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* <div className="activeTable-modules">
-          <div className="chart-container">
-            <h3>Most Used Modules</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={systemUsageData.mostUsedModules} dataKey="percentage" nameKey="module" cx="50%" cy="50%" outerRadius={80} label>
-                  {systemUsageData.mostUsedModules.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={["#4CAF50", "#2196F3", "#FFC107", "#E91E63", "#9C27B0"][index]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-       
-          <div className="tenant-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th>API Calls</th>
-                  <th>Storage</th>
-                  <th>Top Module</th>
-                </tr>
-              </thead>
-              <tbody>
-                {systemUsageData.tenantList.map((tenant) => (
-                  <tr key={tenant.id}>
-                    <td>{tenant.id}</td>
-                    <td>{tenant.name}</td>
-                    <td className={tenant.status === "Active" ? "active-status" : "inactive-status"}>{tenant.status}</td>
-                    <td>{tenant.apiCalls}</td>
-                    <td>{tenant.storage}</td>
-                    <td>{tenant.topModule}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div> */}
         <div className="issue-container">
           <div className="issue-button-head">
-            <h2>Client Issue Tracker</h2>
+            <h2>Employee Issue Tracker</h2>
             <button>View All</button>
           </div>
           <div className="issuetable-container">
@@ -445,4 +315,6 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default ClientDashboard;
+
+

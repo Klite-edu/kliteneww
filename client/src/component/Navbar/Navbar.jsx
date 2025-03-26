@@ -1,6 +1,6 @@
-import { faCircleUser, faGear, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faCircleUser, faGear, faMagnifyingGlass, faBars } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router";
 import "./navbar.css";
@@ -38,10 +38,10 @@ const Navbar = () => {
 
           <Dropdown.Menu className="custom-dropdown-menu">
             <Dropdown.Item href="/admin/account/settings/profile">
-              Profile
+              <FontAwesomeIcon icon={faCircleUser} /> Profile
             </Dropdown.Item>
-            <Dropdown.Item href="/" onClick={handleLogout}>
-              Log out
+            <Dropdown.Item onClick={handleLogout}>
+              <FontAwesomeIcon icon={faGear} /> Log out
             </Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>

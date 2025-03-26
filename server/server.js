@@ -30,6 +30,8 @@ const ChatbotRoute = require("./routes/clients/chatbot/ChatbotRoute");
 const MetaClientRoutes = require("./routes/clients/MetaBusiness/MetaClientRoutes");
 const MetaTemplateRoutes = require("./routes/clients/MetaBusiness/MetaTemplateRoutes");
 const ticketRoute = require("./routes/clients/chatbot/ticketRoute");
+const clientDashRoute = require("./routes/clients/Dashboard/DashboardRoute");
+const TicketRaiseRoute = require("./routes/clients/TicketRaise/TicketRaiseRoute");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
@@ -75,7 +77,9 @@ app.use("/api/form", formRoutes);
 app.use("/api/chat", ChatbotRoute);
 app.use("/api/meta", MetaTemplateRoutes);
 app.use("/api/meta", MetaClientRoutes);
-app.use("/api/ticket", ticketRoute); // ✅ Ticket management (accept/send/end)
+app.use("/api/clientDash", clientDashRoute);
+app.use("/api/ticket", ticketRoute);
+app.use("/api/ticketRaise", TicketRaiseRoute);
 
 // ✅ Start Scheduled Jobs (if any)
 updateTaskFrequency(); // Example: Task scheduler running in background

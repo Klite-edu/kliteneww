@@ -44,6 +44,7 @@ import MetaMessage from "./component/clients/Metasignup/MetaMessage";
 import MetaTemplate from "./component/clients/Metasignup/MetaTemplate";
 import ChatRoomUI from "./component/clients/Chats/ChatRoomUI";
 import Sites from "./component/clients/HRM/Sites/Sites";
+import TicketRaise from "./component/clients/TicketRaise/TicketRaise";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -106,6 +107,7 @@ const App = () => {
         <Route path="/metamessage" element={<MetaMessage />} />
         <Route path="/metatemplate" element={<MetaTemplate />} />
         <Route path="/sites" element={<Sites />} />
+        <Route path="/ticketraise" element={<TicketRaise />} />
       </Routes>
     </div>
   );
