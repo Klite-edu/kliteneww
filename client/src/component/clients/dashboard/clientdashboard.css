@@ -17,9 +17,9 @@
 
 .dashboard-graphs {
   display: flex;
+  flex-direction: row;
   gap: 20px;
-  justify-content: flex-start;
-}
+  }
 
 .dashboard-tabs-info {
   background-color: #e5e5e5;
@@ -46,10 +46,10 @@
 
 .block-data {
   position: relative;
-  left: 4%;
+  left: -3%;
   padding: 20px;
   padding-right: 0;
-  width: 18vw;
+  width: 20vw;
   height: 20vh;
   border-radius: 15px;
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
@@ -103,7 +103,7 @@
   padding: 20px;
   border-radius: 10px;
   position: relative;
-  left: 5%;
+  left: -3%;
   top: 20px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
@@ -157,7 +157,7 @@
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   position: relative;
-  left: 5%;
+  left: -3%;
   top: 20px;
 }
 
@@ -201,13 +201,13 @@
   height: 70vh;
 }
 
-.admin-sub-recent {
+.client-sub-recent {
   display: flex;
   gap: 40px;
 }
 
 .transaction-table {
-  width: 47%;
+  width: 50%;
   max-width: 900px;
   background: #fff;
   padding: 20px;
@@ -215,7 +215,7 @@
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   position: relative;
-  left: 5%;
+  left: -3%;
   top: 40px;
   height: 70vh;
 }
@@ -356,56 +356,6 @@
   gap: 40px;
 }
 
-.analytics-container {
-  max-width: 100%;
-  width: 100%;
-  margin: auto;
-  text-align: center;
-  position: relative;
-  top: 80px;
-  left: 5%;
-}
-
-.kpi-cards {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 20px;
-}
-
-.kpi-card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  width: 22%;
-  text-align: center;
-  cursor: pointer;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.api-container {
-  width: 47%;
-  max-width: 900px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  position: relative;
-  top: 0px;
-  height: 55vh;
-}
-
-.chart-container {
-  width: 30%;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  position: relative;
-  top: 20px;
-  height: 50vh;
-}
 
 .tenant-table table {
   width: 117%;
@@ -449,7 +399,8 @@
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
   position: relative;
-  top: 20px;
+  top: 60px;
+  left: -3%;
   height: 65vh;
 }
 
@@ -461,9 +412,6 @@
 }
 
 /* Table Styling */
-.issuetable-container {
-  overflow-x: auto;
-}
 
 .issue-button-head{
   display: flex;
@@ -471,10 +419,11 @@
 }
 
 .issue-table {
-  width: 100%;
-  border-collapse: collapse;
+  position: relative;
+  left: -20%;
+  top: -100px;
   background: white;
-  border-radius: 8px;
+  border-radius: 8px;  
   overflow: hidden;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -489,9 +438,11 @@
 .issue-table thead {
   background: #e9ecef;
   text-transform: uppercase;
-  font-size: 14px;
-  color: #555;
+  font-size: 14px; 
 }
+
+/* --gray: #f8f8f8;
+--primary-color: #0D6E6E; */
 
 /* Alternating Row Colors */
 .issue-table tbody tr:nth-child(even) {

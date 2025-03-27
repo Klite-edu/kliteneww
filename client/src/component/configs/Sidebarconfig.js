@@ -125,7 +125,7 @@ const sidebarConfig = {
     },
     { name: "Email Connect (UD)", path: "/email", icon: faEnvelope },
     { name: "Support", path: "/ticketraise", icon: faChartPie },
-    { name: "Payment", path: "/payment", icon: faShoppingCart },
+    { name: "Payment", path: "/form", icon: faShoppingCart },
     { name: "Analytics", path: "/analytics", icon: faChartBar },
   ],
   user: [

@@ -31,7 +31,7 @@ const formBuilderSchema = new mongoose.Schema({
     policyInfo: {
         title: { type: String },
         policyRedirectLink: { type: String },
-        visiblity: { type: Boolean, default: false }
+        visibility: { type: Boolean, default: false }
     }
 })
 

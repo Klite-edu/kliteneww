@@ -2,7 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 
 // ✅ Ensure environment variable exists
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI; 
 
 // ✅ Connect to MongoDB (Single Database)
 const connectDB = async () => {

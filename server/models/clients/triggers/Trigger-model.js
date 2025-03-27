@@ -2,12 +2,20 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const triggerSchema = new Schema({
-  event_source: { type: String, required: true }, // e.g., "form_submission"
+  name: { 
+    type: String, 
+    required: true 
+  },
+  description: {
+    type: String,
+    default: ""
+  },
+  event_source: { type: String, required: true },
   conditions: {
-    form_id: { type: Schema.Types.ObjectId, ref: "Submission", required: true }, // Store as ObjectId
+    form_id: { type: Schema.Types.ObjectId, ref: "Submission", required: true },
   },
   action: {
-    move_to_stage: { type: Schema.Types.ObjectId, ref: "Pipeline", required: true }, // Store as ObjectId
+    move_to_stage: { type: Schema.Types.ObjectId, ref: "Pipeline", required: true },
   },
 });
 

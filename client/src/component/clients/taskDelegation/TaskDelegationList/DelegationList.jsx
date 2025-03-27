@@ -22,6 +22,8 @@ const DelegationList = () => {
 
   const role = localStorage.getItem("role");
   const userName = localStorage.getItem("userName") || "User";
+  const userId = localStorage.getItem("userId");
+
   const [customPermissions, setCustomPermissions] = useState(() => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
@@ -31,14 +33,16 @@ const DelegationList = () => {
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/delegation/list`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
       );
-      setTasks(response.data);
-      setFilteredTasks(response.data);
+
+      let taskList = response.data;
+
+      if (role === "user" && userId) {
+        taskList = taskList.filter(task => task.doer?._id === userId);
+      }
+
+      setTasks(taskList);
+      setFilteredTasks(taskList);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
@@ -73,7 +77,7 @@ const DelegationList = () => {
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, dateRange]);
+  }, [searchTerm, dateRange, tasks]);
 
   const handleDeleteTask = async (taskId) => {
     try {
@@ -229,16 +233,8 @@ const DelegationList = () => {
                     <td>{new Date(task.dueDate).toLocaleDateString()}</td>
                     <td>{task.time}</td>
                     <td>{task.status || "Pending"}</td>
-                    <td>
-                      {task.completedAt
-                        ? new Date(task.completedAt).toLocaleString()
-                        : "N/A"}
-                    </td>
-                    <td>
-                      {task.revisedDate
-                        ? new Date(task.revisedDate).toLocaleDateString()
-                        : "N/A"}
-                    </td>
+                    <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                    <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
                     <td>{task.revisedTime || "N/A"}</td>
                     <td>{task.revisedReason || "N/A"}</td>
                     <td>

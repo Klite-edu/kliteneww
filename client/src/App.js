@@ -67,7 +67,7 @@ const App = () => {
         {/* ✅ Public Routes (Accessible Without Login) */}
         <Route path="/" element={<PanelLogin />} />
         <Route path="/landing" element={<Landing />} />
-        <Route path="/form/:id" element={<Form />} />
+        <Route path="/form" element={<Form />} />
 
         {/* ✅ All Routes Accessible Without Authentication */}
         <Route path="/dashboard" element={<Dashboard />} />

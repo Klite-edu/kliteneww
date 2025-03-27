@@ -17,6 +17,8 @@ const Opportunity = () => {
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
 
+  const [leadsByStages, setLeadsByStages] = useState([]);
+
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
     const storedUserId = localStorage.getItem("userId");
@@ -29,6 +31,7 @@ const Opportunity = () => {
 
     fetchEmployees();
     fetchPipelines(storedRole, storedUserId);
+    fetchLeadsByStages();
   }, []);
 
   const fetchPipelines = async (storedRole, storedUserId) => {
@@ -64,6 +67,18 @@ const Opportunity = () => {
       setEmployees(response.data);
     } catch (error) {
       console.error("❌ Error fetching employees:", error);
+    }
+  };
+
+  const fetchLeadsByStages = async () => {
+    console.log("🔵 Fetching leads grouped by stages...");
+
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/form/leads-by-stages`);
+      console.log("✅ Leads grouped by stages:", response.data);
+      setLeadsByStages(response.data);
+    } catch (error) {
+      console.error("❌ Error fetching leads by stages:", error);
     }
   };
 
@@ -124,6 +139,21 @@ const Opportunity = () => {
                         {stage.notes && (
                           <p><strong>Notes:</strong> {stage.notes}</p>
                         )}
+
+                        {/* Show Leads under this stage */}
+                        <div className="lead-list">
+                          {leadsByStages
+                            .filter((group) => group.stage === stage.stageName)
+                            .flatMap((group) => group.leads)
+                            .map((lead) => (
+                              <div key={lead.submission_id} className="lead-entry">
+                                <p><strong>Submitted At:</strong> {new Date(lead.submittedAt).toLocaleString()}</p>
+                                {Object.entries(lead.data).map(([label, value]) => (
+                                  <p key={label}><strong>{label}:</strong> {value}</p>
+                                ))}
+                              </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ))}

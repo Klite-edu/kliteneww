@@ -46,6 +46,6 @@ const TaskSchema = new mongoose.Schema({
 });
 
 // Export the Task model
-module.exports = mongoose.model("Task", TaskSchema);
+module.exports = mongoose.model("checklist", TaskSchema);
  
 

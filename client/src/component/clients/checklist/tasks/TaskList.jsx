@@ -64,8 +64,6 @@ const TaskList = () => {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/contactinfo`);
       setEmployees(res.data);
-      console.log("employee data", res.data);
-      
     } catch (error) {
       console.error("Error fetching employees:", error);
     }
@@ -73,6 +71,7 @@ const TaskList = () => {
 
   const fetchTasks = async (userId, role) => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("Token not found. User is not authenticated.");
@@ -97,6 +96,8 @@ const TaskList = () => {
       setFilteredTasks(res.data);
     } catch (error) {
       console.error("Error Fetching Tasks:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,7 +137,6 @@ const TaskList = () => {
     try {
       setLoading(true);
       
-      // Find the employee ID based on the selected name
       const employee = employees.find(emp => emp.fullName === updatedTask.doerName);
       if (!employee && updatedTask.doerName) {
         alert("Selected employee not found");
@@ -153,7 +153,6 @@ const TaskList = () => {
       setEditingTask(null);
       setUpdatedTask({});
       
-      // Refresh the task list
       const storedUserId = localStorage.getItem("userId");
       const storedRole = localStorage.getItem("role");
       fetchTasks(storedUserId, storedRole);
@@ -172,7 +171,6 @@ const TaskList = () => {
       await axios.delete(`${process.env.REACT_APP_API_URL}/api/tasks/delete/${taskId}`);
       alert("Task deleted successfully!");
       
-      // Refresh the task list
       const storedUserId = localStorage.getItem("userId");
       const storedRole = localStorage.getItem("role");
       fetchTasks(storedUserId, storedRole);
@@ -200,7 +198,6 @@ const TaskList = () => {
       await axios.put(`${process.env.REACT_APP_API_URL}/api/tasks/markCompleted/${taskId}`, { selectedDate: selectedDate.toISOString() });
       alert("Task marked as completed!");
       
-      // Refresh the task list
       const storedUserId = localStorage.getItem("userId");
       const storedRole = localStorage.getItem("role");
       fetchTasks(storedUserId, storedRole);
@@ -342,65 +339,65 @@ const TaskList = () => {
               </tr>
             </thead>
             <tbody>
-            {filteredTasks.length > 0 ? filteredTasks.map(task => {
-              const isToday = serverDate && new Date(task.nextDueDate).toDateString() === serverDate.toDateString();
-              const isEditing = editingTask === task._id;
-              return (
-                <tr key={task._id} className={isToday ? "today-task" : ""}>
-                  <td>{isEditing ? <input type="text" name="taskName" value={updatedTask.taskName || ""} onChange={handleUpdateChange} className="edit-input" /> : task.taskName}</td>
-                  <td>{task.doer?.fullName || "Unassigned"}</td> {/* 🔒 Not Editable */}
-                  <td>{isEditing ? <input type="text" name="department" value={updatedTask.department || ""} onChange={handleUpdateChange} className="edit-input" /> : task.department}</td>
-                  <td>{isEditing ? (
-                    <select name="frequency" value={updatedTask.frequency || ""} onChange={handleUpdateChange} className="edit-select">
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly</option>
-                      <option value="yearly">Yearly</option>
-                    </select>
-                  ) : task.frequency}</td>
-                  <td>{isEditing ? (
-                    <DatePicker selected={updatedTask.plannedDate ? new Date(updatedTask.plannedDate) : null} onChange={(date) => handleDateChange(date, "plannedDate")} className="edit-date-picker" />
-                  ) : new Date(task.plannedDate).toLocaleDateString()}</td>
-                  <td><div className="due-date-cell">{new Date(task.nextDueDate).toLocaleDateString()}{isToday && <span className="today-badge">Today</span>}</div></td>
-                  <td><StatusBadge status={task.status} /></td>
-                  <td>
-                    <div className="action-buttons">
-                      {isEditing ? (
-                        <>
-                          <button className="save-btn" onClick={handleUpdateTask}><FiSave /> Save</button>
-                          <button className="cancel-btn" onClick={handleCancelEdit}><FiX /> Cancel</button>
-                        </>
-                      ) : (
-                        <>
-                          {userRole === "client" && (
-                            <>
-                              <button className="edit-btn" onClick={() => handleEditClick(task)}><FiEdit /></button>
-                              <button className="delete-btn" onClick={() => handleDeleteTask(task._id)}><FiTrash2 /></button>
-                            </>
-                          )}
-                          {userRole === "user" && (
-                            <button className={`complete-btn ${!isToday ? 'disabled' : ''}`} onClick={() => isToday && handleMarkCompleted(task._id, task.nextDueDate)}>
-                              <FiCheckCircle /> Complete
-                            </button>
-                          )}
-                        </>
-                      )}
+              {filteredTasks.length > 0 ? filteredTasks.map(task => {
+                const isToday = serverDate && new Date(task.nextDueDate).toDateString() === serverDate.toDateString();
+                const isEditing = editingTask === task._id;
+                return (
+                  <tr key={task._id} className={isToday ? "today-task" : ""}>
+                    <td>{isEditing ? <input type="text" name="taskName" value={updatedTask.taskName || ""} onChange={handleUpdateChange} className="edit-input" /> : task.taskName}</td>
+                    <td>{task.doer?.fullName || "Unassigned"}</td>
+                    <td>{isEditing ? <input type="text" name="department" value={updatedTask.department || ""} onChange={handleUpdateChange} className="edit-input" /> : task.department}</td>
+                    <td>{isEditing ? (
+                      <select name="frequency" value={updatedTask.frequency || ""} onChange={handleUpdateChange} className="edit-select">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                    ) : task.frequency}</td>
+                    <td>{isEditing ? (
+                      <DatePicker selected={updatedTask.plannedDate ? new Date(updatedTask.plannedDate) : null} onChange={(date) => handleDateChange(date, "plannedDate")} className="edit-date-picker" />
+                    ) : new Date(task.plannedDate).toLocaleDateString()}</td>
+                    <td><div className="due-date-cell">{new Date(task.nextDueDate).toLocaleDateString()}{isToday && <span className="today-badge">Today</span>}</div></td>
+                    <td><StatusBadge status={task.status} /></td>
+                    <td>
+                      <div className="action-buttons">
+                        {isEditing ? (
+                          <>
+                            <button className="save-btn" onClick={handleUpdateTask}><FiSave /> Save</button>
+                            <button className="cancel-btn" onClick={handleCancelEdit}><FiX /> Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            {userRole === "client" && (
+                              <>
+                                <button className="edit-btn" onClick={() => handleEditClick(task)}><FiEdit /></button>
+                                <button className="delete-btn" onClick={() => handleDeleteTask(task._id)}><FiTrash2 /></button>
+                              </>
+                            )}
+                            {userRole === "user" && (
+                              <button className={`complete-btn ${!isToday ? 'disabled' : ''}`} onClick={() => isToday && handleMarkCompleted(task._id, task.nextDueDate)}>
+                                <FiCheckCircle /> Complete
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td>{task.completedDate ? new Date(task.completedDate).toLocaleString() : <span className="not-completed">-</span>}</td>
+                  </tr>
+                );
+              }) : (
+                <tr className="no-tasks-row">
+                  <td colSpan="9">
+                    <div className="no-tasks-message">
+                      {searchQuery.trim() ? `No tasks found for employee "${searchQuery}". Try a different name.` : "No tasks found. Try adjusting your filters."}
                     </div>
                   </td>
-                  <td>{task.completedDate ? new Date(task.completedDate).toLocaleString() : <span className="not-completed">-</span>}</td>
                 </tr>
-              );
-            }) : (
-              <tr className="no-tasks-row">
-                <td colSpan="9">
-                  <div className="no-tasks-message">
-                    {searchQuery.trim() ? `No tasks found for employee "${searchQuery}". Try a different name.` : "No tasks found. Try adjusting your filters."}
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
+              )}
+            </tbody>
           </table>
         </div>
 
