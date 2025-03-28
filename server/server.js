@@ -50,6 +50,7 @@ app.use(
   })
 );
 
+
 // ✅ Middleware Setup
 app.use(express.json()); // Parse JSON bodies
 

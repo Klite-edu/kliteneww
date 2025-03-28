@@ -22,6 +22,7 @@ const TriggerBuilder = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTrigger, setSelectedTrigger] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const role = localStorage.getItem("role");
   const [customPermissions, setCustomPermissions] = useState(() => {
@@ -97,6 +98,40 @@ const TriggerBuilder = () => {
     }
   };
 
+  const handleDeleteTrigger = async (triggerId) => {
+    if (!window.confirm("Are you sure you want to delete this trigger?")) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      const response = await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/triggers/delete/${triggerId}`
+      );
+      alert(response.data.message);
+      // Refresh triggers list
+      const triggersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`);
+      setTriggers(triggersResponse.data);
+      // Clear selection if deleting the currently selected trigger
+      if (selectedTrigger?._id === triggerId) {
+        setSelectedTrigger(null);
+        setTriggerData({
+          name: "",
+          description: "",
+          event_source: "",
+          conditions: { form_id: "" },
+          action: { move_to_stage: "" },
+          is_active: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting trigger:", error);
+      alert("Failed to delete trigger. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleUseTrigger = (trigger) => {
     setSelectedTrigger(trigger);
     setTriggerData({
@@ -106,6 +141,7 @@ const TriggerBuilder = () => {
       event_source: trigger.event_source,
       conditions: trigger.conditions,
       action: trigger.action,
+      is_active: trigger.is_active,
     });
   };
 
@@ -325,30 +361,39 @@ const TriggerBuilder = () => {
                               ? "selected"
                               : ""
                           }`}
-                          onClick={() => handleUseTrigger(trigger)}
                         >
-                          <h4>{trigger.name || "Unnamed Trigger"}</h4>
-                          <p className="trigger-description">
-                            {trigger.description || "No description provided"}
-                          </p>
-                          <div className="trigger-details">
-                            <span className="event-source">
-                              {trigger.event_source.replace(/_/g, " ")}
-                            </span>
-                            <span className="action">
-                              Moves to:{" "}
-                              {stages
-                                .find((p) =>
-                                  p.stages.some(
-                                    (s) =>
-                                      s._id === trigger.action.move_to_stage
+                          <div className="trigger-item-content" onClick={() => handleUseTrigger(trigger)}>
+                            <h4>{trigger.name || "Unnamed Trigger"}</h4>
+                            <p className="trigger-description">
+                              {trigger.description || "No description provided"}
+                            </p>
+                            <div className="trigger-details">
+                              <span className="event-source">
+                                {trigger.event_source.replace(/_/g, " ")}
+                              </span>
+                              <span className="action">
+                                Moves to:{" "}
+                                {stages
+                                  .find((p) =>
+                                    p.stages.some(
+                                      (s) =>
+                                        s._id === trigger.action.move_to_stage
+                                    )
                                   )
-                                )
-                                ?.stages.find(
-                                  (s) => s._id === trigger.action.move_to_stage
-                                )?.stageName || "Unknown stage"}
-                            </span>
+                                  ?.stages.find(
+                                    (s) => s._id === trigger.action.move_to_stage
+                                  )?.stageName || "Unknown stage"}
+                              </span>
+                            </div>
                           </div>
+                          <button
+                            className="delete-trigger-button"
+                            onClick={() => handleDeleteTrigger(trigger._id)}
+                            disabled={isDeleting}
+                            title="Delete trigger"
+                          >
+                            <FiTrash2 />
+                          </button>
                         </div>
                       ))
                     )}

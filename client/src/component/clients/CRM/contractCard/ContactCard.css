@@ -1,0 +1,103 @@
+.contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 0.5rem;
+}
+
+.contact-card {
+    background: white;
+    border-radius: 12px;
+    border-top: 3px solid red;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.contact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--gray);
+}
+
+.contact-name-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.contact-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.contact-stage {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Example stage styles – you can expand more */
+.contact-stage.lead {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: #d32f2f;
+}
+
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.detail-icon {
+    color: var(--primary-color);
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.detail-value.amount {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.card-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.action-icon {
+    font-size: 1.2rem;
+    color: #0D6E6E;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.action-icon:hover {
+    transform: scale(1.2);
+}

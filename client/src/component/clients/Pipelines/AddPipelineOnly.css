@@ -1,0 +1,162 @@
+/* AddPipelineOnly.css */
+:root {
+    --gray-light: #f8f8f8;
+    --gray-medium: #e0e0e0;
+    --primary-color: #0D6E6E;
+    --primary-light: #d9f3f3;
+    --primary-dark: #095858;
+    --box-shadow-primary: 0px 6px 10px rgba(0, 0, 0, 0.15);
+    --border-radius: 10px;
+  }
+  
+  .abhi-pipeline-modal .abhi-modal-content {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-primary);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .abhi-pipeline-modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: none;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: 1.5rem;
+    flex-shrink: 0;
+  }
+  
+  .abhi-pipeline-modal-header .modal-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+  }
+  
+  .abhi-pipeline-modal-header .abhi-btn-close {
+    color: white;
+    opacity: 0.8;
+    filter: brightness(0) invert(1);
+  }
+  
+  .abhi-pipeline-modal-body {
+    padding: 1.5rem;
+    background-color: var(--gray-light);
+    overflow-y: auto;
+    flex: 1 1 auto;
+  }
+  
+  .abhi-pipeline-modal-footer {
+    border-top: none;
+    background-color: var(--gray-light);
+    padding: 1rem 1.5rem;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .abhi-pipeline-stage-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    border: 1px solid var(--gray-medium);
+  }
+  
+  .abhi-pipeline-stage-card:hover {
+    box-shadow: 0 4px 12px rgba(13, 110, 110, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .abhi-pipeline-stage-title {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray-medium);
+  }
+  
+  .abhi-pipeline-stage-remove {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 0;
+  }
+  
+  .abhi-pipeline-input {
+    border: 1px solid var(--gray-medium);
+    border-radius: var(--border-radius);
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+  }
+  
+  .abhi-pipeline-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 110, 0.25);
+  }
+  
+  .abhi-pipeline-add-stage-btn,
+  .abhi-pipeline-cancel-btn,
+  .abhi-pipeline-save-btn {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .abhi-pipeline-save-btn {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+  }
+  
+  .abhi-pipeline-save-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+  
+  .abhi-form-label {
+    font-weight: 500;
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 768px) {
+    .abhi-pipeline-modal-body, .abhi-pipeline-modal-footer, .abhi-pipeline-modal-header {
+      padding: 1rem !important;
+    }
+  
+    .abhi-pipeline-stage-title {
+      font-size: 1rem;
+    }
+  
+    .abhi-pipeline-add-stage-btn,
+    .abhi-pipeline-cancel-btn,
+    .abhi-pipeline-save-btn {
+      width: 100%;
+    }
+  
+    .abhi-pipeline-modal .modal-content {
+      margin: 10px;
+    }
+  
+    .modal-dialog.modal-lg {
+      max-width: 95vw;
+      margin: auto;
+    }
+  
+    .row.g-3 > .col-md-6,
+    .row.g-3 > .col-12 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+  }
+  

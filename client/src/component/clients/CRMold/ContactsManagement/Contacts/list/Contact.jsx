@@ -1,3 +1,4 @@
+// Contact.js
 import * as XLSX from "xlsx";
 import React, { useEffect, useState } from "react";
 import "./contact.css";
@@ -23,12 +24,11 @@ import Navbar from "../../../../../Navbar/Navbar";
 const Contact = () => {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  // Date range state
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const role = localStorage.getItem("role");
   const [customPermissions] = useState(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -41,11 +41,9 @@ const Contact = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
         );
-        console.log("contact list", response.data);
         setContacts(response.data);
       } catch (error) {
-        console.error(error);
-        console.warn("Data not found", error);
+        console.error("Data not found", error);
       }
     };
     fetchContacts();
@@ -80,10 +78,7 @@ const Contact = () => {
       alert("Failed to delete employee");
     }
   };
-  
 
-  // Filter contacts by name and date range.
-  // Assumes each contact has a `createdAt` property.
   const filteredContacts = contacts.filter((contact) => {
     const nameMatch = contact.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const contactDate = new Date(contact.createdAt);
@@ -92,7 +87,6 @@ const Contact = () => {
     return nameMatch && startMatch && endMatch;
   });
 
-  // Sort contacts descending by date (most recent first)
   const sortedContacts = [...filteredContacts].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
@@ -114,7 +108,7 @@ const Contact = () => {
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
-      <div className="Contact-list-table">
+      <div className="client-list-table">
         <div className="list-head-btn">
           <h4>Contacts</h4>
           <div className="list-btns">
@@ -139,10 +133,9 @@ const Contact = () => {
               />
               <FontAwesomeIcon icon={faMagnifyingGlass} className="input-icon" />
             </div>
-            {/* Date range filter dropdown */}
             <Dropdown className="date-range-dropdown">
               <Dropdown.Toggle variant="secondary" id="date-range-dropdown">
-                Sorting
+                Filter by Date
               </Dropdown.Toggle>
               <Dropdown.Menu className="date-range-dropdown-menu">
                 <div className="date-range-picker">
@@ -163,6 +156,7 @@ const Contact = () => {
             </Dropdown>
           </div>
         </form>
+
         {contacts.length === 0 ? (
           <p>No data available.</p>
         ) : (
@@ -173,7 +167,7 @@ const Contact = () => {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Tags</th>
+                <th>Department</th>
                 <th>Status</th>
                 <th>Contact</th>
                 <th>Actions</th>
@@ -186,22 +180,19 @@ const Contact = () => {
                   <td>{contact.fullName}</td>
                   <td>{contact.email}</td>
                   <td>{contact.number}</td>
-                  <td>
-                    {contact.designation}
-                  </td>
+                  <td>{contact.designation}</td>
                   <td>Active</td>
                   <td>
                     <div className="action-buttons">
                       <Link to="">
                         <FontAwesomeIcon
                           icon={faEnvelope}
-                          style={{ marginRight: "10px", cursor: "pointer" }}
                         />
                       </Link>
                       <Link to="/chatbox">
                         <FontAwesomeIcon
                           icon={faComments}
-                          style={{ marginRight: "10px", cursor: "pointer" }}
+
                         />
                       </Link>
                     </div>
@@ -233,6 +224,7 @@ const Contact = () => {
             </tbody>
           </table>
         )}
+
         <div className="pagination">
           <ReactPaginate
             previousLabel={"Prev"}

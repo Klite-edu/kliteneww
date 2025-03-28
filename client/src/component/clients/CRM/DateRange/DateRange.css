@@ -1,0 +1,31 @@
+/* DateRangeButton.css */
+.daterangepicker {
+    font-family: inherit;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow-primary);
+    border: 1px solid #eaeaea;
+}
+
+.daterangepicker td.active,
+.daterangepicker td.active:hover {
+    background-color: var(--primary-color);
+}
+
+.daterangepicker .ranges li.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.daterangepicker .ranges li:hover {
+    background-color: var(--gray);
+}
+
+.daterangepicker .drp-buttons .btn {
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+}
+
+.daterangepicker .drp-buttons .btn.applyBtn {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}

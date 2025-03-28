@@ -1,53 +1,65 @@
 const cron = require("node-cron");
 const Task = require("../models/clients/checklist/task");
 
-// ✅ Function to Calculate Next Due Date
-// Function to calculate the next due date based on frequency
-const calculateNextDueDate = (plannedDate, frequency) => {
-  let nextDueDate = new Date(plannedDate);
-  nextDueDate.setUTCHours(0, 0, 0, 0); // Normalize to UTC
+// Function to calculate the next due datetime based on frequency
+const calculateNextDueDateTime = (plannedDateTime, frequency) => {
+  let nextDueDateTime = new Date(plannedDateTime);
 
   switch (frequency) {
     case "Daily":
-      nextDueDate.setUTCDate(nextDueDate.getUTCDate() + 1);
+      nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 1);
       break;
     case "Alternate Days":
-      nextDueDate.setUTCDate(nextDueDate.getUTCDate() + 2);
+      nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 2);
       break;
     case "Weekly":
-      nextDueDate.setUTCDate(nextDueDate.getUTCDate() + 7);
+      nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 7);
       break;
     case "Fortnightly":
-      nextDueDate.setUTCDate(nextDueDate.getUTCDate() + 14);
+      nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 14);
       break;
     case "Monthly":
-      nextDueDate.setUTCMonth(nextDueDate.getUTCMonth() + 1);
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 1);
       break;
     case "Quarterly":
-      nextDueDate.setUTCMonth(nextDueDate.getUTCMonth() + 3);
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 3);
       break;
     case "Half-yearly":
-      nextDueDate.setUTCMonth(nextDueDate.getUTCMonth() + 6);
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 6);
       break;
     case "Yearly":
-      nextDueDate.setUTCFullYear(nextDueDate.getUTCFullYear() + 1);
+      nextDueDateTime.setUTCFullYear(nextDueDateTime.getUTCFullYear() + 1);
+      break;
+    case "First of every month":
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 1);
+      nextDueDateTime.setUTCDate(1);
+      break;
+    case "Second of every month":
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 1);
+      nextDueDateTime.setUTCDate(2);
+      break;
+    case "Third of every month":
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 1);
+      nextDueDateTime.setUTCDate(3);
+      break;
+    case "Fourth of every month":
+      nextDueDateTime.setUTCMonth(nextDueDateTime.getUTCMonth() + 1);
+      nextDueDateTime.setUTCDate(4);
       break;
     default:
       return null;
   }
 
-  return nextDueDate;
+  return nextDueDateTime;
 };
 
-// ✅ Scheduled Task to Update Recurring Tasks
+// Scheduled Task to Update Recurring Tasks
 const updateTaskFrequency = async () => {
   try {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0); // Normalize to UTC
+    const now = new Date();
+    console.log("🔄 Running Task Frequency Update at (UTC):", now.toUTCString());
 
-    console.log("🔄 Running Task Frequency Update at (UTC):", today.toUTCString());
-
-    const tasks = await Task.find({ nextDueDate: { $lte: today } });
+    const tasks = await Task.find({ nextDueDateTime: { $lte: now } });
 
     console.log(`🔍 Found ${tasks.length} tasks that need updating.`);
 
@@ -57,15 +69,18 @@ const updateTaskFrequency = async () => {
     }
 
     for (let task of tasks) {
-      let newDueDate = calculateNextDueDate(task.nextDueDate, task.frequency);
-      if (!newDueDate) {
-        console.warn(`⚠️ Skipping Task: ${task.taskName} - Unable to calculate next due date.`);
+      let newDueDateTime = calculateNextDueDateTime(task.nextDueDateTime, task.frequency);
+      if (!newDueDateTime) {
+        console.warn(`⚠️ Skipping Task: ${task.taskName} - Unable to calculate next due datetime.`);
         continue;
       }
 
       try {
-        await Task.findByIdAndUpdate(task._id, { nextDueDate: newDueDate, status: "Pending" });
-        console.log(`✅ Successfully Updated Task: ${task.taskName} | New Due Date (UTC): ${newDueDate.toUTCString()}`);
+        await Task.findByIdAndUpdate(task._id, { 
+          nextDueDateTime: newDueDateTime, 
+          status: "Pending" 
+        });
+        console.log(`✅ Successfully Updated Task: ${task.taskName} | New Due DateTime (UTC): ${newDueDateTime.toUTCString()}`);
       } catch (updateError) {
         console.error(`❌ Error updating task ${task.taskName}:`, updateError);
       }
@@ -80,5 +95,4 @@ cron.schedule("0 0 * * *", () => {
   updateTaskFrequency();
 });
 
-module.exports = { calculateNextDueDate, updateTaskFrequency };
-
+module.exports = { calculateNextDueDateTime, updateTaskFrequency };

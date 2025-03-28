@@ -7,8 +7,8 @@ const TaskSchema = new mongoose.Schema({
     required: true,
   },
   doer: {
-    type: mongoose.Schema.Types.ObjectId,  // Reference to the Employee model
-    ref: "Employee",  // Make sure "Employee" is the name of the Employee model
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Employee",
     required: true,
   },
   department: {
@@ -18,16 +18,19 @@ const TaskSchema = new mongoose.Schema({
   frequency: {
     type: String,
     enum: [
-      "Daily", "Alternate Days", "Weekly", "Monthly", "Fortnightly", "Quarterly", "Half-yearly", "Yearly"
+      "Daily", "Alternate Days", "Weekly", "Monthly", "Fortnightly", 
+      "Quarterly", "Half-yearly", "Yearly",
+      "First of every month", "Second of every month", 
+      "Third of every month", "Fourth of every month"
     ],
     required: true,
   },
-  plannedDate: {
+  plannedDateTime: {
     type: Date,
     required: true,
   },
-  nextDueDate: {
-    type: Date, // nextDueDate field
+  nextDueDateTime: {
+    type: Date,
     required: true,
   },
   statusHistory: [
@@ -40,12 +43,9 @@ const TaskSchema = new mongoose.Schema({
         type: String,
         default: "Pending",
       },
-      completedDate: Date, // Date when the task was completed
+      completedDateTime: Date,
     },
   ],
 });
 
-// Export the Task model
 module.exports = mongoose.model("checklist", TaskSchema);
- 
-

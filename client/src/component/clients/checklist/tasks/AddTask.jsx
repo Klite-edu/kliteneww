@@ -13,6 +13,7 @@ const AddTask = () => {
     department: "",
     frequency: "",
     plannedDate: "",
+    plannedTime: ""
   });
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
@@ -59,7 +60,14 @@ const AddTask = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks/add`, task);
+      // Combine date and time into a single datetime string
+      const plannedDateTime = `${task.plannedDate}T${task.plannedTime}:00.000Z`;
+      
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks/add`, {
+        ...task,
+        plannedDateTime
+      });
+      
       alert("Task added successfully!");
       navigate("/check-tasklist");
       setTask({
@@ -68,6 +76,7 @@ const AddTask = () => {
         department: "",
         frequency: "",
         plannedDate: "",
+        plannedTime: ""
       });
     } catch (error) {
       console.error("Error adding task:", error);
@@ -163,13 +172,27 @@ const AddTask = () => {
                   <option value="Fourth of every month">Fourth of every month</option>
                 </select>
               </div>
+            </div>
 
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Planned Date</label>
                 <input
                   type="date"
                   name="plannedDate"
                   value={task.plannedDate}
+                  onChange={handleChange}
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Planned Time</label>
+                <input
+                  type="time"
+                  name="plannedTime"
+                  value={task.plannedTime}
                   onChange={handleChange}
                   className="form-input"
                   required

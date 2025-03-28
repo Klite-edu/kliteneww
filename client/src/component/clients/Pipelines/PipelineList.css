@@ -1,0 +1,290 @@
+:root {
+    --primary-color: #0D6E6E;
+    --primary-light: rgba(13, 110, 110, 0.1);
+    --primary-dark: #0b5e5e;
+    --danger-color: #dc3545;
+    --danger-light: rgba(220, 53, 69, 0.1);
+    --gray-light: #f8f9fa;
+    --gray-medium: #e9ecef;
+    --text-muted: #6c757d;
+    --box-shadow-primary: 0px 6px 15px rgba(13, 110, 110, 0.15);
+    --border-radius: 8px;
+  }
+  
+  .abhi-pipeline-container {
+    background-color: var(--gray-light);
+    min-height: 100vh;
+  }
+  
+  .abhi-pipeline-title {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+  }
+  
+  .abhi-pipeline-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  
+  .pipeline-card {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--gray-medium);
+    box-shadow: var(--box-shadow-primary);
+    background-color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .pipeline-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(13, 110, 110, 0.2);
+  }
+  
+  .pipeline-table-wrapper {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+  }
+  
+  .pipeline-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  
+  .pipeline-table-header {
+    background-color: var(--primary-color);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .pipeline-table-header th {
+    padding: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    border: none;
+  }
+  
+  .pipeline-table-body-scroll {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-light) transparent;
+  }
+  
+  .pipeline-table-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--gray-medium);
+  }
+  
+  .pipeline-table-row:hover {
+    background-color: var(--primary-light) !important;
+  }
+  
+  .pipeline-table-row td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-top: none;
+  }
+  
+  .pipeline-action-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin: 0 2px;
+  }
+  
+  .pipeline-action-btn:hover {
+    transform: scale(1.1);
+    background-color: var(--primary-light);
+  }
+  
+  .btn-outline-danger:hover {
+    background-color: var(--danger-light);
+  }
+  
+  .create-pipeline-btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .create-pipeline-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+  }
+  
+  .spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 0.2em;
+  }
+  
+  /* Empty state styling */
+  .bi-inbox {
+    font-size: 3rem;
+    opacity: 0.7;
+    margin-bottom: 1rem;
+  }
+  
+  .bi-funnel-fill {
+    font-size: 0.9rem;
+  }
+  
+  /* Scrollbar styling */
+  .pipeline-table-body-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .pipeline-table-body-scroll::-webkit-scrollbar-track {
+    background: var(--gray-medium);
+    border-radius: 10px;
+  }
+  
+  .pipeline-table-body-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+  }
+  
+  .pipeline-table-body-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+  }
+  
+  /* Alert styling */
+  .custom-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--border-radius);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 350px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+  }
+  
+  .custom-alert.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  .custom-alert.hide {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  
+  .custom-alert-info {
+    background-color: var(--primary-color);
+  }
+  
+  .custom-alert-success {
+    background-color: #28a745;
+  }
+  
+  .custom-alert-error {
+    background-color: var(--danger-color);
+  }
+  
+  .custom-alert-close {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+  }
+  
+  /* Confirmation dialog styling */
+  .custom-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .custom-confirm-overlay.show {
+    opacity: 1;
+  }
+  
+  .custom-confirm-overlay.fade-out {
+    opacity: 0;
+  }
+  
+  .custom-confirm-box {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+  }
+  
+  .custom-confirm-overlay.show .custom-confirm-box {
+    transform: translateY(0);
+  }
+  
+  .custom-confirm-content {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .custom-confirm-content i {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+  }
+  
+  .custom-confirm-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+  
+  .custom-confirm-buttons button {
+    min-width: 80px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .abhi-pipeline-title {
+      font-size: 1.3rem;
+    }
+    
+    .pipeline-table-header th {
+      padding: 0.75rem;
+      font-size: 0.7rem;
+    }
+    
+    .pipeline-table-row td {
+      padding: 0.75rem;
+    }
+    
+    .pipeline-action-btn {
+      width: 28px;
+      height: 28px;
+      font-size: 0.8rem;
+    }
+  }

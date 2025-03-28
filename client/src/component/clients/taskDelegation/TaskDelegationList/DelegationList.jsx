@@ -3,14 +3,28 @@ import axios from "axios";
 import Navbar from "../../../Navbar/Navbar";
 import Sidebar from "../../../Sidebar/Sidebar";
 import "./delegationlist.css";
+import { FaCheck } from "react-icons/fa";
 
 const DelegationList = () => {
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
   const [editingTask, setEditingTask] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    description: "",
+    dueDate: "",
+    time: "",
+    doer: "",
+  });
   const [revisingTask, setRevisingTask] = useState(null);
+  const [reviseFormData, setReviseFormData] = useState({
+    revisedDate: "",
+    revisedTime: "",
+    revisedReason: ""
+  });
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketData, setTicketData] = useState({
     title: "",
@@ -19,6 +33,8 @@ const DelegationList = () => {
     type: "Help",
     priority: "Medium",
   });
+  const [employees, setEmployees] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState({});
 
   const role = localStorage.getItem("role");
   const userName = localStorage.getItem("userName") || "User";
@@ -32,15 +48,12 @@ const DelegationList = () => {
   const fetchTasks = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/delegation/list`,
+        `${process.env.REACT_APP_API_URL}/api/delegation/list`
       );
-
       let taskList = response.data;
-
       if (role === "user" && userId) {
-        taskList = taskList.filter(task => task.doer?._id === userId);
+        taskList = taskList.filter((task) => task.doer?._id === userId);
       }
-
       setTasks(taskList);
       setFilteredTasks(taskList);
     } catch (error) {
@@ -48,21 +61,37 @@ const DelegationList = () => {
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+      );
+      setEmployees(response.data);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
+    fetchEmployees();
   }, []);
 
   const handleSearch = () => {
     let filtered = [...tasks];
-
     if (searchTerm) {
-      filtered = filtered.filter((task) =>
-        task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.doer?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (task) =>
+          task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          task.doer?.fullName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
+    if (statusFilter) {
+      filtered = filtered.filter(
+        (task) => task.status?.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
     if (dateRange.from && dateRange.to) {
       const fromDate = new Date(dateRange.from);
       const toDate = new Date(dateRange.to);
@@ -71,33 +100,35 @@ const DelegationList = () => {
         return dueDate >= fromDate && dueDate <= toDate;
       });
     }
-
     setFilteredTasks(filtered);
   };
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, dateRange, tasks]);
-
-  const handleDeleteTask = async (taskId) => {
-    try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`);
-      alert("Task deleted successfully!");
-      fetchTasks();
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
-  };
+  }, [searchTerm, statusFilter, dateRange, tasks]);
 
   const handleEditClick = (task) => {
     setEditingTask(task);
+    setEditFormData({
+      name: task.name,
+      description: task.description,
+      dueDate: task.dueDate.split("T")[0],
+      time: task.time,
+      doer: task.doer?._id || "",
+    });
   };
 
-  const handleUpdateTask = async (updatedData) => {
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
+
+  const handleUpdateTask = async (e) => {
+    e.preventDefault();
     try {
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/edit/${editingTask._id}`,
-        updatedData
+        editFormData
       );
       alert("Task updated successfully!");
       setEditingTask(null);
@@ -107,8 +138,22 @@ const DelegationList = () => {
     }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`
+      );
+      alert("Task deleted successfully!");
+      fetchTasks();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
   const handleCompleteTask = async (taskId) => {
     try {
+      setCompletedTasks(prev => ({ ...prev, [taskId]: true }));
+      
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/complete/${taskId}`,
         {},
@@ -118,18 +163,39 @@ const DelegationList = () => {
           },
         }
       );
-      alert("Task marked as completed!");
+      
       fetchTasks();
     } catch (error) {
       console.error("Error completing task:", error);
+      setCompletedTasks(prev => {
+        const newState = { ...prev };
+        delete newState[taskId];
+        return newState;
+      });
+      alert("Failed to complete task. Please try again.");
     }
   };
 
-  const handleReviseTask = async (taskId, revisedData) => {
+  const handleReviseClick = (task) => {
+    setRevisingTask(task);
+    setReviseFormData({
+      revisedDate: task.revisedDate ? task.revisedDate.split("T")[0] : "",
+      revisedTime: task.revisedTime || "",
+      revisedReason: task.revisedReason || ""
+    });
+  };
+
+  const handleReviseFormChange = (e) => {
+    const { name, value } = e.target;
+    setReviseFormData({ ...reviseFormData, [name]: value });
+  };
+
+  const handleReviseSubmit = async (e) => {
+    e.preventDefault();
     try {
       await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/delegation/revise/${taskId}`,
-        revisedData,
+        `${process.env.REACT_APP_API_URL}/api/delegation/revise/${revisingTask._id}`,
+        reviseFormData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -141,6 +207,7 @@ const DelegationList = () => {
       fetchTasks();
     } catch (error) {
       console.error("Error revising task:", error);
+      alert("Failed to revise task. Please try again.");
     }
   };
 
@@ -154,15 +221,18 @@ const DelegationList = () => {
     };
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticketRaise/add`, payload);
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticketRaise/add`,
+        payload
+      );
       alert("Ticket raised successfully!");
       setShowTicketModal(false);
-      setTicketData({ 
-        title: "", 
-        description: "", 
-        category: "Delegation", 
-        type: "Help", 
-        priority: "Medium" 
+      setTicketData({
+        title: "",
+        description: "",
+        category: "Delegation",
+        type: "Help",
+        priority: "Medium",
       });
     } catch (error) {
       console.error("Error submitting ticket:", error);
@@ -172,16 +242,13 @@ const DelegationList = () => {
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
-      <Navbar />
+      <Navbar onRaiseTicket={() => setShowTicketModal(true)} />
       <div className="delegation-wrapper">
-        <h2 className="title">Task Delegation List</h2>
+        <h2 className="title">TASK DELEGATION DASHBOARD</h2>
 
         {role === "user" && (
           <div style={{ textAlign: "right", marginBottom: "15px" }}>
-            <button 
-              className="btn blue" 
-              onClick={() => setShowTicketModal(true)}
-            >
+            <button className="btn blue" onClick={() => setShowTicketModal(true)}>
               Raise Ticket
             </button>
           </div>
@@ -190,20 +257,36 @@ const DelegationList = () => {
         <div className="filters">
           <input
             type="text"
-            placeholder="Search task or assignee..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <input
-            type="date"
-            value={dateRange.from}
-            onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
-          />
-          <input
-            type="date"
-            value={dateRange.to}
-            onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-          />
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="status-filter"
+          >
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+            <option value="Revised">Revised</option>
+          </select>
+
+          <div className="date-filters">
+            <label>From:</label>
+            <input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+            />
+            <label>To:</label>
+            <input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+            />
+          </div>
         </div>
 
         {filteredTasks.length > 0 ? (
@@ -212,9 +295,9 @@ const DelegationList = () => {
               <thead>
                 <tr>
                   <th>Task</th>
-                  <th>Description</th>
-                  <th>Assigned To</th>
-                  <th>Due Date</th>
+                  <th>Task Description</th>
+                  <th>Doer</th>
+                  <th>Planned Date</th>
                   <th>Time</th>
                   <th>Status</th>
                   <th>Completed At</th>
@@ -225,48 +308,157 @@ const DelegationList = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTasks.map((task) => (
-                  <tr key={task._id}>
-                    <td>{task.name}</td>
-                    <td>{task.description}</td>
-                    <td>{task.doer.fullName}</td>
-                    <td>{new Date(task.dueDate).toLocaleDateString()}</td>
-                    <td>{task.time}</td>
-                    <td>{task.status || "Pending"}</td>
-                    <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
-                    <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
-                    <td>{task.revisedTime || "N/A"}</td>
-                    <td>{task.revisedReason || "N/A"}</td>
-                    <td>
-                      {role === "user" ? (
-                        <>
-                          <button className="btn green" onClick={() => handleCompleteTask(task._id)}>
-                            Complete
-                          </button>
-                          {task.status !== "Completed" && (
-                            <button className="btn blue" onClick={() => setRevisingTask(task)}>
-                              Revise
-                            </button>
-                          )}
-                        </>
-                      ) : role === "client" ? (
-                        <>
-                          <button className="btn green" onClick={() => handleEditClick(task)}>
-                            Edit
-                          </button>
-                          <button className="btn red" onClick={() => handleDeleteTask(task._id)}>
-                            Delete
-                          </button>
-                        </>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
+                {filteredTasks.map((task) => {
+                  if (editingTask && editingTask._id === task._id) {
+                    return (
+                      <tr key={task._id}>
+                        <td>
+                          <input
+                            type="text"
+                            name="name"
+                            value={editFormData.name}
+                            onChange={handleEditFormChange}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            name="description"
+                            value={editFormData.description}
+                            onChange={handleEditFormChange}
+                          />
+                        </td>
+                        <td>
+                          <select
+                            name="doer"
+                            value={editFormData.doer}
+                            onChange={handleEditFormChange}
+                          >
+                            <option value="">Select Doer</option>
+                            {employees.map((emp) => (
+                              <option key={emp._id} value={emp._id}>
+                                {emp.fullName}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            name="dueDate"
+                            value={editFormData.dueDate}
+                            onChange={handleEditFormChange}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="time"
+                            name="time"
+                            value={editFormData.time}
+                            onChange={handleEditFormChange}
+                          />
+                        </td>
+                        <td>{task.status || "Pending"}</td>
+                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                        <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                        <td>{task.revisedTime || "N/A"}</td>
+                        <td>{task.revisedReason || "N/A"}</td>
+                        <td>
+                          <button className="btn green" onClick={handleUpdateTask}>Save</button>
+                          <button className="btn red" onClick={() => setEditingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                        </td>
+                      </tr>
+                    );
+                  } else if (revisingTask && revisingTask._id === task._id) {
+                    return (
+                      <tr key={task._id}>
+                        <td>{task.name}</td>
+                        <td>{task.description}</td>
+                        <td>{task.doer?.fullName || "N/A"}</td>
+                        <td>{new Date(task.dueDate).toLocaleDateString()}</td>
+                        <td>{task.time}</td>
+                        <td>{task.status || "Pending"}</td>
+                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                        <td>
+                          <input
+                            type="date"
+                            name="revisedDate"
+                            value={reviseFormData.revisedDate}
+                            onChange={handleReviseFormChange}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="time"
+                            name="revisedTime"
+                            value={reviseFormData.revisedTime}
+                            onChange={handleReviseFormChange}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            name="revisedReason"
+                            value={reviseFormData.revisedReason}
+                            onChange={handleReviseFormChange}
+                            placeholder="Enter revision reason"
+                          />
+                        </td>
+                        <td>
+                          <button className="btn green" onClick={handleReviseSubmit}>Save</button>
+                          <button className="btn red" onClick={() => setRevisingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                        </td>
+                      </tr>
+                    );
+                  } else {
+                    return (
+                      <tr key={task._id}>
+                        <td>{task.name}</td>
+                        <td>{task.description}</td>
+                        <td>{task.doer?.fullName || "N/A"}</td>
+                        <td>{new Date(task.dueDate).toLocaleDateString()}</td>
+                        <td>{task.time}</td>
+                        <td>{task.status || "Pending"}</td>
+                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                        <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                        <td>{task.revisedTime || "N/A"}</td>
+                        <td>{task.revisedReason || "N/A"}</td>
+                        <td>
+                          {role === "user" ? (
+                            <>
+                              {task.status === "Completed" || completedTasks[task._id] ? (
+                                <span className="completed-icon">
+                                  <FaCheck style={{ color: 'green', fontSize: '20px' }} />
+                                </span>
+                              ) : (
+                                <button 
+                                  className="btn green" 
+                                  onClick={() => handleCompleteTask(task._id)}
+                                  disabled={completedTasks[task._id]}
+                                >
+                                  Complete
+                                </button>
+                              )}
+                              {task.status !== "Completed" && !completedTasks[task._id] && (
+                                <button className="btn blue" onClick={() => handleReviseClick(task)}>Revise</button>
+                              )}
+                            </>
+                          ) : role === "client" ? (
+                            <>
+                              <button className="btn green" onClick={() => handleEditClick(task)}>Edit</button>
+                              <button className="btn red" onClick={() => handleDeleteTask(task._id)}>Delete</button>
+                            </>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  }
+                })}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="no-tasks">No tasks available.</p>
+          <p style={{ marginTop: "20px" }}>No tasks found.</p>
         )}
 
         {showTicketModal && (
@@ -280,7 +472,9 @@ const DelegationList = () => {
                     type="text"
                     placeholder="Ticket Title"
                     value={ticketData.title}
-                    onChange={(e) => setTicketData({ ...ticketData, title: e.target.value })}
+                    onChange={(e) =>
+                      setTicketData({ ...ticketData, title: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -289,7 +483,9 @@ const DelegationList = () => {
                   <textarea
                     placeholder="Describe your issue..."
                     value={ticketData.description}
-                    onChange={(e) => setTicketData({ ...ticketData, description: e.target.value })}
+                    onChange={(e) =>
+                      setTicketData({ ...ticketData, description: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -297,7 +493,9 @@ const DelegationList = () => {
                   <label>Priority</label>
                   <select
                     value={ticketData.priority}
-                    onChange={(e) => setTicketData({ ...ticketData, priority: e.target.value })}
+                    onChange={(e) =>
+                      setTicketData({ ...ticketData, priority: e.target.value })
+                    }
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -306,13 +504,7 @@ const DelegationList = () => {
                 </div>
                 <div className="modal-buttons">
                   <button type="submit" className="btn green">Submit</button>
-                  <button 
-                    type="button" 
-                    className="btn red" 
-                    onClick={() => setShowTicketModal(false)}
-                  >
-                    Cancel
-                  </button>
+                  <button type="button" className="btn red" onClick={() => setShowTicketModal(false)}>Cancel</button>
                 </div>
               </form>
             </div>

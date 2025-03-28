@@ -58,6 +58,28 @@ router.get("/event-sources", async (req, res) => {
   }
 });
 
+// Delete a trigger
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid trigger ID" });
+    }
+
+    const deletedTrigger = await Trigger.findByIdAndDelete(id);
+    
+    if (!deletedTrigger) {
+      return res.status(404).json({ message: "Trigger not found" });
+    }
+
+    res.status(200).json({ message: "Trigger deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting trigger:", error);
+    res.status(500).json({ message: "Error deleting trigger", error: error.message });
+  }
+});
+
 // Predefined trigger for "form_submission"
 // const predefinedTrigger = {
 //   name:"form_submission",

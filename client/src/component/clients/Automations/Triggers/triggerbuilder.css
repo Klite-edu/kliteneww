@@ -371,6 +371,60 @@
   font-size: 18px;
 }
 
+/* Add these styles to your triggerbuilder.css file */
+
+.trigger-item {
+  position: relative;
+  padding-right: 40px; /* Make space for delete button */
+}
+
+.delete-trigger-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-trigger-button:hover {
+  color: #ff0000;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.delete-trigger-button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.trigger-item-content {
+  cursor: pointer;
+  padding: 15px 0;
+}
+
+.status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.status.active {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.status.inactive {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
 /* Responsive adjustments */
 @media (max-width: 992px) {
   .trigger-builder-grid {

@@ -44,8 +44,9 @@
   }
   
   .task-table th {
-    background-color: #e0f7f7;
-    color: #333;
+    position: sticky;
+    background-color: var(--primary-color);
+    color: white;
   }
   
   .btn {

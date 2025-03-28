@@ -9,14 +9,6 @@ const ticketSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  category: {
-    type: String,
-    default: "General",
-  },
-  type: {
-    type: String,
-    default: "Query",
-  },
   priority: {
     type: String,
     enum: ["Low", "Medium", "High"],
@@ -34,10 +26,6 @@ const ticketSchema = new mongoose.Schema({
     type: String,
     enum: ["Pending", "Resolved"],
     default: "Pending",
-  },
-  resolution: {
-    type: String,
-    default: "",
   },
   resolvedAt: {
     type: Date,

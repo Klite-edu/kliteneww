@@ -2,15 +2,15 @@ const express = require("express");
 const router = express.Router();
 const Task = require("../../../models/clients/checklist/task");
 const Employee = require("../../../models/clients/contactdata");
-const { calculateNextDueDate } = require("../../../middlewares/TaskScheduler");
+const { calculateNextDueDateTime } = require("../../../middlewares/TaskScheduler");
 const verifyToken = require("../../../middlewares/auth")
 
-// ✅ Add a New Task
+// Add a New Task
 router.post("/add", async (req, res) => {
   try {
     console.log("📩 Received Task Data:", req.body);
 
-    const { taskName, doerName, department, frequency, plannedDate } = req.body;
+    const { taskName, doerName, department, frequency, plannedDateTime } = req.body;
 
     const employee = await Employee.findOne({ fullName: doerName });
     if (!employee) {
@@ -19,17 +19,17 @@ router.post("/add", async (req, res) => {
 
     const employeeId = employee._id;
 
-    let nextDueDate = calculateNextDueDate(plannedDate, frequency);
+    let nextDueDateTime = calculateNextDueDateTime(new Date(plannedDateTime), frequency);
 
-    console.log("📝 Calculated Next Due Date:", nextDueDate);
+    console.log("📝 Calculated Next Due DateTime:", nextDueDateTime);
 
     const newTask = new Task({
       taskName,
       doer: employeeId,
       department,
       frequency,
-      plannedDate,
-      nextDueDate,
+      plannedDateTime: new Date(plannedDateTime),
+      nextDueDateTime,
       statusHistory: [{ status: "Pending" }],
     });
 
@@ -44,37 +44,39 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// ✅ Fetch Task List
+// Fetch Task List
 router.get("/list", async (req, res) => {
   try {
     let { startDate, endDate, sort, generateFutureTasks, userId } = req.query;
     let filter = {};
 
     if (startDate && endDate) {
-      filter.nextDueDate = { $gte: new Date(startDate), $lte: new Date(endDate) };
+      filter.nextDueDateTime = { 
+        $gte: new Date(startDate), 
+        $lte: new Date(endDate) 
+      };
     }
 
-    // For regular users, only show their own tasks
     if (userId) {
       filter.doer = userId;
     }
 
     let tasks = await Task.find(filter)
-      .sort({ nextDueDate: sort === "desc" ? -1 : 1 })
+      .sort({ nextDueDateTime: sort === "desc" ? -1 : 1 })
       .populate("doer", "fullName");
 
     if (generateFutureTasks === "true" && startDate && endDate) {
       let extendedTasks = [];
 
       tasks.forEach((task) => {
-        let nextDueDate = new Date(task.nextDueDate);
-        while (nextDueDate <= new Date(endDate)) {
+        let nextDueDateTime = new Date(task.nextDueDateTime);
+        while (nextDueDateTime <= new Date(endDate)) {
           extendedTasks.push({
             ...task.toObject(),
-            _id: task._id + "_" + nextDueDate.toISOString(),
-            nextDueDate: new Date(nextDueDate),
+            _id: task._id + "_" + nextDueDateTime.toISOString(),
+            nextDueDateTime: new Date(nextDueDateTime),
           });
-          nextDueDate = calculateNextDueDate(nextDueDate, task.frequency);
+          nextDueDateTime = calculateNextDueDateTime(nextDueDateTime, task.frequency);
         }
       });
 
@@ -87,16 +89,17 @@ router.get("/list", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// ✅ Update Task
+
+// Update Task
 router.put("/update/:id", async (req, res) => {
   try {
-    const { taskName, doerName, department, frequency, plannedDate } = req.body;
+    const { taskName, doerName, department, frequency, plannedDateTime } = req.body;
 
-    let nextDueDate = calculateNextDueDate(plannedDate, frequency);
+    let nextDueDateTime = calculateNextDueDateTime(new Date(plannedDateTime), frequency);
 
     const updatedTask = await Task.findByIdAndUpdate(
       req.params.id,
-      { taskName, doerName, department, frequency, plannedDate, nextDueDate },
+      { taskName, doerName, department, frequency, plannedDateTime: new Date(plannedDateTime), nextDueDateTime },
       { new: true }
     );
 
@@ -110,21 +113,11 @@ router.put("/update/:id", async (req, res) => {
   }
 });
 
-// ✅ Delete Task
-router.delete("/delete/:id", async (req, res) => {
-  try {
-    await Task.findByIdAndDelete(req.params.id);
-    res.json({ message: "✅ Task deleted successfully!" });
-  } catch (error) {
-    res.status(500).json({ error: "Error deleting task", details: error.message });
-  }
-});
-
-// ✅ Mark Task as Completed
+// Mark Task as Completed
 router.put("/markCompleted/:id", async (req, res) => {
   try {
-    const { selectedDate } = req.body;
-    console.log("📥 Received data for marking task as completed:", selectedDate);
+    const { selectedDateTime } = req.body;
+    console.log("📥 Received data for marking task as completed:", selectedDateTime);
 
     const task = await Task.findById(req.params.id);
     if (!task) {
@@ -132,31 +125,29 @@ router.put("/markCompleted/:id", async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
 
-    const selectedDateObj = new Date(selectedDate);
-    selectedDateObj.setUTCHours(0, 0, 0, 0);
-    console.log("Normalized selectedDate:", selectedDateObj.toISOString());
+    const selectedDateTimeObj = new Date(selectedDateTime);
+    console.log("Normalized selectedDateTime:", selectedDateTimeObj.toISOString());
 
     task.statusHistory.push({
       date: new Date(),
       status: "Completed",
-      completedDate: selectedDateObj,
+      completedDateTime: selectedDateTimeObj,
     });
 
-    const newNextDueDate = calculateNextDueDate(task.nextDueDate, task.frequency);
-    console.log("New calculated nextDueDate:", newNextDueDate);
+    const newNextDueDateTime = calculateNextDueDateTime(task.nextDueDateTime, task.frequency);
+    console.log("New calculated nextDueDateTime:", newNextDueDateTime);
 
-    task.nextDueDate = newNextDueDate;
+    task.nextDueDateTime = newNextDueDateTime;
 
     await task.save();
-    console.log("✅ Task marked as completed and nextDueDate updated for selected date:", selectedDate);
-    res.json({ message: "✅ Task marked as completed for selected date!", task });
+    console.log("✅ Task marked as completed and nextDueDateTime updated for selected datetime:", selectedDateTime);
+    res.json({ message: "✅ Task marked as completed for selected datetime!", task });
   } catch (error) {
     console.error("❌ Error in markCompleted route:", error);
     res.status(500).json({ error: "Error updating task", details: error.message });
   }
 });
 
-// ✅ Get Server Date
 router.get("/serverdate", (req, res) => {
   const currentDate = new Date().toISOString();
   res.json({ currentDate });
