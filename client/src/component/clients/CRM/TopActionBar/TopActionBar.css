@@ -1,0 +1,122 @@
+/* TopActionBar.css */
+.top-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .action-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .pipeline-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .selector-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .selector-label i {
+    color: var(--primary-color);
+  }
+  
+  .form-select {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+  }
+  
+  .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 110, 0.25);
+  }
+  
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .search-box i {
+    position: absolute;
+    left: 0.75rem;
+    color: #6c757d;
+  }
+  
+  .search-input {
+    padding: 0.5rem 1rem 0.5rem 2rem;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  
+  .search-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 110, 0.05);
+  }
+  
+  .refresh-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+  
+  .refresh-btn:hover {
+    background-color: var(--gray);
+    color: var(--primary-color);
+  }
+  
+  .divider {
+    width: 1px;
+    height: 24px;
+    background-color: #eaeaea;
+  }
+  
+  .primary-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+  }
+  
+  .primary-btn:hover {
+    background-color: #0b5c5c;
+  }
+  
+  .secondary-btn {
+    background-color: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+  }
+  
+  .secondary-btn:hover {
+    background-color: rgba(13, 110, 110, 0.05);
+  }

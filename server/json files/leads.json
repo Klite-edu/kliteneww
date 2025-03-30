@@ -1,0 +1,39 @@
+[
+    {
+      "id": 1,
+      "leadName": "John Doe",
+      "leadType": "Person",
+      "companyName": "Tech Innovations Ltd.",
+      "value": 5000,
+      "currency": "USD",
+      "phone": "+1 234-567-8901",
+      "source": "Website Form",
+      "industry": "Technology",
+      "owner": "Alice Johnson",
+      "tags": ["AI", "Software"],
+      "rated": 5,
+      "description": "Interested in AI-based solutions.",
+      "visibility": "Public",
+      "selectedPeople": ["Alice Johnson", "Bob Williams"],
+      "status": "Active"
+    },
+    {
+      "id": 2,
+      "leadName": "Marketing Solutions LLC",
+      "leadType": "Organization",
+      "companyName": "Marketing Solutions LLC",
+      "value": 8000,
+      "currency": "USD",
+      "phone": "+1 987-654-3210",
+      "source": "LinkedIn",
+      "industry": "Marketing",
+      "owner": "Bob Williams",
+      "tags": ["SEO", "PPC"],
+      "rated": 4,
+      "description": "Looking for PPC campaign management.",
+      "visibility": "Private",
+      "selectedPeople": ["Bob Williams"],
+      "status": "Inactive"
+    }
+  ]
+  

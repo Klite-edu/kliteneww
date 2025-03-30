@@ -1,0 +1,18 @@
+.modal-backdrop.show {
+  opacity: 0 !important;
+}
+
+.App {
+  text-align: center;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  /* background: #f8f9fd; */
+  box-sizing: border-box;
+}
+:root {
+  --gray: #f8f8f8;
+  --primary-color: #0D6E6E;
+}

@@ -1,0 +1,366 @@
+:root {
+    --primary-color: #0D6E6E;
+    --primary-light: rgba(13, 110, 110, 0.1);
+    --primary-dark: #0b5e5e;
+    --danger-color: #dc3545;
+    --danger-light: rgba(220, 53, 69, 0.1);
+    --gray-light: #f8f9fa;
+    --gray-medium: #e9ecef;
+    --text-muted: #6c757d;
+    --box-shadow-primary: 0px 6px 15px rgba(13, 110, 110, 0.15);
+    --border-radius: 8px;
+}
+
+.abhi-pipeline-container {
+    width: 82vw;
+    background-color: var(--gray-light);
+    min-height: 100vh;
+    position: relative;
+    left: 7%;
+    top: 100px;
+}
+
+.abhi-pipeline-title {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+}
+
+.abhi-pipeline-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.abhi-pipeline-card {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--gray-medium);
+    box-shadow: var(--box-shadow-primary);
+    background-color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.abhi-pipeline-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(13, 110, 110, 0.2);
+}
+
+.abhi-pipeline-table-wrapper {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.abhi-pipeline-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.abhi-pipeline-table-header {
+    background-color: var(--primary-color);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.abhi-pipeline-table-header th {
+    padding: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    border: none;
+}
+
+.abhi-pipeline-table-body-scroll {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-light) transparent;
+}
+
+.abhi-pipeline-table-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--gray-medium);
+}
+
+.abhi-pipeline-table-row:hover {
+    background-color: var(--primary-light) !important;
+}
+
+.abhi-pipeline-table-row td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-top: none;
+}
+
+.abhi-pipeline-action-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin: 0 2px;
+}
+
+
+.btn-outline-danger:hover {
+    background-color: var(--danger-light);
+}
+
+.abhi-create-pipeline-btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.abhi-create-pipeline-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.abhi-spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 0.2em;
+}
+
+/* Empty state styling */
+.bi-inbox {
+    font-size: 3rem;
+    opacity: 0.7;
+    margin-bottom: 1rem;
+}
+
+.bi-funnel-fill {
+    font-size: 0.9rem;
+}
+
+/* Scrollbar styling */
+.abhi-pipeline-table-body-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.abhi-pipeline-table-body-scroll::-webkit-scrollbar-track {
+    background: var(--gray-medium);
+    border-radius: 10px;
+}
+
+.abhi-pipeline-table-body-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.abhi-pipeline-table-body-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Alert Styles */
+.custom-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1100;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    width: 90%;
+    max-width: 400px;
+}
+
+.custom-alert.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.custom-alert-content {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    background: white;
+    position: relative;
+}
+
+.custom-alert-icon {
+    margin-right: 1rem;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.custom-alert-info .custom-alert-icon {
+    color: var(--primary-color);
+}
+
+.custom-alert-success .custom-alert-icon {
+    color: #28a745;
+}
+
+.custom-alert-error .custom-alert-icon {
+    color: #dc3545;
+}
+
+.custom-alert-message {
+    flex-grow: 1;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.custom-alert-close {
+    background: none;
+    border: none;
+    margin-left: 1rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.custom-alert-close:hover {
+    color: #333;
+}
+
+/* Confirmation Dialog Styles */
+.custom-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.custom-confirm-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.custom-confirm-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.custom-confirm-overlay.show .custom-confirm-box {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.custom-confirm-content {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.custom-confirm-icon {
+    font-size: 2.5rem;
+    color: #ffc107;
+    margin-bottom: 1rem;
+}
+
+.custom-confirm-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.custom-confirm-message {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.custom-confirm-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.custom-confirm-buttons .btn {
+    min-width: 80px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.custom-confirm-cancel {
+    border: 1px solid #dee2e6;
+}
+
+.custom-confirm-confirm {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+/* Animation for alert entrance */
+@keyframes alertIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes alertOut {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0;
+    }
+}
+
+.custom-alert.show {
+    animation: alertIn 0.3s ease forwards;
+}
+
+.custom-alert:not(.show) {
+    animation: alertOut 0.3s ease forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .abhi-pipeline-title {
+        font-size: 1.3rem;
+    }
+
+    .abhi-pipeline-table-header th {
+        padding: 0.75rem;
+        font-size: 0.7rem;
+    }
+
+    .abhi-pipeline-table-row td {
+        padding: 0.75rem;
+    }
+
+    .abhi-pipeline-action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+}

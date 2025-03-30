@@ -1,0 +1,366 @@
+/* Variables */
+:root {
+  --abhi-primary-color: #0d6e6e;
+  --abhi-primary-light: #e0f2f2;
+  --abhi-primary-dark: #0a5656;
+  --abhi-secondary-color: #6c757d;
+  --abhi-success-color: #28a745;
+  --abhi-danger-color: #dc3545;
+  --abhi-warning-color: #ffc107;
+  --abhi-info-color: #17a2b8;
+  --abhi-light-color: #f8f9fa;
+  --abhi-dark-color: #343a40;
+  --abhi-gray-light: #f5f5f5;
+  --abhi-gray-medium: #e0e0e0;
+  --abhi-gray-dark: #cccccc;
+  --abhi-border-radius: 8px;
+  --abhi-box-shadow-primary: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --abhi-transition: all 0.3s ease;
+}
+
+/* Utility Classes */
+.abhi-me-2 {
+  margin-right: 0.5rem;
+}
+
+.abhi-mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.abhi-mt-3 {
+  margin-top: 1rem;
+}
+
+.abhi-p-4 {
+  padding: 1.5rem;
+}
+
+.abhi-text-center {
+  text-align: center;
+}
+
+.abhi-position-relative {
+  position: relative;
+}
+
+/* Grid System */
+.abhi-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.75rem;
+}
+
+.abhi-col-md-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding: 0 0.75rem;
+}
+
+.abhi-col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 0 0.75rem;
+}
+
+.abhi-g-3 {
+  margin: -0.75rem;
+}
+
+.abhi-g-3>[class*="abhi-col-"] {
+  padding: 0.75rem;
+}
+
+/* Modal Styles */
+.abhi-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.abhi-modal-container {
+  background-color: white;
+  border-radius: var(--abhi-border-radius);
+  box-shadow: var(--abhi-box-shadow-primary);
+  max-height: 90vh;
+  width: 90%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+}
+
+.abhi-modal-header {
+  background-color: var(--abhi-primary-color);
+  color: white;
+  border-radius: var(--abhi-border-radius) var(--abhi-border-radius) 0 0;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.abhi-modal-title {
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.abhi-modal-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+}
+
+.abhi-modal-body {
+  padding: 1.5rem;
+  background-color: var(--abhi-gray-light);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.abhi-modal-footer {
+  border-top: 1px solid var(--abhi-gray-medium);
+  background-color: var(--abhi-gray-light);
+  padding: 1rem 1.5rem;
+  border-radius: 0 0 var(--abhi-border-radius) var(--abhi-border-radius);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Form Styles */
+.abhi-form-group {
+  margin-bottom: 1rem;
+}
+
+.abhi-form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--abhi-primary-dark);
+  font-size: 0.9rem;
+}
+
+.abhi-form-control,
+.abhi-form-select {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid var(--abhi-gray-medium);
+  border-radius: var(--abhi-border-radius);
+  transition: var(--abhi-transition);
+}
+
+.abhi-form-control:focus,
+.abhi-form-select:focus {
+  border-color: var(--abhi-primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 110, 0.25);
+}
+
+.abhi-form-control[type="date"] {
+  appearance: none;
+}
+
+/* Button Styles */
+.abhi-btn {
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: var(--abhi-border-radius);
+  transition: var(--abhi-transition);
+  cursor: pointer;
+}
+
+.abhi-btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.abhi-btn-primary {
+  color: #fff;
+  background-color: var(--abhi-primary-color);
+  border-color: var(--abhi-primary-color);
+}
+
+.abhi-btn-primary:hover {
+  background-color: var(--abhi-primary-dark);
+  border-color: var(--abhi-primary-dark);
+  transform: translateY(-1px);
+}
+
+.abhi-btn-outline-primary {
+  color: var(--abhi-primary-color);
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--abhi-primary-color);
+}
+
+.abhi-btn-outline-primary:hover {
+  color: #fff;
+  background-color: var(--abhi-primary-color);
+  border-color: var(--abhi-primary-color);
+}
+
+.abhi-btn-outline-secondary {
+  color: var(--abhi-secondary-color);
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--abhi-secondary-color);
+}
+
+.abhi-btn-outline-secondary:hover {
+  color: #fff;
+  background-color: var(--abhi-secondary-color);
+  border-color: var(--abhi-secondary-color);
+}
+
+.abhi-btn-danger {
+  color: #fff;
+  background-color: var(--abhi-danger-color);
+  border-color: var(--abhi-danger-color);
+}
+
+.abhi-btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Pipeline Specific Styles */
+.abhi-create-pipeline-btn {
+  background-color: var(--abhi-primary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--abhi-border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: var(--abhi-transition);
+}
+
+.abhi-create-pipeline-btn:hover {
+  background-color: var(--abhi-primary-dark);
+  transform: translateY(-1px);
+}
+
+.abhi-pipeline-stage-card {
+  background-color: white;
+  border-radius: var(--abhi-border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: var(--abhi-transition);
+  border: 1px solid var(--abhi-gray-medium);
+}
+
+.abhi-pipeline-stage-card:hover {
+  box-shadow: 0 4px 12px rgba(13, 110, 110, 0.1);
+  transform: translateY(-2px);
+}
+
+.abhi-pipeline-stage-title {
+  color: var(--abhi-primary-color);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--abhi-gray-medium);
+  font-size: 1.1rem;
+}
+
+.abhi-pipeline-stage-remove {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.abhi-pipeline-input {
+  border: 1px solid var(--abhi-gray-medium);
+  border-radius: var(--abhi-border-radius);
+  padding: 0.5rem 0.75rem;
+  transition: var(--abhi-transition);
+}
+
+.abhi-pipeline-input:focus {
+  border-color: var(--abhi-primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 110, 0.25);
+}
+
+.abhi-pipeline-add-stage-btn {
+  border-radius: var(--abhi-border-radius);
+  padding: 0.5rem 1.5rem;
+  transition: var(--abhi-transition);
+}
+
+.abhi-pipeline-add-stage-btn:hover {
+  background-color: var(--abhi-primary-light);
+  color: var(--abhi-primary-color);
+}
+
+.abhi-pipeline-cancel-btn {
+  border-radius: var(--abhi-border-radius);
+  padding: 0.5rem 1.5rem;
+  transition: var(--abhi-transition);
+}
+
+.abhi-pipeline-save-btn {
+  border-radius: var(--abhi-border-radius);
+  padding: 0.5rem 1.5rem;
+  transition: var(--abhi-transition);
+  background-color: var(--abhi-primary-color);
+  border: none;
+}
+
+.abhi-pipeline-save-btn:hover {
+  background-color: var(--abhi-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .abhi-modal-header {
+      padding: 1rem;
+  }
+
+  .abhi-modal-body {
+      padding: 1rem;
+  }
+
+  .abhi-pipeline-stage-card {
+      padding: 1.5rem;
+  }
+
+  .abhi-pipeline-stage-title {
+      font-size: 1.1rem;
+  }
+
+  .abhi-col-md-6 {
+      flex: 0 0 100%;
+      max-width: 100%;
+  }
+}

@@ -1,0 +1,43 @@
+[
+    {
+      "name": "Alice Johnson",
+      "status": "Active",
+      "role": "Manager",
+      "email": "alice@example.com",
+      "password": "AlicePass123",
+      "mobileNumber": "9123456780"
+    },
+    {
+      "name": "Bob Williams",
+      "status": "Inactive",
+      "role": "Employee",
+      "email": "bobw@example.com",
+      "password": "BobSecure789",
+      "mobileNumber": "9234567891"
+    },
+    {
+      "name": "Charlie Brown",
+      "status": "Active",
+      "role": "Supervisor",
+      "email": "charlieb@example.com",
+      "password": "CharliePass456",
+      "mobileNumber": "9345678902"
+    },
+    {
+      "name": "Diana Smith",
+      "status": "Active",
+      "role": "HR",
+      "email": "diana.smith@example.com",
+      "password": "DianaPass321",
+      "mobileNumber": "9456789013"
+    },
+    {
+      "name": "Ethan White",
+      "status": "Inactive",
+      "role": "Technician",
+      "email": "ethanwhite@example.com",
+      "password": "EthanTech999",
+      "mobileNumber": "9567890124"
+    }
+  ]
+  

@@ -1,0 +1,127 @@
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6a11cb, #2575fc); /* Gradient background */
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  /* Form styling */
+  .login-form {
+    background: rgba(255, 255, 255, 0.9); /* Slight transparency for modern effect */
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    width: 350px;
+    text-align: center;
+    transition: all 0.3s ease-in-out; /* Smooth hover effect */
+  }
+  
+  .login-form:hover {
+    transform: scale(1.05); /* Slight zoom effect on hover */
+  }
+  
+  .login-form h2 {
+    margin-bottom: 25px;
+    font-size: 28px;
+    color: #333;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+  
+  /* Input fields */
+  .input-group {
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  
+  .input-group label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    font-size: 16px;
+    color: #333;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  /* Focus effect on input */
+  .input-group input:focus {
+    border-color: #2575fc;
+    box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
+  }
+  
+  /* Remember me and Forgot Password */
+  .remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #555;
+  }
+  
+  .remember-forgot label {
+    display: flex;
+    align-items: center;
+  }
+  
+  .remember-forgot a {
+    color: #2575fc;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .remember-forgot a:hover {
+    color: #6a11cb;
+  }
+  
+  /* Login Button */
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+  
+  .login-btn:hover {
+    background: #6a11cb;
+    transform: translateY(-2px); /* Slight lift effect */
+  }
+  
+  .login-btn:active {
+    background: #2575fc;
+    transform: translateY(1px); /* Press effect */
+  }
+  
+  /* Register link */
+  .register-link {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .register-link a {
+    color: #2575fc;
+    text-decoration: none;
+  }
+  
+  .register-link a:hover {
+    text-decoration: underline;
+  }
+  

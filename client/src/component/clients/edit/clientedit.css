@@ -1,0 +1,206 @@
+body {
+    overflow-x: hidden;
+  }
+  
+  .Edit-head {
+    position: relative;
+    left: 20%;
+    top: 85px;
+  }
+  
+  .Product-edit-info {
+    width: 45vw;
+    height: auto;
+    background: white;
+    color: black;
+    position: relative;
+    left: 20%;
+    top: 90px;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .basic-info-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .basic-info-edit label {
+    color: #666666;
+  }
+  
+  .basic-info-edit input {
+    height: 7vh;
+    background-color: #e5e7eb;
+    border-radius: 15px;
+  }
+  .basic-info-edit textarea {
+    background-color: #e5e7eb;
+    border-radius: 15px;
+  }
+  
+  .basic-info-edit select {
+    border: none;
+    height: 7vh;
+    background-color: #e5e7eb;
+    border-radius: 15px;
+  }
+  
+  .ql-toolbar {
+    background-color: #e5e7eb; /* Light gray background */
+    border-radius: 15px 15px 0px 0px;
+  }
+  
+  .ql-container {
+    font-size: 14px; /* Text size */
+    min-height: 100px; /* Editor height */
+    background-color: #e5e7eb;
+    border-radius: 0px 0px 15px 15px;
+  }
+  
+  .Product-edit-image {
+    width: 31vw;
+    height: auto;
+    background: white;
+    color: black;
+    position: absolute;
+    left: 67%;
+    top: 130px;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .image-edit-sec {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .image-edit {
+    background-color: #e5e7eb;
+    width: 9vw;
+    height: 20vh;
+    border-radius: 15px;
+  }
+  
+  .image-outline {
+    border: 3px dashed #e5e7eb;
+    width: 9vw;
+    height: 20vh;
+    border-radius: 15px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .image-outline:hover {
+    border: 3px dashed blue;
+  }
+  
+  label {
+    cursor: pointer;
+  }
+  
+  .image-edit img {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border-radius: 15px;
+  }
+  
+  .Product-edit-pricing {
+    width: 31vw;
+    height: auto;
+    background: white;
+    color: black;
+    position: absolute;
+    left: 67%;
+    top: 92%;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .size-info-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .size-info-edit label {
+    color: #666666;
+  }
+  
+  .size-info-edit input {
+    height: 7vh;
+    background-color: #e5e7eb;
+    border-radius: 15px;
+  }
+  
+  .size-info-edit select {
+    border: none;
+    height: 7vh;
+    background-color: #e5e7eb;
+    border-radius: 15px;
+  }
+  
+  .bottom-button {
+    position: relative;
+    bottom: -100px;
+    background-color: white;
+    width: 82%;
+    height: 12vh;
+    right: 0;
+    left: 18%;
+  }
+  
+  .create-discard {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+    position: relative;
+    right: 30px;
+    top: 15px;
+  }
+  
+  .discard-btn {
+    background-color: white;
+    border: 3px solid red;
+    gap: 10px;
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: 15px;
+    color: red;
+  }
+  .create-btn {
+    background-color: blue;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 15px;
+    width: 7vw;
+  }
+  
+  .category-option-input {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .category-input {
+    width: 30vw;
+  }
+  
+  .category-button {
+    background-color: blue;
+    border: none;
+    color: white;
+    border-radius: 15px;
+    height: 3vw;
+    padding: 10px;
+  }
+  

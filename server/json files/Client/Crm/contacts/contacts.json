@@ -1,0 +1,172 @@
+[
+  {
+    "fullName": "John Doe",
+    "employeeID": "EMP12345",
+    "designation": "Senior Software Engineer",
+    "email": "john.doe@example.com",
+    "number": "123-456-7890",
+    "address": "123 Main St, Springfield, USA",
+    "joiningDate": "2020-01-15",
+    "specificEmail": "john.work@example.com",
+    "workAssigned": "Project Alpha, Project Beta",
+    "notes": "Exemplary performer with strong leadership skills.",
+    "callData": "Last call on 2023-08-15 (15 min)",
+    "status": "Active",
+    "permissionAccessLevel": "Admin",
+    "teamAssociation": "Team Rocket",
+    "activityLog": "Logged in, updated record, logged out",
+    "pastDataHistory": "Previous role: Junior Developer (Updated: 2019-06-10)",
+    "receivedEmails": [
+      {
+        "subject": "Meeting Reminder",
+        "date": "2023-09-01T09:00:00",
+        "sender": "boss@example.com",
+        "snippet": "Just a reminder about our meeting at 10 AM..."
+      }
+    ],
+    "sentEmails": [
+      {
+        "subject": "Re: Meeting Reminder",
+        "date": "2023-09-01T09:30:00",
+        "recipient": "boss@example.com",
+        "snippet": "Thank you for the reminder, I'll be there..."
+      }
+    ]
+  },
+  {
+    "fullName": "Jane Smith",
+    "employeeID": "EMP67890",
+    "designation": "Project Manager",
+    "email": "jane.smith@example.com",
+    "number": "987-654-3210",
+    "address": "456 Oak St, Metropolis, USA",
+    "joiningDate": "2018-03-22",
+    "specificEmail": "jane.work@example.com",
+    "workAssigned": "Project Gamma",
+    "notes": "Excellent organizational skills with a focus on deadlines.",
+    "callData": "Last call on 2023-09-05 (30 min)",
+    "status": "Active",
+    "permissionAccessLevel": "Manager",
+    "teamAssociation": "Team Phoenix",
+    "activityLog": "Updated project timeline, reviewed reports",
+    "pastDataHistory": "Promoted from Project Coordinator (Updated: 2020-07-01)",
+    "receivedEmails": [
+      {
+        "subject": "Project Budget Approval",
+        "date": "2023-08-20T10:15:00",
+        "sender": "finance@example.com",
+        "snippet": "The budget for Project Gamma has been approved..."
+      }
+    ],
+    "sentEmails": [
+      {
+        "subject": "Weekly Team Update",
+        "date": "2023-09-04T08:45:00",
+        "recipient": "team-phoenix@example.com",
+        "snippet": "Here’s the weekly update for Project Gamma..."
+      }
+    ]
+  },
+  {
+    "fullName": "Alice Johnson",
+    "employeeID": "EMP23456",
+    "designation": "UI/UX Designer",
+    "email": "alice.johnson@example.com",
+    "number": "555-678-1234",
+    "address": "789 Pine St, Gotham, USA",
+    "joiningDate": "2019-06-10",
+    "specificEmail": "alice.work@example.com",
+    "workAssigned": "App Redesign, User Testing",
+    "notes": "Creative thinker with attention to detail.",
+    "callData": "Last call on 2023-09-08 (20 min)",
+    "status": "Active",
+    "permissionAccessLevel": "Employee",
+    "teamAssociation": "Team Design",
+    "activityLog": "Updated wireframes, collaborated with developers",
+    "pastDataHistory": "Intern to Full-time Designer (Updated: 2021-02-15)",
+    "receivedEmails": [
+      {
+        "subject": "User Feedback Summary",
+        "date": "2023-08-28T11:30:00",
+        "sender": "research@example.com",
+        "snippet": "Here’s a summary of user feedback from the latest testing..."
+      }
+    ],
+    "sentEmails": [
+      {
+        "subject": "Design Review Invitation",
+        "date": "2023-09-06T02:30:00",
+        "recipient": "design-team@example.com",
+        "snippet": "You are invited to the design review session scheduled for Friday..."
+      }
+    ]
+  },
+  {
+    "fullName": "Bob Williams",
+    "employeeID": "EMP34567",
+    "designation": "Systems Analyst",
+    "email": "bob.williams@example.com",
+    "number": "666-789-2345",
+    "address": "101 Maple St, Star City, USA",
+    "joiningDate": "2021-09-05",
+    "specificEmail": "bob.work@example.com",
+    "workAssigned": "System Migration, Data Integration",
+    "notes": "Detail-oriented with a focus on system performance.",
+    "callData": "Last call on 2023-09-10 (45 min)",
+    "status": "Active",
+    "permissionAccessLevel": "Employee",
+    "teamAssociation": "IT Operations",
+    "activityLog": "Resolved system outage, updated database schema",
+    "pastDataHistory": "New hire with ongoing system training (Updated: 2021-10-01)",
+    "receivedEmails": [
+      {
+        "subject": "System Maintenance Schedule",
+        "date": "2023-09-03T08:00:00",
+        "sender": "it-support@example.com",
+        "snippet": "Scheduled maintenance will be conducted on Friday evening..."
+      }
+    ],
+    "sentEmails": [
+      {
+        "subject": "System Upgrade Confirmation",
+        "date": "2023-09-05T04:15:00",
+        "recipient": "project-alpha@example.com",
+        "snippet": "The system upgrade has been successfully completed. All services are operational..."
+      }
+    ]
+  },
+  {
+    "fullName": "Charlie Brown",
+    "employeeID": "EMP45678",
+    "designation": "Marketing Specialist",
+    "email": "charlie.brown@example.com",
+    "number": "777-890-3456",
+    "address": "202 Cedar St, Central City, USA",
+    "joiningDate": "2022-02-01",
+    "specificEmail": "charlie.work@example.com",
+    "workAssigned": "Social Media Campaigns, Content Creation",
+    "notes": "Strong communication skills and creativity.",
+    "callData": "Last call on 2023-09-12 (10 min)",
+    "status": "Active",
+    "permissionAccessLevel": "Employee",
+    "teamAssociation": "Marketing Team",
+    "activityLog": "Published social media posts, analyzed engagement metrics",
+    "pastDataHistory": "Marketing Intern promoted to Specialist (Updated: 2022-08-01)",
+    "receivedEmails": [
+      {
+        "subject": "Campaign Performance Report",
+        "date": "2023-09-07T09:30:00",
+        "sender": "analytics@example.com",
+        "snippet": "The performance report for the recent campaign is now available..."
+      }
+    ],
+    "sentEmails": [
+      {
+        "subject": "New Campaign Launch Announcement",
+        "date": "2023-09-08T10:00:00",
+        "recipient": "marketing-team@example.com",
+        "snippet": "We are excited to announce the launch of our new campaign starting next week..."
+      }
+    ]
+  }
+]

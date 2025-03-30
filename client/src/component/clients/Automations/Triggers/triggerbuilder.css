@@ -1,0 +1,438 @@
+:root {
+  --gray: #f8f8f8;
+  --primary-color: #0D6E6E;
+  --primary-light: #e0f2f2;
+  --primary-dark: #094c4c;
+  --box-shadow-primary: 0px 6px 10px rgba(0, 0, 0, 0.15);
+  --border-radius: 10px;
+  --text-dark: #2c3e50;
+  --text-medium: #7f8c8d;
+  --text-light: #95a5a6;
+  --white: #ffffff;
+  --danger-color: #e74c3c;
+  --danger-light: #fde8e6;
+  --warning-color: #f39c12;
+  --success-color: #2ecc71;
+}
+
+.trigger-builder-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--gray);
+}
+
+.trigger-builder-content {
+  flex: 1;
+  padding: 20px 30px;
+  margin-left: 18%; /* Matches sidebar width */
+}
+
+.trigger-builder-title {
+  color: var(--primary-dark);
+  font-size: 28px;
+  margin-bottom: 5px;
+}
+
+.trigger-builder-subtitle {
+  color: var(--text-medium);
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+.trigger-builder-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 25px;
+}
+
+.trigger-form-card, .predefined-triggers-card {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-primary);
+  padding: 25px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--gray);
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--primary-dark);
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-switch label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-medium);
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-switch .slider {
+  width: 40px;
+  height: 20px;
+  background-color: var(--text-light);
+  border-radius: 20px;
+  position: relative;
+  transition: background-color 0.3s;
+}
+
+.toggle-switch .slider:before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--white);
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+}
+
+.toggle-switch input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.trigger-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.form-group input, 
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border 0.3s;
+}
+
+.form-group input:focus, 
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.conditions-section, .action-section {
+  background-color: var(--gray);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  margin-top: 10px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--primary-dark);
+}
+
+.add-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.save-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.save-button:disabled {
+  background-color: var(--text-light);
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--white);
+  color: var(--text-dark);
+  border: 1px solid var(--text-light);
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: var(--gray);
+}
+
+.predefined-triggers-list {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trigger-item {
+  padding: 15px;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.trigger-item:hover {
+  border-color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.trigger-item.selected {
+  border-color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.trigger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.trigger-item h4 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 15px;
+}
+
+.trigger-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-button, .delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-medium);
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.edit-button:hover {
+  color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.delete-button:hover {
+  color: var(--danger-color);
+  background-color: var(--danger-light);
+}
+
+.trigger-description {
+  margin: 0 0 10px 0;
+  color: var(--text-medium);
+  font-size: 13px;
+}
+
+.trigger-details {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.trigger-details span {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background-color: var(--gray);
+  color: var(--text-dark);
+}
+
+.status {
+  font-weight: 500;
+}
+
+.status.active {
+  background-color: #e8f5e9;
+  color: var(--success-color);
+}
+
+.status.inactive {
+  background-color: #ffebee;
+  color: var(--danger-color);
+}
+
+.event-source {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.action {
+  background-color: #fff3e0;
+  color: var(--warning-color);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 20px;
+  color: var(--primary-color);
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-medium);
+  font-size: 18px;
+}
+
+/* Add these styles to your triggerbuilder.css file */
+
+.trigger-item {
+  position: relative;
+  padding-right: 40px; /* Make space for delete button */
+}
+
+.delete-trigger-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-trigger-button:hover {
+  color: #ff0000;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.delete-trigger-button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.trigger-item-content {
+  cursor: pointer;
+  padding: 15px 0;
+}
+
+.status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.status.active {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.status.inactive {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .trigger-builder-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .trigger-builder-content {
+    margin-left: 0;
+    padding: 20px 15px;
+  }
+}

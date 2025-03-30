@@ -1,0 +1,114 @@
+/* Overall styling for the page */
+.subscription-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* padding: 50px; */
+    position: relative;
+    left: 25%;
+    top: 80px;
+    border-radius: 15px;
+  }
+
+  .authenticator-setup{
+    width: 25vw;
+    margin: -20% 10% ;
+    font-size: 16px;
+    
+    border-radius: 8px;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 30px;
+  }
+  
+  /* Container for all subscription plans */
+  .plans-container {
+   display: flex;
+    gap: 20px;
+    max-width:100%;
+    width: 100%;
+  }
+  
+  /* Styling for each subscription plan card */
+  .plan-card {
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 23vw;
+    height: 65vh;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .styled-table-sub{
+    width: 25vw;
+    border-collapse: collapse;
+    margin: 0% 75%;
+    font-size: 16px;
+    text-align: left;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .plan-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .plan-name {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .plan-price {
+    font-size: 1.25rem;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+  }
+  
+  .plan-duration {
+    font-size: 1rem;
+    color: #777;
+    margin-bottom: 20px;
+  }
+  
+  /* Styling for the plan features */
+  .plan-features {
+    list-style-type: none;
+    padding-left: 0;
+    /* margin-bottom: 30px; */
+  }
+  
+  .feature-item {
+    font-size: 1rem;
+    color: #555;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .feature-item .feature-icon {
+    margin-right: 10px;
+    color: #ff6b6b; /* Icon color */
+  }
+  
+  .subscribe-btn {
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .subscribe-btn:hover {
+    background-color: #ff4b4b;
+  }
+  

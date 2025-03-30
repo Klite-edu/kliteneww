@@ -1,0 +1,167 @@
+[
+    {
+      "employeeID": "EMP0001",
+      "fullName": "Babita Joshi",
+      "designation": "EA",
+      "email": "ea.gkgindia@gmail.com",
+      "number": "8130260700",
+      "address": "MDO",
+      "joiningDate": "2024-09-06",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0002",
+      "fullName": "Priyanka Ujjanwal",
+      "designation": "PC",
+      "email": "pc.gkgindia@gmail.com",
+      "number": "9891310700",
+      "address": "MDO",
+      "joiningDate": "2023-05-16",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0003",
+      "fullName": "Sonia",
+      "designation": "GC",
+      "email": "gkgdelhi@gmail.com",
+      "number": "9971110700",
+      "address": "Sales",
+      "joiningDate": "2023-01-27",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0004",
+      "fullName": "Taniya",
+      "designation": "Accountant",
+      "email": "gkgulatis@gmail.com",
+      "number": "9891410700",
+      "address": "Accounts",
+      "joiningDate": "2025-03-24",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0005",
+      "fullName": "Saroj Pandit",
+      "designation": "Free Lencer",
+      "email": "gkgcanvas@gmail.com",
+      "number": "9354345554",
+      "address": "Accounts",
+      "joiningDate": "2024-05-02",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0006",
+      "fullName": "Pooja Kumar",
+      "designation": "Operation Head",
+      "email": "gkgpooja@gmail.com",
+      "number": "8826159700",
+      "address": "HOD",
+      "joiningDate": "2016-12-03",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0007",
+      "fullName": "Rohit Jaiswal",
+      "designation": "Helper",
+      "email": "rohitjaiswal19@gmail.com",
+      "number": "8826149700",
+      "address": "Operation",
+      "joiningDate": "2025-03-19",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0008",
+      "fullName": "Anju Devi",
+      "designation": "Helper",
+      "email": "anjupassi68@gmail.com",
+      "number": "9711261021",
+      "address": "Operation",
+      "joiningDate": "2010-08-10",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0009",
+      "fullName": "Vijay Singh",
+      "designation": "Helper",
+      "email": "vijaykumarahw567@gmail.com",
+      "number": "8800219386",
+      "address": "Operation",
+      "joiningDate": "2024-07-17",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0010",
+      "fullName": "Subhash Kumar",
+      "designation": "Helper",
+      "email": "ksubhash1532@gmail.com",
+      "number": "8383958468",
+      "address": "Operation",
+      "joiningDate": "2025-02-21",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0011",
+      "fullName": "Uday Kumar",
+      "designation": "Helper",
+      "email": "uday9220981037@gmail.com",
+      "number": "9220981037",
+      "address": "Operation",
+      "joiningDate": "2025-03-10",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0012",
+      "fullName": "Mamta Kumari",
+      "designation": "Helper",
+      "email": "kumarimamta15480@gmail.com",
+      "number": "8084614439",
+      "address": "Operation",
+      "joiningDate": "2025-03-05",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0013",
+      "fullName": "Shonkey",
+      "designation": "Free Lencer",
+      "email": "gkgcanvaspvt@gmail.com",
+      "number": "7703811904",
+      "address": "Sales",
+      "joiningDate": "2024-10-21",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0014",
+      "fullName": "Ranjan",
+      "designation": "Free Lencer",
+      "email": "ranjansahni.mars@gmail.com",
+      "number": "9015738131",
+      "address": "Ecom",
+      "joiningDate": "2024-10-15",
+      "status": "Active",
+      "role": "user"
+    },
+    {
+      "employeeID": "EMP0015",
+      "fullName": "Shivam",
+      "designation": "Free Lencer",
+      "email": "worldwidestarie@gmail.com",
+      "number": "9354910232",
+      "address": "Ecom",
+      "joiningDate": "2025-01-15",
+      "status": "Active",
+      "role": "user"
+    }
+  ]

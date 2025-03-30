@@ -1,0 +1,57 @@
+.security-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    position: relative;
+    left: 20%;
+    top: 90px;
+    width: 80%;
+}
+
+h2 {
+    color: #333;
+    text-align: center;
+}
+
+.security-section {
+    margin-bottom: 30px;
+}
+
+h3 {
+    color: #007bff;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #f8f9fa;
+}
+
+.success {
+    color: green;
+    font-weight: bold;
+}
+
+.failed {
+    color: red;
+    font-weight: bold;
+}
+
+.warning {
+    color: orange;
+    font-weight: bold;
+}
+
+.critical {
+    color: red;
+    font-weight: bold;
+}

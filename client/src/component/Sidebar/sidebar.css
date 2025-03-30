@@ -1,0 +1,302 @@
+/* Sidebar Base Styles */
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background-color: #ffffff;
+  padding: 0;
+  overflow-y: auto;
+  position: fixed;
+  left: 0;
+  top: 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.app-logo {
+  max-width: 180px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.sidebar-menu {
+  flex: 1;
+  padding: 15px 0;
+  list-style: none;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.sidebar-menu li {
+  position: relative;
+}
+
+/* Menu Item Styles */
+.feat-btn-admin, 
+.nested-item,
+.sidebar-link {
+  padding: 12px 20px;
+  color: #333333;
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  font-size: 0.95rem;
+}
+
+.feat-btn-admin:hover,
+.nested-item:hover,
+.sidebar-link:hover {
+  background-color: #f0f0f0;
+}
+
+.sidebar-link.active {
+  color: #0D6E6E;
+  background-color: #e6f7f7;
+  border-left-color: #0D6E6E;
+}
+
+.label-icon {
+  width: 20px;
+  text-align: center;
+  color: #666666;
+  font-size: 0.9rem;
+}
+
+.sidebar-link.active .label-icon {
+  color: #0D6E6E;
+}
+
+.item-name {
+  flex: 1;
+}
+
+.rotate {
+  transition: transform 0.3s ease;
+  color: #666666;
+  font-size: 0.9rem;
+}
+
+.rotate-open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu Styles */
+.feat-show-admin,
+.nested-menu {
+  padding-left: 0;
+  background-color: #f8f8f8;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease;
+}
+
+.feat-show-admin.show,
+.nested-menu.show {
+  max-height: 1000px;
+}
+
+/* Nested Items */
+.nested-item {
+  font-size: 0.85rem;
+  padding-left: 52px;
+  position: relative;
+}
+
+.nested-item::before {
+  content: "";
+  position: absolute;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #cccccc;
+}
+
+.bullet {
+  font-size: 0.4rem;
+  color: #666666;
+}
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1100;
+  background: #0D6E6E;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+/* Scrollbar styling */
+.sidebar-menu::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1199px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .app-logo {
+    max-width: 150px;
+  }
+  
+  .feat-btn-admin,
+  .nested-item,
+  .sidebar-link {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+  
+  .nested-item {
+    padding-left: 45px;
+  }
+}
+
+@media (max-width: 991px) {
+  .sidebar {
+    width: 220px;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
+  }
+  
+  .app-logo {
+    max-width: 140px;
+  }
+  
+  .feat-btn-admin,
+  .nested-item,
+  .sidebar-link {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    width: 100%;
+    max-width: 280px;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .sidebar-header {
+    padding: 15px;
+    min-height: 70px;
+  }
+  
+  .app-logo {
+    max-width: 130px;
+  }
+  
+  .feat-btn-admin,
+  .nested-item,
+  .sidebar-link {
+    padding: 12px 20px;
+  }
+  
+  .nested-item {
+    padding-left: 52px;
+  }
+}
+
+@media (max-width: 575px) {
+  .sidebar {
+    max-width: 260px;
+  }
+  
+  .sidebar-header {
+    padding: 12px 15px;
+  }
+  
+  .app-logo {
+    max-width: 120px;
+  }
+  
+  .feat-btn-admin,
+  .nested-item,
+  .sidebar-link {
+    padding: 10px 15px;
+    font-size: 0.85rem;
+  }
+  
+  .nested-item {
+    padding-left: 45px;
+    font-size: 0.8rem;
+  }
+  
+  .label-icon {
+    width: 18px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animation for mobile menu */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.sidebar.open {
+  animation: slideIn 0.3s forwards;
+}
+
+.sidebar.closed {
+  animation: slideOut 0.3s forwards;
+}

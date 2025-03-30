@@ -1,0 +1,203 @@
+.Client-list-table {
+  width: 78vw;
+  height: auto;
+  background: white;
+  color: black;
+  position: relative;
+  left: 21%;
+  top: 90px;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid grey;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+
+}
+
+a {
+  text-decoration: none;
+}
+
+.list-head-btn {
+  display: flex;
+  justify-content: space-between;
+  background-color: white;
+}
+
+.list-head-btn h4 {
+  font-size: 2rem;
+  padding: 10px;
+  background-color: white;
+}
+
+.list-btns {
+  display: flex;
+  gap: 30px;
+  background-color: white;
+}
+
+.list-search {
+  display: flex;
+  gap: 30px;
+  margin-top: 20px;
+}
+.list-search input {
+  width: 65vw;
+  height: 7vh;
+  background-color: white;
+  border-radius: 15px;
+}
+
+.list-search button {
+  border-radius: 15px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0px 30px;
+  font-weight: 700;
+  border: 2px solid white;
+}
+
+.list-search button:hover {
+  border: 2px solid blue;
+  color: blue;
+}
+
+.list-btns button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 15px;
+  padding: 10px;
+  font-weight: 700;
+  height: 10vh;
+}
+
+.export-btn-list {
+  background-color: white;
+  border: 2px solid #e5e7eb;
+}
+
+.export-btn-list:hover {
+  border: 2px solid blue;
+  color: blue;
+}
+
+.Add-btn-list {
+  background-color: blue;
+  border: none;
+  color: white;
+  text-decoration: none;
+}
+
+.add-btn-icon{
+    background-color: transparent;
+}
+
+.input-with-icon {
+  position: relative;
+  width: 65vw; /* Adjust as needed */
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding-right: 40px; /* Space for the icon */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  font-size: 16px;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 18px;
+  pointer-events: none; /* Prevent clicks on the icon */
+}
+
+/* Styling for the table */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 16px;
+  text-align: left;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header styling */
+.styled-table thead {
+  color: gray;
+}
+
+.styled-table thead th {
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Body styling */
+.styled-table tbody tr {
+  border-bottom: 1px solid #ddd;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.styled-table tbody td {
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Checkbox styling */
+.table-checkbox {
+  transform: scale(1.2);
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.pen-trash {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  align-items: center;
+  color: black;
+  text-decoration: none;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+  background-color: white;
+}
+
+.pagination-settings{
+    background-color: white;
+}
+
+.pagination-link {
+  background-color: #e5e7eb;
+  padding: 8px 15px;
+  margin: 0 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  text-decoration: none;
+}
+
+.pagination-link:hover {
+  background-color: #007bff;
+  color: white;
+}
