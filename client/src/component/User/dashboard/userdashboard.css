@@ -1,0 +1,386 @@
+/* :root {
+  --primary-color: #0D6E6E;
+  --primary-light: #E0F2F1;
+  --primary-dark: #0B5D5D;
+  --secondary-color: #4CAF50;
+  --accent-color: #FF9800;
+  --gray: #f8f8f8;
+  --gray-dark: #e0e0e0;
+  --text-color: #333;
+  --text-light: #666;
+  --white: #ffffff;
+  --error-color: #F44336;
+  --warning-color: #FFC107;
+  --success-color: #4CAF50;
+  --info-color: #2196F3;
+  --border-radius: 8px;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard {
+  padding: 20px;
+  background-color: var(--gray);
+  min-height: 100vh;
+  position: relative;
+  left: 8%;
+  top: 30px;
+  width: 82vw;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px 20px;
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.dashboard-header h2 {
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info span {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
+.username {
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.status-badge {
+  background-color: var(--success-color);
+  color: white;
+  font-weight: bold;
+}
+
+.status-badge.inactive {
+  background-color: var(--error-color);
+}
+
+.user-role {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.user-email, .user-phone {
+  color: var(--text-light);
+}
+
+.dashboard-graphs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.block-data {
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  transition: transform 0.3s ease;
+}
+
+.block-data:hover {
+  transform: translateY(-5px);
+}
+
+.block-data h3 {
+  color: var(--text-color);
+  margin-top: 10px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.icon-client {
+  font-size: 1.5rem;
+}
+
+.bar-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bar-progress h5 {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin: 0;
+}
+
+.bar-progress p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.revenue-subCancel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.revenue-chart, .subscription-chart {
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.revenue-chart h3, .subscription-chart h3 {
+  color: var(--primary-color);
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.revenue-container {
+  height: 300px;
+}
+
+.client-sub-recent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.transaction-table {
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.recent-transHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.recent-transHead h3 {
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.recent-transHead button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.recent-transHead button:hover {
+  background-color: var(--primary-dark);
+}
+
+.transaction-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.transaction-item {
+  padding: 10px 0;
+}
+
+.recent-transaction {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.task-index {
+  background-color: var(--primary-color);
+  color: white;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin: 0;
+}
+
+.trans-name-date {
+  flex: 1;
+}
+
+.trans-name-date h5 {
+  color: var(--text-color);
+  margin: 0 0 5px 0;
+  font-size: 0.95rem;
+}
+
+.trans-name-date p {
+  color: var(--text-light);
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.trans-plan-price {
+  text-align: right;
+}
+
+.trans-plan-price p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.trans-plan-price p:first-child {
+  color: var(--text-color);
+  margin-bottom: 5px;
+}
+
+.status-pending {
+  color: var(--warning-color);
+  font-weight: bold;
+}
+
+.status-in-progress {
+  color: var(--info-color);
+  font-weight: bold;
+}
+
+.status-completed {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.status-revised {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.analytics-container {
+  background-color: var(--white);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.issue-button-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.issue-button-head h3 {
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.issue-button-head button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.issue-button-head button:hover {
+  background-color: var(--primary-dark);
+}
+
+.issuetable-container {
+ position: relative;
+ left: -20%;
+ top: -80px;
+}
+
+.issue-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.issue-table th {
+  background-color: var(--primary-color);
+  color:#0B5D5D;
+  text-align: left;
+}
+
+.issue-table td {
+  border-bottom: 1px solid var(--gray-dark);
+}
+
+.issue-table tr:nth-child(even) {
+  background-color: var(--gray);
+}
+
+.issue-table tr:hover {
+  background-color: var(--primary-light);
+}
+
+.priority-critical {
+  color: var(--error-color);
+  font-weight: bold;
+}
+
+.priority-high {
+  color: var(--warning-color);
+  font-weight: bold;
+}
+
+.priority-medium {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.status-open {
+  color: var(--error-color);
+  font-weight: bold;
+}
+
+.status-in-progress {
+  color: var(--info-color);
+  font-weight: bold;
+}
+
+.status-pending {
+  color: var(--warning-color);
+  font-weight: bold;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gray-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+} */
