@@ -18,6 +18,11 @@ const formSubmissionSchema = new mongoose.Schema({
       value: { type: mongoose.Schema.Types.Mixed, required: true },
     },
   ],
+  current_stage_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Pipeline",
+    required: true,
+  },
   submittedAt: {
     type: Date,
     default: Date.now,
@@ -26,4 +31,3 @@ const formSubmissionSchema = new mongoose.Schema({
 
 const Submission = mongoose.model("Submission", formSubmissionSchema);
 module.exports = Submission;
-

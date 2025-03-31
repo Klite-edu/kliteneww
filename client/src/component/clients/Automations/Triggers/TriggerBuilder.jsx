@@ -178,7 +178,7 @@ const TriggerBuilder = () => {
         <div className="trigger-builder-grid">
           {/* Main Trigger Builder Form */}
           <div className="trigger-form-card">
-            <div className="card-header">
+            <div className="automate-card-header">
               <h2>Create New Trigger</h2>
               <div className="toggle-switch">
                 <label>
@@ -332,7 +332,7 @@ const TriggerBuilder = () => {
 
           {/* Triggers Panel */}
           <div className="predefined-triggers-card">
-            <div className="card-header">
+            <div className="automate-card-header">
               <h2>Existing Triggers</h2>
               <button
                 className="toggle-button"

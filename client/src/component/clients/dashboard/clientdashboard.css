@@ -1,25 +1,25 @@
 :root {
-  --primary-color: #0D6E6E;
-  --primary-light: #E0F2F1;
-  --primary-dark: #0B5D5D;
-  --secondary-color: #4CAF50;
-  --accent-color: #FF9800;
+  --primary-color: #0d6e6e;
+  --primary-light: #e0f2f1;
+  --primary-dark: #0b5d5d;
+  --secondary-color: #4caf50;
+  --accent-color: #ff9800;
   --gray: #f8f8f8;
   --gray-dark: #e0e0e0;
   --text-color: #333;
   --text-light: #666;
   --white: #ffffff;
-  --error-color: #F44336;
-  --warning-color: #FFC107;
-  --success-color: #4CAF50;
-  --info-color: #2196F3;
+  --error-color: #f44336;
+  --warning-color: #ffc107;
+  --success-color: #4caf50;
+  --info-color: #2196f3;
   --border-radius: 8px;
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Base styles */
 .dashboard {
-  padding: 12px;
+  padding: 15px;
   background-color: var(--gray);
   min-height: 100vh;
   position: relative;
@@ -27,15 +27,15 @@
   top: 0;
   width: 100%;
   box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .dashboard-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 15px;
-  padding: 12px;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
   background-color: var(--white);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
@@ -44,7 +44,7 @@
 .dashboard-header h2 {
   color: var(--primary-color);
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
@@ -52,13 +52,13 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .user-info span {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
 }
 
 .username {
@@ -81,40 +81,41 @@
   color: var(--primary-color);
 }
 
-.user-email, .user-phone {
+.user-email,
+.user-phone {
   color: var(--text-light);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .dashboard-graphs {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .block-data {
   background-color: var(--white);
-  padding: 12px;
+  padding: 15px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   transition: transform 0.3s ease;
 }
 
 .block-data:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
 }
 
 .block-data h3 {
   color: var(--text-color);
-  margin-top: 8px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  font-size: 1rem;
   font-weight: 500;
 }
 
 .icon-client {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 .bar-progress {
@@ -124,16 +125,16 @@
 }
 
 .bar-progress h5 {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: bold;
   color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
+  padding: 5px 10px;
+  border-radius: 15px;
   margin: 0;
 }
 
 .bar-progress p {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: bold;
   color: var(--text-color);
   margin: 0;
@@ -142,39 +143,41 @@
 .revenue-subCancel {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
-.revenue-chart, .subscription-chart {
+.revenue-chart,
+.subscription-chart {
   background-color: var(--white);
-  padding: 12px;
+  padding: 15px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
 }
 
-.revenue-chart h3, .subscription-chart h3 {
+.revenue-chart h3,
+.subscription-chart h3 {
   color: var(--primary-color);
   margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 1.1rem;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
 .revenue-container {
-  height: 200px;
+  height: 250px;
 }
 
 .client-sub-recent {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .transaction-table {
   background-color: var(--white);
-  padding: 12px;
+  padding: 15px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
 }
@@ -182,14 +185,14 @@
 .recent-transHead {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .recent-transHead h3 {
   color: var(--primary-color);
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
@@ -197,11 +200,11 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 15px;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: background-color 0.3s;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   align-self: flex-start;
 }
 
@@ -210,25 +213,25 @@
 }
 
 .transaction-list {
-  max-height: 350px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
 .transaction-item {
-  padding: 8px 0;
+  padding: 10px 0;
 }
 
 .recent-transaction {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .task-index {
   background-color: var(--primary-color);
   color: white;
-  width: 22px;
-  height: 22px;
+  width: 25px;
+  height: 25px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -236,7 +239,6 @@
   font-weight: bold;
   margin: 0;
   flex-shrink: 0;
-  font-size: 0.7rem;
 }
 
 .trans-name-date {
@@ -246,8 +248,8 @@
 
 .trans-name-date h5 {
   color: var(--text-color);
-  margin: 0 0 4px 0;
-  font-size: 0.8rem;
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -257,7 +259,7 @@
 .trans-name-date p {
   color: var(--text-light);
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .trans-plan-price {
@@ -267,12 +269,12 @@
 
 .trans-plan-price p {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .trans-plan-price p:first-child {
   color: var(--text-color);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   font-weight: 500;
 }
 
@@ -296,70 +298,67 @@
   font-weight: bold;
 }
 
-.analytics-container {
+.issue-container {
   background-color: var(--white);
-  padding: 12px;
+  padding: 15px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  overflow-x: auto;
 }
 
 .issue-button-head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .issue-button-head h3 {
   color: var(--primary-color);
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
 .issue-button-head button {
   background-color: var(--primary-color);
+  padding: 8px 15px;
   color: white;
   border: none;
-  padding: 6px 12px;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: background-color 0.3s;
-  font-size: 0.8rem;
-  align-self: flex-start;
+  font-size: 0.9rem;
 }
 
 .issue-button-head button:hover {
   background-color: var(--primary-dark);
 }
 
-.issuetable-container {
-  width: 100%;
-  overflow-x: auto;
-  margin-bottom: 15px;
-}
-
 .issue-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 500px;
 }
 
-.issue-table th, .issue-table td {
-  padding: 10px 12px;
+.issue-table th,
+.issue-table td {
+  padding: 12px 15px;
   text-align: left;
-  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .issue-table th {
   background-color: var(--primary-color);
   color: white;
   font-weight: 500;
+  position: sticky;
+  top: 0;
 }
 
 .issue-table td {
   border-bottom: 1px solid var(--gray-dark);
+  font-size: 0.9rem;
 }
 
 .issue-table tr:nth-child(even) {
@@ -392,191 +391,103 @@
 
 .no-tasks {
   text-align: center;
-  padding: 15px;
+  padding: 20px;
   color: var(--text-light);
-  font-size: 0.9rem;
 }
 
 hr {
   border: none;
   border-top: 1px solid var(--gray-dark);
-  margin: 8px 0;
+  margin: 10px 0;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--gray-dark);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--primary-color);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary-dark);
 }
 
-/* Small mobile devices (350px to 399px) */
-@media (min-width: 350px) and (max-width: 399px) {
+/* 350px - 599px */
+@media (min-width: 350px) and (max-width: 599px) {
   .dashboard {
-    padding: 14px;
+    padding: 10px;
   }
 
   .dashboard-header {
-    padding: 14px;
+    padding: 12px;
   }
 
   .dashboard-header h2 {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
+  }
+
+  .user-info {
+    gap: 8px;
   }
 
   .user-info span {
-    font-size: 0.78rem;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+
+  .block-data {
+    padding: 12px;
   }
 
   .block-data h3 {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .bar-progress p {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
   }
 
-  .revenue-chart h3, 
+  .revenue-chart h3,
   .subscription-chart h3,
-  .recent-transHead h3, 
+  .recent-transHead h3,
   .issue-button-head h3 {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
   }
 
-  .transaction-list {
-    max-height: 300px;
-  }
-}
-
-/* Medium mobile devices (400px to 479px) */
-@media (min-width: 400px) and (max-width: 479px) {
-  .dashboard {
-    padding: 16px;
-  }
-
-  .dashboard-header {
-    padding: 15px;
-  }
-
-  .dashboard-header h2 {
-    font-size: 1.4rem;
-  }
-
-  .user-info span {
+  .recent-transHead button,
+  .issue-button-head button {
+    padding: 6px 12px;
     font-size: 0.8rem;
   }
 
-  .block-data {
-    padding: 14px;
+  .transaction-item,
+  .issue-table td {
+    padding: 8px 10px;
   }
 
-  .block-data h3 {
-    font-size: 1rem;
-  }
-
-  .bar-progress p {
-    font-size: 1.2rem;
-  }
-
-  .revenue-chart h3, 
-  .subscription-chart h3,
-  .recent-transHead h3, 
-  .issue-button-head h3 {
-    font-size: 1.2rem;
-  }
-
-  .transaction-list {
-    max-height: 320px;
-  }
-}
-
-/* Large mobile devices (480px to 599px) */
-@media (min-width: 480px) and (max-width: 599px) {
-  .dashboard {
-    padding: 18px;
-  }
-
-  .dashboard-header {
-    padding: 16px;
-  }
-
-  .dashboard-header h2 {
-    font-size: 1.45rem;
-  }
-
-  .user-info span {
-    font-size: 0.82rem;
-    padding: 5px 10px;
-  }
-
-  .dashboard-graphs {
-    gap: 14px;
-  }
-
-  .block-data {
-    padding: 15px;
-  }
-
-  .block-data h3 {
-    font-size: 1.05rem;
-  }
-
-  .bar-progress p {
-    font-size: 1.25rem;
-  }
-
-  .revenue-subCancel {
-    gap: 14px;
-  }
-
-  .client-sub-recent {
-    gap: 14px;
-  }
-
-  .revenue-chart h3, 
-  .subscription-chart h3,
-  .recent-transHead h3, 
-  .issue-button-head h3 {
-    font-size: 1.25rem;
-  }
-
-  .transaction-list {
-    max-height: 350px;
-  }
-
-  .task-index {
-    width: 24px;
-    height: 24px;
+  .issue-table {
     font-size: 0.8rem;
   }
 
   .trans-name-date h5 {
-    font-size: 0.85rem;
-  }
-
-  .trans-name-date p {
-    font-size: 0.72rem;
+    font-size: 0.8rem;
   }
 
   .trans-plan-price p {
-    font-size: 0.78rem;
+    font-size: 0.7rem;
   }
 }
 
-/* 600px and up (already in your original code) */
+/* 600px and up */
 @media (min-width: 600px) {
   .dashboard {
     padding: 20px;
@@ -598,7 +509,8 @@ hr {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .recent-transHead, .issue-button-head {
+  .recent-transHead,
+  .issue-button-head {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -609,10 +521,10 @@ hr {
   }
 }
 
-/* The rest of your existing media queries (768px and up) remain unchanged */
 @media (min-width: 768px) {
   .dashboard {
     left: 60px;
+    top: 30px;
     width: calc(100% - 60px);
   }
 
@@ -628,15 +540,11 @@ hr {
     font-size: 1.4rem;
   }
 
-  .revenue-chart h3, 
+  .revenue-chart h3,
   .subscription-chart h3,
-  .recent-transHead h3, 
+  .recent-transHead h3,
   .issue-button-head h3 {
     font-size: 1.3rem;
-  }
-
-  .issuetable-container {
-    width: 100%;
   }
 }
 
@@ -689,16 +597,16 @@ hr {
     font-size: 1.45rem;
   }
 
-  .revenue-chart, 
+  .revenue-chart,
   .subscription-chart,
   .transaction-table,
   .analytics-container {
     padding: 18px;
   }
 
-  .revenue-chart h3, 
+  .revenue-chart h3,
   .subscription-chart h3,
-  .recent-transHead h3, 
+  .recent-transHead h3,
   .issue-button-head h3 {
     font-size: 1.35rem;
   }
@@ -759,9 +667,9 @@ hr {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   }
 
-  .revenue-chart h3, 
+  .revenue-chart h3,
   .subscription-chart h3,
-  .recent-transHead h3, 
+  .recent-transHead h3,
   .issue-button-head h3 {
     font-size: 1.4rem;
   }
@@ -770,7 +678,7 @@ hr {
 @media (min-width: 1300px) {
   .dashboard {
     width: 76vw;
-    left: 12.5%;
+    left: 10.5%;
     top: 30px;
   }
 
@@ -802,9 +710,9 @@ hr {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   }
 
-  .revenue-chart h3, 
+  .revenue-chart h3,
   .subscription-chart h3,
-  .recent-transHead h3, 
+  .recent-transHead h3,
   .issue-button-head h3 {
     font-size: 1.4rem;
   }

@@ -1,7 +1,7 @@
 /* Sidebar Base Styles */
 .sidebar {
   width: 280px;
-  height: 100vh;
+  height: 100%;
   background-color: #ffffff;
   padding: 0;
   overflow-y: auto;
@@ -194,7 +194,6 @@
 @media (max-width: 991px) {
   .sidebar {
     width: 220px;
-    transform: translateX(-100%);
   }
   
   .sidebar.open {

@@ -385,7 +385,6 @@ const ClientDashboard = () => {
         </div>
       </div>
 
-      <div className="analytics-container">
         <div className="issue-container">
           <div className="issue-button-head">
             <h3>Employee Issue Tracker</h3>
@@ -402,7 +401,6 @@ const ClientDashboard = () => {
                   <th>Status</th>
                   <th>Assigned To</th>
                   <th>Reported Date</th>
-                  <th>Expected Resolution</th>
                 </tr>
               </thead>
               <tbody>
@@ -419,14 +417,12 @@ const ClientDashboard = () => {
                     </td>
                     <td>{issue.assignedTo}</td>
                     <td>{issue.reportedDate}</td>
-                    <td>{issue.expectedResolution}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
     </div>
   );
 };

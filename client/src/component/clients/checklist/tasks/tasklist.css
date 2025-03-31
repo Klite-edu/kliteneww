@@ -159,11 +159,13 @@
   background-color: var(--white);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow-primary);
+  -webkit-overflow-scrolling: touch;
 }
 
 .task-list-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Minimum width to prevent squeezing */
 }
 
 .task-list-table th {
@@ -398,45 +400,90 @@
   background-color: #c82333;
 }
 
-/* Responsive adjustments for search */
-@media (max-width: 992px) {
-  .search-control {
-    width: 100%;
-    margin-bottom: 15px;
-  }
-
-  .controls-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
+/* Status Badge Colors */
+.status-badge.completed {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
 }
 
-@media (max-width: 768px) {
-  .search-input {
-    padding: 8px 15px 8px 35px;
-  }
-
-  .search-icon {
-    left: 10px;
-  }
+.status-badge.pending {
+  background-color: #FFF3CD;
+  color: #856404;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.status-badge.overdue {
+  background-color: #F8D7DA;
+  color: #721C24;
 }
 
-/* Responsive styles */
-@media (max-width: 992px) {
+/* Responsive Breakpoints */
+@media (min-width: 1600px) {
   .task-list-container {
-    max-width: 100%;
-    margin-left: 0;
-    padding: 15px;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 30px;
+    left:8%;
+  }
+  
+  .task-list-header {
+    margin-bottom: 30px;
+  }
+  
+  .task-list-title {
+    font-size: 28px;
+  }
+  
+  .task-list-table th,
+  .task-list-table td {
+    padding: 15px 20px;
+    font-size: 16px;
+  }
+  
+  .action-buttons {
+    gap: 12px;
+  }
+  
+  .edit-btn,
+  .delete-btn,
+  .complete-btn {
+    padding: 8px 15px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 1599px) and (min-width: 1400px) {
+  .task-list-container {
+    max-width: calc(100% - 300px);
+    left: 1%;
+  }
+}
+@media (max-width: 1399px) and (min-width: 1200px) {
+  .task-list-container {
+    max-width: calc(100% - 350px);
+    left: 7%;
+  }
+
+  .search-control{
+    position: relative;
+    min-width: 150px;
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+  .task-list-container {
+    max-width: calc(100% - 320px);
+    left: 6%;
+  }
+
+  .search-control {
+    position: relative;
+    min-width: 160px;
+  }
+  
+  .search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
   .task-list-controls {
@@ -461,52 +508,194 @@
 
   .task-list-table th,
   .task-list-table td {
-    padding: 8px 10px;
+    padding: 10px 12px;
     font-size: 14px;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991px) and (min-width: 768px) {
   .task-list-container {
-    top: 60px;
+    top: 70px;
+    padding: 15px;
+    left: 11%;
+    width: 100vw;
   }
-
+  
   .task-list-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-
-  .task-list-table {
-    display: block;
+  
+  .search-control {
+    min-width: 200px;
   }
-
+  
   .task-list-table th,
   .task-list-table td {
-    display: block;
-    width: 100%;
-    text-align: right;
-    padding-left: 50%;
-    position: relative;
+    padding: 8px 10px;
+    font-size: 13px;
   }
-
-  .task-list-table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 15px;
-    width: 45%;
-    padding-right: 10px;
-    font-weight: bold;
-    text-align: left;
-  }
-
-  .task-list-table tr {
-    margin-bottom: 15px;
-    display: block;
-    border-bottom: 2px solid var(--gray);
-  }
-
+  
   .action-buttons {
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: 5px;
   }
+  
+  .edit-btn,
+  .delete-btn,
+  .complete-btn {
+    padding: 5px 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 767px) {
+  .task-list-container {
+    top: 60px;
+    padding: 10px;
+    margin-left: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .task-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .task-list-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .controls-left,
+  .controls-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .search-control {
+    min-width: 100%;
+  }
+  
+  .task-list-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-primary);
+  }
+  
+  .task-list-table {
+    min-width: 700px; /* Ensure table has minimum width for scrolling */
+  }
+  
+  .task-list-table th,
+  .task-list-table td {
+    padding: 10px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    gap: 5px;
+  }
+  
+  .edit-btn,
+  .delete-btn,
+  .complete-btn {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 575px) and (min-width: 350px) {
+  .task-list-container {
+    top: 50px;
+    padding: 8px;
+  }
+  
+  .task-list-title {
+    font-size: 18px;
+  }
+  
+  .server-date {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+  
+  .date-icon {
+    font-size: 14px;
+  }
+  
+  .search-control {
+    min-width: 100%;
+  }
+  
+  .search-input {
+    padding: 6px 12px 6px 35px;
+    font-size: 13px;
+  }
+  
+  .search-icon {
+    left: 10px;
+    font-size: 14px;
+  }
+  
+  .filter-toggle {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  .date-range-filter {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .date-picker-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .date-picker {
+    min-width: 100%;
+    padding: 6px 10px;
+  }
+  
+  .task-list-table th,
+  .task-list-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .today-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    gap: 3px;
+  }
+  
+  .edit-btn,
+  .delete-btn,
+  .complete-btn {
+    padding: 3px 5px;
+    font-size: 11px;
+  }
+  
+  .save-btn,
+  .cancel-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
