@@ -19,7 +19,7 @@ import {
 } from "recharts";
 import axios from "axios";
 
-const ClientDashboard = () => {
+const UserDashboard = () => {
   const [totalEmployee, setTotalEmployee] = useState(0);
   const [activeEmployee, setActiveEmployee] = useState(0);
   const [triggers, setTriggers] = useState(0);
@@ -431,4 +431,4 @@ const ClientDashboard = () => {
   );
 };
 
-export default ClientDashboard;
+export default UserDashboard;
