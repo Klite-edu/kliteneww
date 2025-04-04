@@ -28,7 +28,8 @@ const Contact = () => {
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
+  const token = localStorage.getItem("token");
+  console.log("🔑 [FETCH TRIGGER COUNT] Retrieved Token:", token);
   const role = localStorage.getItem("role");
   const [customPermissions] = useState(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -39,7 +40,12 @@ const Contact = () => {
     const fetchContacts = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setContacts(response.data);
       } catch (error) {
@@ -69,8 +75,12 @@ const Contact = () => {
   const handleDelete = async (id) => {
     try {
       if (window.confirm("Do you want to delete this employee?")) {
-        await axios.delete(`${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`);
-        setContacts((prevContacts) => prevContacts.filter((contact) => contact._id !== id));
+        await axios.delete(
+          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`
+        );
+        setContacts((prevContacts) =>
+          prevContacts.filter((contact) => contact._id !== id)
+        );
         alert("Employee deleted successfully");
       }
     } catch (error) {
@@ -80,7 +90,9 @@ const Contact = () => {
   };
 
   const filteredContacts = contacts.filter((contact) => {
-    const nameMatch = contact.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = contact.fullName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const contactDate = new Date(contact.createdAt);
     const startMatch = startDate ? contactDate >= new Date(startDate) : true;
     const endMatch = endDate ? contactDate <= new Date(endDate) : true;
@@ -131,7 +143,10 @@ const Contact = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="input-icon" />
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="input-icon"
+              />
             </div>
             <Dropdown className="date-range-dropdown">
               <Dropdown.Toggle variant="secondary" id="date-range-dropdown">
@@ -185,15 +200,10 @@ const Contact = () => {
                   <td>
                     <div className="action-buttons">
                       <Link to="">
-                        <FontAwesomeIcon
-                          icon={faEnvelope}
-                        />
+                        <FontAwesomeIcon icon={faEnvelope} />
                       </Link>
                       <Link to="/chatbox">
-                        <FontAwesomeIcon
-                          icon={faComments}
-
-                        />
+                        <FontAwesomeIcon icon={faComments} />
                       </Link>
                     </div>
                   </td>
@@ -207,13 +217,21 @@ const Contact = () => {
                         <FontAwesomeIcon icon={faEllipsisV} />
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item as={Link} to={`/contactsmgmt/view/${contact._id}`}>
+                        <Dropdown.Item
+                          as={Link}
+                          to={`/contactsmgmt/view/${contact._id}`}
+                        >
                           View
                         </Dropdown.Item>
-                        <Dropdown.Item as={Link} to={`/contactmgmt/edit/${contact._id}`}>
+                        <Dropdown.Item
+                          as={Link}
+                          to={`/contactmgmt/edit/${contact._id}`}
+                        >
                           Edit
                         </Dropdown.Item>
-                        <Dropdown.Item onClick={() => handleDelete(contact._id)}>
+                        <Dropdown.Item
+                          onClick={() => handleDelete(contact._id)}
+                        >
                           Delete
                         </Dropdown.Item>
                       </Dropdown.Menu>
@@ -251,7 +269,10 @@ const Contact = () => {
               </Dropdown.Toggle>
               <Dropdown.Menu>
                 {[5, 10, 15, 20, 50].map((size) => (
-                  <Dropdown.Item key={size} onClick={() => handleItemsPerPageChange(size)}>
+                  <Dropdown.Item
+                    key={size}
+                    onClick={() => handleItemsPerPageChange(size)}
+                  >
                     {size} items
                   </Dropdown.Item>
                 ))}

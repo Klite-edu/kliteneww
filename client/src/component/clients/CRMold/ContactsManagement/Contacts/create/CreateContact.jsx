@@ -34,7 +34,7 @@ const CreateEmployee = () => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
-
+  const token = localStorage.getItem("token");
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEmployee({ ...employee, [name]: value });
@@ -45,7 +45,12 @@ const CreateEmployee = () => {
     try {
       await axios.post(
         `${process.env.REACT_APP_API_URL}/api/employee/create`,
-        employee
+        employee,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       navigate("/contactmgmt/contacts");
     } catch (error) {
@@ -61,7 +66,9 @@ const CreateEmployee = () => {
       <div className="edit-create-div">
         <div className="create-header-container">
           <h3 className="Edit-create-head">Create New Employee</h3>
-          <p className="create-subheading">Fill in the details below to add a new team member</p>
+          <p className="create-subheading">
+            Fill in the details below to add a new team member
+          </p>
         </div>
         <div className="employee-create-edit-info">
           <form onSubmit={handleSubmit}>
@@ -269,7 +276,11 @@ const CreateEmployee = () => {
               </div>
             </div>
             <div className="bottom-create-button">
-              <button className="discard-btn" type="button" onClick={() => navigate("/contactmgmt/contacts")}>
+              <button
+                className="discard-btn"
+                type="button"
+                onClick={() => navigate("/contactmgmt/contacts")}
+              >
                 Discard
               </button>
               <button className="create-btn" type="submit">

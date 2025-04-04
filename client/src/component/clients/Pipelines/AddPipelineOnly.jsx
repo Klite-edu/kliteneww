@@ -12,7 +12,7 @@ const AddPipelineOnly = ({
     pipelineName: "",
     stages: [],
   });
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     fetchEmployees();
 
@@ -33,7 +33,12 @@ const AddPipelineOnly = ({
   const fetchEmployees = async () => {
     try {
       const response = await fetch(
-        "https://api.autopilotmybusiness.com/api/stages/contactinfo"
+        `${process.env.REACT_APP_API_URL}/api/stages/contactinfo`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.json();
       setEmployees(data || []);
@@ -77,26 +82,46 @@ const AddPipelineOnly = ({
   };
 
   const savePipeline = async () => {
-    if (!newPipeline.pipelineName.trim())
-      return alert("Please enter a pipeline name");
-
+    // Validate pipeline name
+    if (!newPipeline.pipelineName.trim()) {
+      alert("Please enter a pipeline name");
+      return;
+    }
+  
+    // Validate stage names
     const invalidStages = newPipeline.stages.some(
       (stage) => !stage.stageName.trim()
     );
-    if (invalidStages) return alert("Please fill in all stage names");
-
+    if (invalidStages) {
+      alert("Please fill in all stage names");
+      return;
+    }
+  
     try {
+      // Determine URL and method based on whether pipeline data exists
       const url = pipelineData
-        ? `https://api.autopilotmybusiness.com/api/stages/${pipelineData._id}`
-        : "https://api.autopilotmybusiness.com/api/stages/add";
+        ? `${process.env.REACT_APP_API_URL}/api/stages/${pipelineData._id}`
+        : `${process.env.REACT_APP_API_URL}/api/stages/add`;
       const method = pipelineData ? "PUT" : "POST";
-
+  
+      // Retrieve token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Unauthorized. Please log in.");
+        return;
+      }
+  
+      // Make API request with authorization header
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Added Authorization header
+        },
         body: JSON.stringify(newPipeline),
       });
-
+  
+      // Handle response
       if (response.ok) {
         alert(
           pipelineData
@@ -107,14 +132,16 @@ const AddPipelineOnly = ({
         onClose();
         refreshList();
       } else {
-        const errorText = await response.text();
-        alert("Operation failed. Check console for details.");
+        const errorText = await response.json();
+        console.error("❌ Operation failed:", errorText);
+        alert(`Operation failed: ${errorText.message || "Unknown error"}`);
       }
     } catch (error) {
+      console.error("❌ Error during savePipeline operation:", error.message);
       alert("Operation failed. Please try again.");
     }
   };
-
+  
   return (
     <>
       {!pipelineData && (
@@ -123,7 +150,7 @@ const AddPipelineOnly = ({
           className="abhi-create-pipeline-btn"
         >
           <i className="bi bi-plus-lg abhi-me-2"></i>
-          Create Pipeline
+          Create FMS/Pipeline
         </button>
       )}
 
@@ -133,7 +160,7 @@ const AddPipelineOnly = ({
             <div className="abhi-modal-header">
               <h3 className="abhi-modal-title text-light">
                 <i className="bi bi-diagram-3-fill abhi-me-2"></i>
-                {pipelineData ? "Edit Pipeline" : "Add New Pipeline"}
+                {pipelineData ? "Edit FMS/Pipeline" : "Add New FMS/Pipeline"}
               </h3>
               <button
                 className="bg-transparent fs-3"
@@ -148,10 +175,10 @@ const AddPipelineOnly = ({
 
             <div className="abhi-modal-body">
               <div className="abhi-form-group abhi-mb-4">
-                <label className="abhi-form-label">Pipeline Name</label>
+                <label className="abhi-form-label">FMS/Pipeline Name</label>
                 <input
                   type="text"
-                  placeholder="Enter pipeline name"
+                  placeholder="Enter FMS/pipeline name"
                   className="abhi-form-control abhi-pipeline-input"
                   value={newPipeline.pipelineName}
                   onChange={(e) =>

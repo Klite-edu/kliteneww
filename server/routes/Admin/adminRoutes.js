@@ -182,28 +182,28 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const Admin = require("../../models/Admin/admin-model");
 const dotenv = require("dotenv");
 dotenv.config();
 const router = express.Router();
-const Client = require("../../models/Admin/client-modal");
-const verifyToken = require("../../middlewares/auth");
-const Employee = require("../../models/clients/contactdata");
+const Admin = require("../../models/Admin/admin-model");
+const { getAllClientDBNames, createClientDatabase } = require("../../database/db");
+const { getEmployeeModel } = require("../../models/clients/contactdata");
+const { getClientModel } = require("../../models/Admin/client-modal");
 
 // Register Route
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  console.log(`Register request received for email: ${email}`);
+  console.log(`🔑 [REGISTER] Request received for email: ${email}`);
 
   try {
     const existingUser = await Admin.findOne({ email });
     if (existingUser) {
-      console.log(`Email already in use: ${email}`);
+      console.log(`⚠️ [REGISTER] Email already in use: ${email}`);
       return res.status(400).json({ message: "Email already in use" });
     }
 
-    const salt = await bcrypt.genSalt(10); // Generate salt
-    const hashedPassword = await bcrypt.hash(password, salt); // Hash password with salt
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const newAdmin = new Admin({
       email,
@@ -211,11 +211,10 @@ router.post("/register", async (req, res) => {
     });
 
     await newAdmin.save();
-    console.log(`User registered successfully: ${email}`);
-
+    console.log(`✅ [REGISTER] User registered successfully: ${email}`);
     res.status(201).json({ message: "User registered successfully!" });
   } catch (error) {
-    console.error("Error during registration:", error);
+    console.error("❌ [REGISTER] Error during registration:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -223,75 +222,68 @@ router.post("/register", async (req, res) => {
 // Login Route
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log(`Login attempt for email: ${email}`);
+  console.log(`🔑 [LOGIN] Login attempt for email: ${email}`);
 
   try {
-    // ✅ Find user in Admin, Client, or Employee collections
-    const admin =
-      (await Admin.findOne({ email })) || 
-      (await Client.findOne({ email })) || 
-      (await Employee.findOne({ email }));
-
-    console.log("🔍 Found user:", admin);
-
-    if (!admin) {
-      console.log(`❌ Invalid email or password for email: ${email}`);
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    // ✅ Compare entered password with hashed password
-    const isMatch = await bcrypt.compare(password, admin.password);
-    console.log("🔑 Password Match:", isMatch);
-    
-    if (!isMatch) {
-      console.log(`❌ Invalid password attempt for email: ${email}`);
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    // ✅ Generate JWT Token
-    const token = jwt.sign(
-      { id: admin._id, role: admin.role }, // Send `id` in token
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-    console.log("✅ Generated Token:", token);
-
-    console.log(`✅ Login successful for email: ${email}`);
-
-    // ✅ Send both `token` and `userId` in response
-    res.json({ token, userId: admin._id, role: admin.role });
-
-  } catch (error) {
-    console.error("❌ Error during login:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-// Dashboard Route (Client access only)
-router.get("/dashboard", verifyToken, (req, res) => {
-  console.log(`Dashboard request by user ID: ${req.user.adminId}`);
-
-  if (req.user.role !== "client") {
-    console.log(
-      `Access denied for user ID: ${req.user.adminId}. Only clients can access this.`
-    );
-    return res.status(403).send("Access denied. Only clients can access this.");
-  }
-
-  // Fetch data for the client based on req.user.clientId or similar
-  Client.findById(req.user.clientId)
-    .then((client) => {
-      console.log(`Fetched client data for client ID: ${req.user.clientId}`);
-      res.json(client);
-    })
-    .catch((err) => {
-      console.error(
-        `Error fetching client data for client ID: ${req.user.clientId}`,
-        err
+    // Step 1: Admin Login Attempt
+    console.log("🔍 [LOGIN] Searching for admin with email:", email);
+    const admin = await Admin.findOne({ email });
+    if (admin && await bcrypt.compare(password, admin.password)) {
+      const token = jwt.sign(
+        { id: admin._id, role: "admin", companyName: "admin" },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
       );
-      res.status(500).send("Error fetching client data");
-    });
+      console.log(`✅ [LOGIN] Admin login successful for email: ${email}`);
+      return res.json({ token, userId: admin._id, role: "admin", companyName: "admin" });
+    }
+
+    // Step 2: Multi-Tenant Client and Employee Login
+    console.log("🔄 [LOGIN] Attempting multi-tenant login...");
+    const clientDBNames = await getAllClientDBNames();
+    for (const dbName of clientDBNames) {
+      try {
+        const companyName = dbName.replace("client_db_", "");
+        console.log(`🔄 [LOGIN] Processing client DB: ${dbName} | Company Name: ${companyName}`);
+
+        // Step 2a: Check in Client Model
+        const Client = await getClientModel(companyName);
+        console.log(`🔍 [LOGIN] Looking for client in database: ${dbName} with email: ${email}`);
+        const client = await Client.findOne({ email });
+        if (client && await bcrypt.compare(password, client.password)) {
+          const token = jwt.sign(
+            { id: client._id, role: "client", companyName },
+            process.env.JWT_SECRET,
+            { expiresIn: "12h" }
+          );
+          console.log(`✅ [LOGIN] Client login successful for email: ${email}`);
+          return res.json({ token, userId: client._id, role: "client", companyName });
+        }
+
+        // Step 2b: Check in Employee Model
+        const Employee = await getEmployeeModel(companyName);
+        console.log(`🔍 [LOGIN] Looking for employee in database: ${dbName} with email: ${email}`);
+        const employee = await Employee.findOne({ email });
+        if (employee && await bcrypt.compare(password, employee.password)) {
+          const token = jwt.sign(
+            { id: employee._id, role: "user", companyName },
+            process.env.JWT_SECRET,
+            { expiresIn: "12h" }
+          );
+          console.log(`✅ [LOGIN] Employee login successful for email: ${email}`);
+          return res.json({ token, userId: employee._id, role: "user", companyName });
+        }
+      } catch (err) {
+        console.error(`❌ [LOGIN] Error accessing client DB ${dbName}:`, err.message);
+      }
+    }
+
+    res.status(401).json({ message: "Invalid email or password" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 });
+
 
 module.exports = router;
+

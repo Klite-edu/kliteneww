@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const { createClientDatabase } = require("../../../database/db");
 
 const WebhookLogSchema = new mongoose.Schema({
   data: {
@@ -8,7 +9,13 @@ const WebhookLogSchema = new mongoose.Schema({
   created_at: {
     type: Date,
     default: Date.now,
-  }
+  },
 });
 
-module.exports = mongoose.model('WebhookLog', WebhookLogSchema);
+// Function to get the WebhookLog model from the dynamic database
+const getWebhookLogModel = async (companyName) => {
+  const clientDB = await createClientDatabase(companyName);
+  return clientDB.model("WebhookLog", WebhookLogSchema);
+};
+
+module.exports = { getWebhookLogModel };

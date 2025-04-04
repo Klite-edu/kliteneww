@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
-const  db  = require("../../database/db");
+const { connectMainDB } = require("../../database/db");
+connectMainDB();
+
 
 const subscriptionPlanSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -13,5 +15,5 @@ const subscriptionPlanSchema = new mongoose.Schema({
   ],
 });
 
-const Subscription = db.model("Subscription", subscriptionPlanSchema);
+const Subscription = mongoose.model("Subscription", subscriptionPlanSchema);
 module.exports = Subscription;

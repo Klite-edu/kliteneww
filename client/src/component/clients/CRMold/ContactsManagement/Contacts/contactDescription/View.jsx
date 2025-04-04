@@ -15,6 +15,7 @@ const View = () => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
+  const token = localStorage.getItem("token");
 
   const [employee, setEmployee] = useState(null);
   const [error, setError] = useState(null);
@@ -23,7 +24,12 @@ const View = () => {
     const fetchEmployee = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/${id}`
+          `${process.env.REACT_APP_API_URL}/api/employee/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setEmployee(response.data);
       } catch (err) {
@@ -38,7 +44,12 @@ const View = () => {
     try {
       if (window.confirm("Do you want to delete this employee?")) {
         await axios.delete(
-          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`
+          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         alert("Employee deleted successfully");
         navigate("/contactmgmt/contacts");

@@ -1,40 +1,45 @@
 const express = require("express");
 const router = express.Router();
-const Pipeline = require("../../../models/clients/pipeline/pipeline-model");
-const Employee = require("../../../models/clients/contactdata");
+const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
+
 // Get all pipelines
-router.get("/list", async (req, res) => {
+router.get("/list", dbDBMiddleware, async (req, res) => {
   try {
-    const pipelines = await Pipeline.find().populate({
+    console.log("📥 Fetching all pipelines...");
+    const pipelines = await req.pipeline.find().populate({
       path: "stages.who",
-      select: "fullName email department position", // Include the fields you want from Employee
-      model: "Employee", // Specify the model to populate from
+      select: "fullName email department position",
+      model: "Employee",
     });
 
+    console.log(`✅ Pipelines fetched: ${pipelines.length}`);
     res.json(pipelines);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching pipelines", error });
+    console.error("❌ Error fetching pipelines:", error.message);
+    res.status(500).json({ message: "Error fetching pipelines", error: error.message });
   }
 });
 
-router.get("/contactinfo", async (req, res) => {
+// Get all contacts
+router.get("/contactinfo", dbDBMiddleware, async (req, res) => {
   try {
-    const employees = await Employee.find();
+    console.log("📥 Fetching all contacts...");
+    const employees = await req.Employee.find();
+    console.log(`✅ Contacts fetched: ${employees.length}`);
     res.json(employees);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching employees", error });
+    console.error("❌ Error fetching contacts:", error.message);
+    res.status(500).json({ message: "Error fetching employees", error: error.message });
   }
 });
 
-router.get("/user/:userId", async (req, res) => {
+// Get pipelines specific to a user
+router.get("/user/:userId", dbDBMiddleware, async (req, res) => {
   const { userId } = req.params;
   console.log(`🔵 Request received for pipelines with userId: ${userId}`);
 
   try {
-    const pipelines = await Pipeline.find({
-      "stages.who": userId,
-    });
-
+    const pipelines = await req.pipeline.find({ "stages.who": userId });
     console.log(`🟢 Found ${pipelines.length} pipelines with matching stages`);
 
     // Filter stages for the given userId
@@ -54,60 +59,76 @@ router.get("/user/:userId", async (req, res) => {
       };
     });
 
-    console.log(
-      "✅ Filtered Pipelines Response:",
-      JSON.stringify(filteredPipelines, null, 2)
-    );
-
+    console.log("✅ Filtered Pipelines Response:", JSON.stringify(filteredPipelines, null, 2));
     res.json(filteredPipelines);
   } catch (error) {
-    console.error("❌ Error fetching user-specific pipelines:", error);
-    res.status(500).json({ message: "Server Error", error });
+    console.error("❌ Error fetching user-specific pipelines:", error.message);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 
 // Add a new pipeline with multiple stages
-router.post("/add", async (req, res) => {
+router.post("/add", dbDBMiddleware, async (req, res) => {
   try {
+    console.log("📥 Adding new pipeline:", req.body);
     const { pipelineName, stages } = req.body;
 
     if (!pipelineName || !stages.length) {
+      console.warn("❌ Pipeline name or stages missing");
       return res
         .status(400)
         .json({ message: "Pipeline name and at least one stage are required" });
     }
 
-    const newPipeline = new Pipeline({ pipelineName, stages });
+    const newPipeline = new req.pipeline({ pipelineName, stages });
     await newPipeline.save();
-    res
-      .status(201)
-      .json({ message: "Pipeline added successfully", newPipeline });
+    console.log("✅ Pipeline added successfully:", newPipeline);
+    res.status(201).json({ message: "Pipeline added successfully", newPipeline });
   } catch (error) {
-    res.status(500).json({ message: "Error adding pipeline", error });
+    console.error("❌ Error adding pipeline:", error.message);
+    res.status(500).json({ message: "Error adding pipeline", error: error.message });
   }
 });
 
 // Delete a pipeline
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", dbDBMiddleware,  async (req, res) => {
   try {
-    await Pipeline.findByIdAndDelete(req.params.id);
-    res.json({ message: "Pipeline deleted successfully" });
+    console.log(`🗑️ Deleting pipeline with ID: ${req.params.id}`);
+    const deletedPipeline = await req.pipeline.findByIdAndDelete(req.params.id);
+
+    if (!deletedPipeline) {
+      console.warn("❌ Pipeline not found:", req.params.id);
+      return res.status(404).json({ message: "Pipeline not found" });
+    }
+
+    console.log("✅ Pipeline deleted successfully:", deletedPipeline);
+    res.json({ message: "Pipeline deleted successfully", deletedPipeline });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting pipeline", error });
+    console.error("❌ Error deleting pipeline:", error.message);
+    res.status(500).json({ message: "Error deleting pipeline", error: error.message });
   }
 });
 
 // Update stage status
-router.put("/:id", async (req, res) => {
+router.put("/:id", dbDBMiddleware, async (req, res) => {
   try {
-    const updatedPipeline = await Pipeline.findByIdAndUpdate(
+    console.log(`🔄 Updating pipeline with ID: ${req.params.id}`);
+    const updatedPipeline = await req.pipeline.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     );
+
+    if (!updatedPipeline) {
+      console.warn("❌ Pipeline not found:", req.params.id);
+      return res.status(404).json({ message: "Pipeline not found" });
+    }
+
+    console.log("✅ Pipeline updated successfully:", updatedPipeline);
     res.json({ message: "Pipeline updated successfully", updatedPipeline });
   } catch (error) {
-    res.status(500).json({ message: "Error updating pipeline", error });
+    console.error("❌ Error updating pipeline:", error.message);
+    res.status(500).json({ message: "Error updating pipeline", error: error.message });
   }
 });
 

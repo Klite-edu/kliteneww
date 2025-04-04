@@ -8,7 +8,7 @@ const { validationResult, sanitize } = require("express-validator");
 const cors = require("cors");
 const http = require("http");
 const { updateTaskFrequency } = require("./middlewares/TaskScheduler");
-const db = require("./database/db");
+const { connectMainDB } = require("./database/db");
 
 // ✅ Import Routes
 const adminRoutes = require("./routes/Admin/adminRoutes");
@@ -37,21 +37,23 @@ const MetaTemplateRoutes = require("./routes/clients/MetaBusiness/MetaTemplateRo
 const ticketRoute = require("./routes/clients/chatbot/ticketRoute");
 const clientDashRoute = require("./routes/clients/Dashboard/DashboardRoute");
 const TicketRaiseRoute = require("./routes/clients/TicketRaise/TicketRaiseRoute");
+// const permissionRoutes = require("./routes/clients/permissions/prmissionsRoute");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
-
+connectMainDB();
 // ✅ Enable CORS for both local and production origins
 const allowedOrigins = [
-  "http://localhost:3000", // Development Frontend
-  "https://app.autopilotmybusiness.com", // Production Frontend
+  "http://localhost:3000",
 ];
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 // ✅ Enhance Security with Helmet
 app.use(helmet());
@@ -60,15 +62,19 @@ app.use(helmet.hidePoweredBy());
 app.use(helmet.xssFilter());
 app.use(helmet.noSniff());
 app.use(helmet.dnsPrefetchControl({ allow: false }));
-app.use(helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true }));
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "trusted.com"],
-    objectSrc: ["'none'"],
-    upgradeInsecureRequests: [],
-  },
-}));
+app.use(
+  helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true })
+);
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "trusted.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  })
+);
 
 // ✅ Middleware to sanitize incoming data
 app.use(express.json());
@@ -111,6 +117,7 @@ app.use("/api/meta", MetaClientRoutes);
 app.use("/api/clientDash", clientDashRoute);
 app.use("/api/ticket", ticketRoute);
 app.use("/api/ticketRaise", TicketRaiseRoute);
+// app.use("/api/permission", permissionRoutes);
 
 // ✅ Start Scheduled Jobs
 updateTaskFrequency();

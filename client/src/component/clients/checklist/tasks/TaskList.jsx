@@ -38,7 +38,7 @@ const TaskList = () => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
     const storedUserId = localStorage.getItem("userId");
@@ -77,7 +77,12 @@ const TaskList = () => {
   const fetchServerDate = async () => {
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/tasks/serverdate`
+        `${process.env.REACT_APP_API_URL}/api/tasks/serverdate`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setServerDate(new Date(res.data.currentDate));
     } catch (error) {
@@ -88,7 +93,12 @@ const TaskList = () => {
   const fetchEmployees = async () => {
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setEmployees(res.data);
     } catch (error) {
@@ -189,7 +199,7 @@ const TaskList = () => {
         taskData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -216,7 +226,7 @@ const TaskList = () => {
         `${process.env.REACT_APP_API_URL}/api/tasks/delete/${taskId}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

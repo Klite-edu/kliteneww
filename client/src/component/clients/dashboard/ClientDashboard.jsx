@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "./clientdashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBolt, faBuilding, faUsers, faTasks, faUserCheck } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBolt,
+  faBuilding,
+  faUsers,
+  faTasks,
+  faUserCheck,
+} from "@fortawesome/free-solid-svg-icons";
 import {
   BarChart,
   Bar,
@@ -37,12 +43,18 @@ const ClientDashboard = () => {
   const userRole = localStorage.getItem("role");
   const userName = localStorage.getItem("userName") || "User";
   const userEmail = localStorage.getItem("email") || "No email";
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`
+          `${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setTotalEmployee(response.data.totalEmployee);
         setActiveEmployee(response.data.activeEmployee);
@@ -54,18 +66,32 @@ const ClientDashboard = () => {
     const fetchTriggerCount = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`
+          `${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
+        console.log("✅ [FETCH TRIGGER COUNT] Response Data:", response.data);
         setTriggers(response.data.totalTriggers);
       } catch (error) {
-        console.error("Error fetching trigger count:", error);
+        console.error(
+          "❌ [FETCH TRIGGER COUNT] Error fetching trigger count:",
+          error
+        );
       }
     };
 
     const fetchPipelineStageCount = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`
+          `${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setTotalPipelines(response.data.totalPipelines);
         setTotalStages(response.data.totalStages);
@@ -128,7 +154,12 @@ const ClientDashboard = () => {
     const fetchChecklist = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/tasks/list`
+          `${process.env.REACT_APP_API_URL}/api/tasks/list`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         const data = response.data.slice(0, 5);
         setChecklist(data);
@@ -139,13 +170,22 @@ const ClientDashboard = () => {
 
     const fetchDelegation = async () => {
       try {
+        const token = localStorage.getItem("token"); // Get token from localStorage
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/delegation/list`
+          `${process.env.REACT_APP_API_URL}/api/delegation/list`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Send token in headers
+            },
+          }
         );
-        const data = response.data.slice(0, 5);
-        setDelegation(data);
+        console.log("Delegation Data:", response.data);
       } catch (error) {
-        console.error("❌ Error fetching checklist tasks:", error);
+        console.error(
+          "Error fetching delegation tasks:",
+          error.response?.data || error.message
+        );
       }
     };
 
@@ -160,14 +200,24 @@ const ClientDashboard = () => {
   }, []);
 
   const data = [
-    { label: "Total Employee", value: totalEmployee, icon: faUsers, color: "#0D6E6E" },
-    { label: "Active Employee", value: activeEmployee, icon: faUserCheck, color: "#4CAF50" },
+    {
+      label: "Total Employee",
+      value: totalEmployee,
+      icon: faUsers,
+      color: "#0D6E6E",
+    },
+    {
+      label: "Active Employee",
+      value: activeEmployee,
+      icon: faUserCheck,
+      color: "#4CAF50",
+    },
     { label: "Triggers", value: triggers, icon: faBolt, color: "#FF9800" },
     {
       label: "FMS/Pipeline",
       value: `${totalPipelines} / ${totalStages}`,
       icon: faTasks,
-      color: "#9C27B0"
+      color: "#9C27B0",
     },
   ];
 
@@ -224,10 +274,14 @@ const ClientDashboard = () => {
 
       <div className="dashboard-graphs">
         {data.map((item, index) => (
-          <div className="block-data" key={index} style={{ borderLeft: `4px solid ${item.color}` }}>
-            <FontAwesomeIcon 
-              icon={item.icon} 
-              className="icon-client" 
+          <div
+            className="block-data"
+            key={index}
+            style={{ borderLeft: `4px solid ${item.color}` }}
+          >
+            <FontAwesomeIcon
+              icon={item.icon}
+              className="icon-client"
               style={{ color: item.color }}
             />
             <h3>{item.label}</h3>
@@ -280,13 +334,13 @@ const ClientDashboard = () => {
               <YAxis stroke="#666" />
               <Tooltip />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="profit" 
-                stroke="#0D6E6E" 
-                strokeWidth={2} 
-                dot={{ fill: '#0D6E6E', r: 4 }} 
-                activeDot={{ r: 6 }} 
+              <Line
+                type="monotone"
+                dataKey="profit"
+                stroke="#0D6E6E"
+                strokeWidth={2}
+                dot={{ fill: "#0D6E6E", r: 4 }}
+                activeDot={{ r: 6 }}
                 name="Leads"
               />
             </LineChart>
@@ -298,7 +352,9 @@ const ClientDashboard = () => {
         <div className="transaction-table">
           <div className="recent-transHead">
             <h3>Task Delegated</h3>
-            <button onClick={() => (window.location.href = "/delegation-tasklist")}>
+            <button
+              onClick={() => (window.location.href = "/delegation-tasklist")}
+            >
               View All
             </button>
           </div>
@@ -312,11 +368,11 @@ const ClientDashboard = () => {
                     <div className="trans-name-date">
                       <h5>{task.name || "Unnamed Task"}</h5>
                       <p>
-                        {new Date(task.dueDate).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
+                        {new Date(task.dueDate).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </p>
                     </div>
@@ -354,27 +410,33 @@ const ClientDashboard = () => {
                   <div className="trans-name-date">
                     <h5>{task.taskName || "Untitled Task"}</h5>
                     <p>
-                      {task.plannedDateTime ? 
-                        new Date(task.plannedDateTime).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : 
-                        "No date set"}
+                      {task.plannedDateTime
+                        ? new Date(task.plannedDateTime).toLocaleString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )
+                        : "No date set"}
                     </p>
                   </div>
                   <div className="trans-plan-price">
                     <p>{task.frequency}</p>
                     <p>
-                      {task.nextDueDateTime ? 
-                        new Date(task.nextDueDateTime).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : 
-                        "No due date"}
+                      {task.nextDueDateTime
+                        ? new Date(task.nextDueDateTime).toLocaleString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )
+                        : "No due date"}
                     </p>
                   </div>
                 </div>
@@ -385,44 +447,48 @@ const ClientDashboard = () => {
         </div>
       </div>
 
-        <div className="issue-container">
-          <div className="issue-button-head">
-            <h3>Employee Issue Tracker</h3>
-            <button>View All</button>
-          </div>
-          <div className="issuetable-container">
-            <table className="issue-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Client</th>
-                  <th>Issue Type</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Assigned To</th>
-                  <th>Reported Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {issues.map((issue) => (
-                  <tr key={issue.id}>
-                    <td>{issue.id}</td>
-                    <td>{issue.client}</td>
-                    <td>{issue.type}</td>
-                    <td className={`priority-${issue.priority.toLowerCase()}`}>
-                      {issue.priority}
-                    </td>
-                    <td className={`status-${issue.status.toLowerCase().replace(' ', '-')}`}>
-                      {issue.status}
-                    </td>
-                    <td>{issue.assignedTo}</td>
-                    <td>{issue.reportedDate}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="issue-container">
+        <div className="issue-button-head">
+          <h3>Employee Issue Tracker</h3>
+          <button>View All</button>
         </div>
+        <div className="issuetable-container">
+          <table className="issue-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Issue Type</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Reported Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {issues.map((issue) => (
+                <tr key={issue.id}>
+                  <td>{issue.id}</td>
+                  <td>{issue.client}</td>
+                  <td>{issue.type}</td>
+                  <td className={`priority-${issue.priority.toLowerCase()}`}>
+                    {issue.priority}
+                  </td>
+                  <td
+                    className={`status-${issue.status
+                      .toLowerCase()
+                      .replace(" ", "-")}`}
+                  >
+                    {issue.status}
+                  </td>
+                  <td>{issue.assignedTo}</td>
+                  <td>{issue.reportedDate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

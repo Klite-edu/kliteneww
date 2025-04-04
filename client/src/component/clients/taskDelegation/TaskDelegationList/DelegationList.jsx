@@ -23,7 +23,7 @@ const DelegationList = () => {
   const [reviseFormData, setReviseFormData] = useState({
     revisedDate: "",
     revisedTime: "",
-    revisedReason: ""
+    revisedReason: "",
   });
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketData, setTicketData] = useState({
@@ -44,11 +44,16 @@ const DelegationList = () => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
-
+  const token = localStorage.getItem("token");
   const fetchTasks = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/delegation/list`
+        `${process.env.REACT_APP_API_URL}/api/delegation/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       let taskList = response.data;
       if (role === "user" && userId) {
@@ -64,7 +69,12 @@ const DelegationList = () => {
   const fetchEmployees = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setEmployees(response.data);
     } catch (error) {
@@ -128,7 +138,12 @@ const DelegationList = () => {
     try {
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/edit/${editingTask._id}`,
-        editFormData
+        editFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       alert("Task updated successfully!");
       setEditingTask(null);
@@ -141,7 +156,12 @@ const DelegationList = () => {
   const handleDeleteTask = async (taskId) => {
     try {
       await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`
+        `${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       alert("Task deleted successfully!");
       fetchTasks();
@@ -152,8 +172,8 @@ const DelegationList = () => {
 
   const handleCompleteTask = async (taskId) => {
     try {
-      setCompletedTasks(prev => ({ ...prev, [taskId]: true }));
-      
+      setCompletedTasks((prev) => ({ ...prev, [taskId]: true }));
+
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/complete/${taskId}`,
         {},
@@ -163,11 +183,11 @@ const DelegationList = () => {
           },
         }
       );
-      
+
       fetchTasks();
     } catch (error) {
       console.error("Error completing task:", error);
-      setCompletedTasks(prev => {
+      setCompletedTasks((prev) => {
         const newState = { ...prev };
         delete newState[taskId];
         return newState;
@@ -181,7 +201,7 @@ const DelegationList = () => {
     setReviseFormData({
       revisedDate: task.revisedDate ? task.revisedDate.split("T")[0] : "",
       revisedTime: task.revisedTime || "",
-      revisedReason: task.revisedReason || ""
+      revisedReason: task.revisedReason || "",
     });
   };
 
@@ -248,7 +268,10 @@ const DelegationList = () => {
 
         {role === "user" && (
           <div style={{ textAlign: "right", marginBottom: "15px" }}>
-            <button className="btn blue" onClick={() => setShowTicketModal(true)}>
+            <button
+              className="btn blue"
+              onClick={() => setShowTicketModal(true)}
+            >
               Raise Ticket
             </button>
           </div>
@@ -278,13 +301,17 @@ const DelegationList = () => {
             <input
               type="date"
               value={dateRange.from}
-              onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, from: e.target.value })
+              }
             />
             <label>To:</label>
             <input
               type="date"
               value={dateRange.to}
-              onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, to: e.target.value })
+              }
             />
           </div>
         </div>
@@ -359,13 +386,32 @@ const DelegationList = () => {
                           />
                         </td>
                         <td>{task.status || "Pending"}</td>
-                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
-                        <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          {task.completedAt
+                            ? new Date(task.completedAt).toLocaleString()
+                            : "N/A"}
+                        </td>
+                        <td>
+                          {task.revisedDate
+                            ? new Date(task.revisedDate).toLocaleDateString()
+                            : "N/A"}
+                        </td>
                         <td>{task.revisedTime || "N/A"}</td>
                         <td>{task.revisedReason || "N/A"}</td>
                         <td>
-                          <button className="btn green" onClick={handleUpdateTask}>Save</button>
-                          <button className="btn red" onClick={() => setEditingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                          <button
+                            className="btn green"
+                            onClick={handleUpdateTask}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn red"
+                            onClick={() => setEditingTask(null)}
+                            style={{ marginLeft: "8px" }}
+                          >
+                            Cancel
+                          </button>
                         </td>
                       </tr>
                     );
@@ -378,7 +424,11 @@ const DelegationList = () => {
                         <td>{new Date(task.dueDate).toLocaleDateString()}</td>
                         <td>{task.time}</td>
                         <td>{task.status || "Pending"}</td>
-                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                        <td>
+                          {task.completedAt
+                            ? new Date(task.completedAt).toLocaleString()
+                            : "N/A"}
+                        </td>
                         <td>
                           <input
                             type="date"
@@ -405,8 +455,19 @@ const DelegationList = () => {
                           />
                         </td>
                         <td>
-                          <button className="btn green" onClick={handleReviseSubmit}>Save</button>
-                          <button className="btn red" onClick={() => setRevisingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                          <button
+                            className="btn green"
+                            onClick={handleReviseSubmit}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn red"
+                            onClick={() => setRevisingTask(null)}
+                            style={{ marginLeft: "8px" }}
+                          >
+                            Cancel
+                          </button>
                         </td>
                       </tr>
                     );
@@ -419,34 +480,61 @@ const DelegationList = () => {
                         <td>{new Date(task.dueDate).toLocaleDateString()}</td>
                         <td>{task.time}</td>
                         <td>{task.status || "Pending"}</td>
-                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
-                        <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          {task.completedAt
+                            ? new Date(task.completedAt).toLocaleString()
+                            : "N/A"}
+                        </td>
+                        <td>
+                          {task.revisedDate
+                            ? new Date(task.revisedDate).toLocaleDateString()
+                            : "N/A"}
+                        </td>
                         <td>{task.revisedTime || "N/A"}</td>
                         <td>{task.revisedReason || "N/A"}</td>
                         <td>
                           {role === "user" ? (
                             <>
-                              {task.status === "Completed" || completedTasks[task._id] ? (
+                              {task.status === "Completed" ||
+                              completedTasks[task._id] ? (
                                 <span className="completed-icon">
-                                  <FaCheck style={{ color: 'green', fontSize: '20px' }} />
+                                  <FaCheck
+                                    style={{ color: "green", fontSize: "20px" }}
+                                  />
                                 </span>
                               ) : (
-                                <button 
-                                  className="btn green" 
+                                <button
+                                  className="btn green"
                                   onClick={() => handleCompleteTask(task._id)}
                                   disabled={completedTasks[task._id]}
                                 >
                                   Complete
                                 </button>
                               )}
-                              {task.status !== "Completed" && !completedTasks[task._id] && (
-                                <button className="btn blue" onClick={() => handleReviseClick(task)}>Revise</button>
-                              )}
+                              {task.status !== "Completed" &&
+                                !completedTasks[task._id] && (
+                                  <button
+                                    className="btn blue"
+                                    onClick={() => handleReviseClick(task)}
+                                  >
+                                    Revise
+                                  </button>
+                                )}
                             </>
                           ) : role === "client" ? (
                             <>
-                              <button className="btn green" onClick={() => handleEditClick(task)}>Edit</button>
-                              <button className="btn red" onClick={() => handleDeleteTask(task._id)}>Delete</button>
+                              <button
+                                className="btn green"
+                                onClick={() => handleEditClick(task)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn red"
+                                onClick={() => handleDeleteTask(task._id)}
+                              >
+                                Delete
+                              </button>
                             </>
                           ) : null}
                         </td>
@@ -484,7 +572,10 @@ const DelegationList = () => {
                     placeholder="Describe your issue..."
                     value={ticketData.description}
                     onChange={(e) =>
-                      setTicketData({ ...ticketData, description: e.target.value })
+                      setTicketData({
+                        ...ticketData,
+                        description: e.target.value,
+                      })
                     }
                     required
                   />
@@ -503,8 +594,16 @@ const DelegationList = () => {
                   </select>
                 </div>
                 <div className="modal-buttons">
-                  <button type="submit" className="btn green">Submit</button>
-                  <button type="button" className="btn red" onClick={() => setShowTicketModal(false)}>Cancel</button>
+                  <button type="submit" className="btn green">
+                    Submit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn red"
+                    onClick={() => setShowTicketModal(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </form>
             </div>

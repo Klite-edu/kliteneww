@@ -1,4 +1,4 @@
-:root {
+/* :root {
     --primary-color: #0D6E6E;
     --primary-light: rgba(13, 110, 110, 0.1);
     --primary-dark: #0b5e5e;
@@ -127,7 +127,7 @@
     border-width: 0.2em;
 }
 
-/* Empty state styling */
+
 .bi-inbox {
     font-size: 3rem;
     opacity: 0.7;
@@ -138,7 +138,7 @@
     font-size: 0.9rem;
 }
 
-/* Scrollbar styling */
+
 .abhi-pipeline-table-body-scroll::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -158,7 +158,7 @@
     background: var(--primary-dark);
 }
 
-/* Alert Styles */
+
 .custom-alert {
     position: fixed;
     top: 50%;
@@ -227,7 +227,7 @@
     color: #333;
 }
 
-/* Confirmation Dialog Styles */
+
 .custom-confirm-overlay {
     position: fixed;
     top: 0;
@@ -310,7 +310,7 @@
     border-color: var(--danger-color);
 }
 
-/* Animation for alert entrance */
+
 @keyframes alertIn {
     0% {
         transform: translate(-50%, -50%) scale(0.9);
@@ -343,7 +343,7 @@
     animation: alertOut 0.3s ease forwards;
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
     .abhi-pipeline-title {
         font-size: 1.3rem;
@@ -363,4 +363,409 @@
         height: 28px;
         font-size: 0.8rem;
     }
+} */
+
+.PipelinesList-pipeline-container {
+  padding: 2rem;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 70px);
+  margin-left: 280px;
+  margin-top: 70px;
+  transition: all 0.3s ease;
+}
+
+.PipelinesList-pipeline-title {
+  font-size: 1.75rem;
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.pipline-dash-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+  left: 35%;
+  top: 100px;
+  max-width: 800px;
+  flex-wrap: wrap;
+}
+
+.pipline-dash-buttons button {
+  padding: 12px 24px;
+  background-color: var(--white);
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(13, 110, 110, 0.1);
+  min-width: 160px;
+  text-align: center;
+}
+
+.pipline-dash-buttons button:hover {
+  background-color: var(--primary-color);
+  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(13, 110, 110, 0.2);
+}
+
+.pipline-dash-buttons button:active {
+  background-color: var(--primary-hover);
+  transform: translateY(0);
+}
+
+/* Active state - if you want to highlight current page */
+.pipline-dash-buttons button.active {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.PipelinesList-pipeline-subtitle {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-bottom: 0;
+}
+
+.PipelinesList-pipeline-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+.PipelinesList-pipeline-table-wrapper {
+  position: relative;
+}
+
+.PipelinesList-pipeline-table {
+  width: 100%;
+  margin-bottom: 0;
+  color: #212529;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.PipelinesList-pipeline-table-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.PipelinesList-pipeline-table-header th {
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  color: #495057;
+}
+
+.PipelinesList-pipeline-table-body-scroll {
+  overflow-y: auto;
+}
+
+.PipelinesList-pipeline-table-row {
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.PipelinesList-pipeline-table-row:last-child {
+  border-bottom: none;
+}
+
+.PipelinesList-pipeline-table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.PipelinesList-pipeline-table-row td {
+  padding: 1rem 1.5rem;
+  vertical-align: middle;
+}
+
+.PipelinesList-pipeline-action-btn {
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.PipelinesList-pipeline-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-outline-primary {
+  color: #0d6e6e;
+  border-color: #0d6e6e;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6e6e;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.PipelinesList-spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.25em;
+  color: #0d6e6e;
+}
+
+/* Empty State Styles */
+.PipelinesList-empty-state {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.PipelinesList-empty-state i {
+  font-size: 3rem;
+  color: #0d6e6e;
+  opacity: 0.7;
+  margin-bottom: 1rem;
+}
+
+.PipelinesList-empty-state p {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+/* Delete Confirmation Styles */
+.custom-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.custom-confirm-overlay.show {
+  opacity: 1;
+}
+
+.custom-confirm-box {
+  background-color: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.custom-confirm-overlay.show .custom-confirm-box {
+  transform: translateY(0);
+}
+
+.custom-confirm-content {
+  text-align: center;
+}
+
+.custom-confirm-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16px;
+}
+
+.custom-confirm-message {
+  color: #6c757d;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.custom-confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.custom-confirm-cancel {
+  min-width: 100px;
+  padding: 8px 16px;
+}
+
+.custom-confirm-confirm {
+  min-width: 100px;
+  padding: 8px 16px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1199.98px) {
+  .PipelinesList-pipeline-container {
+    margin-left: 240px;
+    padding: 1.5rem;
+  }
+
+  .pipline-dash-buttons {
+    left: 30%;
+    top: 80px;
+  }
+  .PipelinesList-pipeline-title {
+    font-size: 1.5rem;
+  }
+
+  .PipelinesList-pipeline-subtitle {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .PipelinesList-pipeline-container {
+    margin-left: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .pipline-dash-buttons {
+    left: 0;
+    top: 80px;
+    justify-content: flex-start;
+    padding: 0 1rem;
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .PipelinesList-pipeline-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .PipelinesList-pipeline-table {
+    min-width: 600px;
+  }
+
+  .PipelinesList-pipeline-action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .PipelinesList-pipeline-container {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+    margin-top: 60px;
+  }
+
+  .pipline-dash-buttons {
+    gap: 15px;
+    top: 70px;
+  }
+
+  .pipline-dash-buttons button {
+    padding: 10px 18px;
+    font-size: 14px;
+    min-width: 140px;
+  }
+
+
+  .PipelinesList-pipeline-title {
+    font-size: 1.3rem;
+  }
+
+  .PipelinesList-pipeline-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .PipelinesList-pipeline-table-header th,
+  .PipelinesList-pipeline-table-row td {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .PipelinesList-pipeline-container {
+    padding: 1rem 0.75rem;
+    margin-top: 60px;
+  }
+
+  .pipline-dash-buttons {
+    gap: 10px;
+    top: 70px;
+    margin-bottom: 1rem;
+  }
+
+  .pipline-dash-buttons button {
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 120px;
+    border-width: 1px;
+  }
+
+  .pipline-dash-buttons button i {
+    font-size: 16px;
+    margin-right: 6px;
+  }
+
+  .PipelinesList-pipeline-title {
+    font-size: 1.2rem;
+  }
+
+  .PipelinesList-pipeline-action-btn {
+    margin: 0.1rem;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .PipelinesList-pipeline-table-body-scroll {
+    max-height: calc(100vh - 220px) !important;
+  }
+}
+
+/* Animation for smooth transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.PipelinesList-pipeline-card {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Custom scrollbar for table */
+.PipelinesList-pipeline-table-body-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.PipelinesList-pipeline-table-body-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.PipelinesList-pipeline-table-body-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.PipelinesList-pipeline-table-body-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }

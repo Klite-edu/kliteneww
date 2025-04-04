@@ -1,5 +1,6 @@
 const cron = require("node-cron");
-const Task = require("../models/clients/checklist/task");
+const { getTaskModel } = require("../models/clients/checklist/task");
+const { getAllClientDBNames } = require("../database/db");
 
 // Function to calculate the next due datetime based on frequency
 const calculateNextDueDateTime = (plannedDateTime, frequency) => {
@@ -53,45 +54,45 @@ const calculateNextDueDateTime = (plannedDateTime, frequency) => {
   return nextDueDateTime;
 };
 
-// Scheduled Task to Update Recurring Tasks
+// Scheduled Task to Update Recurring Tasks for All Client Databases
 const updateTaskFrequency = async () => {
   try {
     const now = new Date();
-    console.log("🔄 Running Task Frequency Update at (UTC):", now.toUTCString());
+    const clientDBNames = await getAllClientDBNames();
 
-    const tasks = await Task.find({ nextDueDateTime: { $lte: now } });
-
-    console.log(`🔍 Found ${tasks.length} tasks that need updating.`);
-
-    if (tasks.length === 0) {
-      console.log("✅ No tasks to update.");
-      return;
-    }
-
-    for (let task of tasks) {
-      let newDueDateTime = calculateNextDueDateTime(task.nextDueDateTime, task.frequency);
-      if (!newDueDateTime) {
-        console.warn(`⚠️ Skipping Task: ${task.taskName} - Unable to calculate next due datetime.`);
-        continue;
-      }
-
+    for (const dbName of clientDBNames) {
       try {
-        await Task.findByIdAndUpdate(task._id, { 
-          nextDueDateTime: newDueDateTime, 
-          status: "Pending" 
-        });
-        console.log(`✅ Successfully Updated Task: ${task.taskName} | New Due DateTime (UTC): ${newDueDateTime.toUTCString()}`);
-      } catch (updateError) {
-        console.error(`❌ Error updating task ${task.taskName}:`, updateError);
+        const companyName = dbName.replace("client_db_", "");
+        const Task = await getTaskModel(companyName);
+        const tasks = await Task.find({ nextDueDateTime: { $lte: now } });
+
+        if (tasks.length === 0) continue;
+
+        for (let task of tasks) {
+          let newDueDateTime = calculateNextDueDateTime(task.nextDueDateTime, task.frequency);
+
+          if (!newDueDateTime) continue;
+
+          try {
+            await Task.findByIdAndUpdate(task._id, {
+              nextDueDateTime: newDueDateTime,
+              status: "Pending",
+            });
+          } catch (updateError) {
+            console.error(`❌ Error updating task ${task.taskName} in ${companyName}:`, updateError.message);
+          }
+        }
+      } catch (companyError) {
+        console.error(`❌ Error processing tasks for company: ${dbName}`, companyError.message);
       }
     }
   } catch (error) {
-    console.error("❌ Error updating tasks:", error);
+    console.error("❌ Error updating tasks:", error.message);
   }
 };
 
+// Schedule to run the task update daily at midnight
 cron.schedule("0 0 * * *", () => {
-  console.log("🕛 Running Scheduled Task Update...");
   updateTaskFrequency();
 });
 

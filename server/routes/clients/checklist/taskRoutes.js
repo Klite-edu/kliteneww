@@ -1,21 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const Task = require("../../../models/clients/checklist/task");
-const Employee = require("../../../models/clients/contactdata");
+const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
 const {
   calculateNextDueDateTime,
 } = require("../../../middlewares/TaskScheduler");
 const verifyToken = require("../../../middlewares/auth");
-
 // Add a New Task
-router.post("/add", async (req, res) => {
+router.post("/add", dbDBMiddleware, async (req, res) => {
   try {
     console.log("📩 Received Task Data:", req.body);
 
     const { taskName, doerName, department, frequency, plannedDateTime } =
       req.body;
 
-    const employee = await Employee.findOne({ fullName: doerName });
+    const employee = await req.Employee.findOne({ fullName: doerName });
     if (!employee) {
       return res.status(400).json({ message: "Employee not found" });
     }
@@ -29,7 +27,7 @@ router.post("/add", async (req, res) => {
 
     console.log("📝 Calculated Next Due DateTime:", nextDueDateTime);
 
-    const newTask = new Task({
+    const newTask = new req.Task({
       taskName,
       doer: employeeId,
       department,
@@ -51,7 +49,7 @@ router.post("/add", async (req, res) => {
 });
 
 // Fetch Task List
-router.get("/list", async (req, res) => {
+router.get("/list", dbDBMiddleware, async (req, res) => {
   try {
     let { startDate, endDate, sort, generateFutureTasks, userId } = req.query;
     let filter = {};
@@ -67,7 +65,7 @@ router.get("/list", async (req, res) => {
       filter.doer = userId;
     }
 
-    let tasks = await Task.find(filter)
+    let tasks = await req.Task.find(filter)
       .sort({ nextDueDateTime: sort === "desc" ? -1 : 1 })
       .populate("doer", "fullName");
 
@@ -100,7 +98,7 @@ router.get("/list", async (req, res) => {
 });
 
 // Update Task
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", dbDBMiddleware, async (req, res) => {
   try {
     const { taskName, doerName, department, frequency, plannedDateTime } =
       req.body;
@@ -110,7 +108,7 @@ router.put("/update/:id", async (req, res) => {
       frequency
     );
 
-    const updatedTask = await Task.findByIdAndUpdate(
+    const updatedTask = await req.Task.findByIdAndUpdate(
       req.params.id,
       {
         taskName,
@@ -136,7 +134,7 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // Mark Task as Completed
-router.put("/markCompleted/:id", async (req, res) => {
+router.put("/markCompleted/:id", dbDBMiddleware, async (req, res) => {
   try {
     const { selectedDateTime } = req.body;
     console.log(
@@ -144,7 +142,7 @@ router.put("/markCompleted/:id", async (req, res) => {
       selectedDateTime
     );
 
-    const task = await Task.findById(req.params.id);
+    const task = await req.Task.findById(req.params.id);
     if (!task) {
       console.error("❌ Task not found:", req.params.id);
       return res.status(404).json({ error: "Task not found" });
@@ -188,9 +186,9 @@ router.put("/markCompleted/:id", async (req, res) => {
 });
 
 // Delete Task
-router.delete("/delete/:id", verifyToken,  async (req, res) => {
+router.delete("/delete/:id", dbDBMiddleware, verifyToken,  async (req, res) => {
   try {
-    const deletedTask = await Task.findByIdAndDelete(req.params.id);
+    const deletedTask = await req.Task.findByIdAndDelete(req.params.id);
 
     if (!deletedTask) {
       return res.status(404).json({ error: "Task not found" });
@@ -205,7 +203,7 @@ router.delete("/delete/:id", verifyToken,  async (req, res) => {
   }
 });
 
-router.get("/serverdate", (req, res) => {
+router.get("/serverdate" ,dbDBMiddleware, (req, res) => {
   const currentDate = new Date().toISOString();
   res.json({ currentDate });
 });

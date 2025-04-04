@@ -17,7 +17,7 @@ const Form = () => {
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
   const navigate = useNavigate();
-
+  const token = localStorage.getItem("token");
   const [formCategories, setFormCategories] = useState({
     "Next form": [],
   });
@@ -27,7 +27,12 @@ const Form = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/builder/forms`
+          `${process.env.REACT_APP_API_URL}/api/builder/forms`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         const formsData = response.data.forms;
@@ -89,7 +94,7 @@ const Form = () => {
             className="form-dash-new-btn"
             onClick={() => navigate("/FormBuilder")}
           >
-            Start a new form
+            Create a new form
           </button>
         </div>
 
@@ -153,7 +158,7 @@ const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const initialData = {};
     form.fields.forEach((field) => {
@@ -192,7 +197,12 @@ const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
 
       await axios.post(
         `${process.env.REACT_APP_API_URL}/api/form/submit/${form._id}`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       alert("Form submitted successfully!");
@@ -243,7 +253,9 @@ const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
               <div key={index} className="form-dash-field">
                 <label className="form-dash-field-label">
                   {field.label}
-                  {field.required && <span className="required-asterisk">*</span>}
+                  {field.required && (
+                    <span className="required-asterisk">*</span>
+                  )}
                 </label>
                 {field.type === "select" ? (
                   <select

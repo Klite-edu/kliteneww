@@ -1,7 +1,6 @@
-// models/Delegation.js
 const mongoose = require("mongoose");
+const { createClientDatabase } = require("../../../database/db");
 
-// models/Delegation.js
 const delegationSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -39,6 +38,19 @@ const delegationSchema = new mongoose.Schema({
   revisedReason: {
     type: String, // New field to store revised reason
   },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Delegation", delegationSchema);
+delegationSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Function to get the Delegation model from the dynamic database
+const getDelegationModel = async (companyName) => {
+  const clientDB = await createClientDatabase(companyName);
+  return clientDB.model("Delegation", delegationSchema);
+};
+
+module.exports = { getDelegationModel };

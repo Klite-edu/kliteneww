@@ -13,7 +13,7 @@ const AddTask = () => {
     department: "",
     frequency: "",
     plannedDate: "",
-    plannedTime: ""
+    plannedTime: "",
   });
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
@@ -22,11 +22,18 @@ const AddTask = () => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/contactinfo`);
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setEmployees(res.data);
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -62,12 +69,20 @@ const AddTask = () => {
     try {
       // Combine date and time into a single datetime string
       const plannedDateTime = `${task.plannedDate}T${task.plannedTime}:00.000Z`;
-      
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks/add`, {
-        ...task,
-        plannedDateTime
-      });
-      
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/tasks/add`,
+        {
+          ...task,
+          plannedDateTime,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       alert("Task added successfully!");
       navigate("/check-tasklist");
       setTask({
@@ -76,7 +91,7 @@ const AddTask = () => {
         department: "",
         frequency: "",
         plannedDate: "",
-        plannedTime: ""
+        plannedTime: "",
       });
     } catch (error) {
       console.error("Error adding task:", error);
@@ -166,10 +181,18 @@ const AddTask = () => {
                   <option value="Quarterly">Quarterly</option>
                   <option value="Half-yearly">Half-yearly</option>
                   <option value="Yearly">Yearly</option>
-                  <option value="First of every month">First of every month</option>
-                  <option value="Second of every month">Second of every month</option>
-                  <option value="Third of every month">Third of every month</option>
-                  <option value="Fourth of every month">Fourth of every month</option>
+                  <option value="First of every month">
+                    First of every month
+                  </option>
+                  <option value="Second of every month">
+                    Second of every month
+                  </option>
+                  <option value="Third of every month">
+                    Third of every month
+                  </option>
+                  <option value="Fourth of every month">
+                    Fourth of every month
+                  </option>
                 </select>
               </div>
             </div>
@@ -201,7 +224,11 @@ const AddTask = () => {
             </div>
 
             <div className="form-actions">
-              <button type="button" className="cancel-btn" onClick={handleCancel}>
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={handleCancel}
+              >
                 Cancel
               </button>
               <button type="submit" className="submit-btn">

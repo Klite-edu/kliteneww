@@ -22,6 +22,7 @@ const EditContact = () => {
     workAssigned: "",
     notes: "",
     callData: "",
+    password: "",
     status: "Active",
     permissionAccessLevel: "Employee",
     teamAssociation: "",
@@ -33,12 +34,17 @@ const EditContact = () => {
     const storedPermissions = localStorage.getItem("permissions");
     return storedPermissions ? JSON.parse(storedPermissions) : {};
   });
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/${id}`
+          `${process.env.REACT_APP_API_URL}/api/employee/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setEmployee(response.data);
       } catch (error) {
@@ -51,21 +57,40 @@ const EditContact = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEmployee({ ...employee, [name]: value });
+    
+    // If the password field is empty, set it to an empty string (optional)
+    if (name === "password" && value.trim() === "") {
+      setEmployee({ ...employee, [name]: "" });
+    } else {
+      setEmployee({ ...employee, [name]: value });
+    }
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    // Create a copy to remove the password field if it is empty
+    const updatedEmployee = { ...employee };
+    if (!updatedEmployee.password) {
+      delete updatedEmployee.password;
+    }
+  
     try {
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/employee/update/${id}`,
-        employee
+        updatedEmployee,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       navigate("/contactmgmt/contacts");
     } catch (error) {
       console.error("Error updating employee:", error);
     }
   };
+  
 
   return (
     <>
@@ -75,7 +100,9 @@ const EditContact = () => {
       <div className="edit-create-div">
         <div className="create-header-container">
           <h3 className="Edit-create-head">Edit Employee</h3>
-          <p className="create-subheading">Update the details below to modify employee information</p>
+          <p className="create-subheading">
+            Update the details below to modify employee information
+          </p>
         </div>
         <div className="employee-create-edit-info">
           <form onSubmit={handleSubmit}>
@@ -173,6 +200,17 @@ const EditContact = () => {
                 <h4 className="section-title">Account Settings</h4>
                 <div className="form-grid">
                   <div className="form-employee-input">
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={employee.password || ""} // Keep empty if not updating
+                      onChange={handleChange}
+                      placeholder="Enter new password"
+                    />
+                  </div>
+
+                  <div className="form-employee-input">
                     <label>Status</label>
                     <select
                       name="status"
@@ -262,9 +300,9 @@ const EditContact = () => {
               </div>
             </div>
             <div className="bottom-create-button">
-              <button 
-                className="discard-btn" 
-                type="button" 
+              <button
+                className="discard-btn"
+                type="button"
                 onClick={() => navigate("/contactmgmt/contacts")}
               >
                 Discard

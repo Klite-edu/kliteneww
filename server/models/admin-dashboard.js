@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const { connectMainDB } = require("../database/db");
+
+connectMainDB();
 const CompanySchema = new mongoose.Schema({
   company: String,
   opportunities: {

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
-const  db1  = require("../../database/db");
+const { connectMainDB } = require("../../database/db");
+connectMainDB();
+
 
 const userSubscriptionSchema = new mongoose.Schema({
   clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Clients", required: true },
@@ -9,5 +11,5 @@ const userSubscriptionSchema = new mongoose.Schema({
   status: { type: String, enum: ["expired", "active"], default: "active" },
 });
 
-const UserSubscription = db1.model("UserSubscription", userSubscriptionSchema);
+const UserSubscription = mongoose.model("UserSubscription", userSubscriptionSchema);
 module.exports = UserSubscription;

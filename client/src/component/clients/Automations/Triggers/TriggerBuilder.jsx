@@ -3,7 +3,13 @@ import axios from "axios";
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
 import "./triggerbuilder.css";
-import { FiPlus, FiTrash2, FiChevronDown, FiChevronUp, FiSave } from "react-icons/fi";
+import {
+  FiPlus,
+  FiTrash2,
+  FiChevronDown,
+  FiChevronUp,
+  FiSave,
+} from "react-icons/fi";
 
 const TriggerBuilder = () => {
   const [triggerData, setTriggerData] = useState({
@@ -23,7 +29,7 @@ const TriggerBuilder = () => {
   const [selectedTrigger, setSelectedTrigger] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
   const [customPermissions, setCustomPermissions] = useState(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -34,33 +40,54 @@ const TriggerBuilder = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
-        // Fetch all data in parallel
+        const token = localStorage.getItem("token");
+        console.log("🔑 Retrieved Token:", token);
         const [
           formsResponse,
           stagesResponse,
           eventSourcesResponse,
           triggersResponse,
         ] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/builder/formDetails`),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/stages/list`),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/event-sources`),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/builder/formDetails`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          ),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/stages/list`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/triggers/event-sources`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          ),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
         ]);
 
         // Transform forms data to only include what we need
-        const formattedForms = formsResponse.data.data.map(form => ({
+        const formattedForms = formsResponse.data.data.map((form) => ({
           _id: form._id,
-          form_name: form.formInfo?.title || 'Untitled Form'
+          form_name: form.formInfo?.title || "Untitled Form",
         }));
 
         setForms(formattedForms);
         setStages(stagesResponse.data);
         setEventSources(eventSourcesResponse.data);
         setTriggers(triggersResponse.data);
-
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("❌ Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +102,12 @@ const TriggerBuilder = () => {
       setIsLoading(true);
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/triggers/create`,
-        triggerData
+        triggerData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       alert(response.data.message);
       // Reset form after successful creation
@@ -88,7 +120,14 @@ const TriggerBuilder = () => {
         is_active: true,
       });
       // Refresh triggers list
-      const triggersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`);
+      const triggersResponse = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/triggers/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setTriggers(triggersResponse.data);
     } catch (error) {
       console.error("Error creating trigger:", error);
@@ -106,11 +145,23 @@ const TriggerBuilder = () => {
     try {
       setIsDeleting(true);
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/triggers/delete/${triggerId}`
+        `${process.env.REACT_APP_API_URL}/api/triggers/delete/${triggerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       alert(response.data.message);
       // Refresh triggers list
-      const triggersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`);
+      const triggersResponse = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/triggers/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setTriggers(triggersResponse.data);
       // Clear selection if deleting the currently selected trigger
       if (selectedTrigger?._id === triggerId) {
@@ -349,9 +400,7 @@ const TriggerBuilder = () => {
                 ) : (
                   <>
                     {triggers.length === 0 ? (
-                      <div className="empty-state">
-                        No triggers available
-                      </div>
+                      <div className="empty-state">No triggers available</div>
                     ) : (
                       triggers.map((trigger) => (
                         <div
@@ -362,7 +411,10 @@ const TriggerBuilder = () => {
                               : ""
                           }`}
                         >
-                          <div className="trigger-item-content" onClick={() => handleUseTrigger(trigger)}>
+                          <div
+                            className="trigger-item-content"
+                            onClick={() => handleUseTrigger(trigger)}
+                          >
                             <h4>{trigger.name || "Unnamed Trigger"}</h4>
                             <p className="trigger-description">
                               {trigger.description || "No description provided"}
@@ -381,7 +433,8 @@ const TriggerBuilder = () => {
                                     )
                                   )
                                   ?.stages.find(
-                                    (s) => s._id === trigger.action.move_to_stage
+                                    (s) =>
+                                      s._id === trigger.action.move_to_stage
                                   )?.stageName || "Unknown stage"}
                               </span>
                             </div>

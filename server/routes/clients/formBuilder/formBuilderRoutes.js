@@ -1,13 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Submission = require("../../../models/clients/form/form-model");
-const formBuilderDB = require("../../../models/clients/formBuilder/formBuilder-model");
-const verifyToken = require("../../../middlewares/auth");
+const DBMiddleware = require("../../../middlewares/dbMiddleware");
 
 const router = express.Router();
 
 // Create a form
-router.post("/create", async (req, res) => {
+router.post("/create", DBMiddleware, async (req, res) => {
     try {
       const { body } = req;
   
@@ -49,7 +47,7 @@ router.post("/create", async (req, res) => {
         visibility: body.policyInfo?.visibility || false
       };
   
-      const formSavedInfo = await formBuilderDB.create({
+      const formSavedInfo = await req.FormBuilder.create({
         client: [clientId], // <== Save the client ID here
         fields,
         buttons,
@@ -68,9 +66,9 @@ router.post("/create", async (req, res) => {
   });
   
 
-  router.get("/forms", async (req, res) => {
+  router.get("/forms", DBMiddleware, async (req, res) => {
     try {
-      const forms = await formBuilderDB
+      const forms = await req.FormBuilder
         .find({})
         .sort({ _id: -1 }) // Sort by most recent first
         .lean();
@@ -93,12 +91,12 @@ router.post("/create", async (req, res) => {
     }
   });
 
-  router.get("/formDetails", async (req, res) => {
+  router.get("/formDetails", DBMiddleware, async (req, res) => {
     try {
         console.log("🔍 [FormBuilder] Fetching all forms from database");
 
         // Find all forms and exclude the version key
-        const forms = await formBuilderDB.find({})
+        const forms = await req.FormBuilder.find({})
             .select('-__v')
             .lean();
 
@@ -143,9 +141,9 @@ router.post("/create", async (req, res) => {
 
 
 // Get form by formId
-router.get("/form/:id",  async (req, res) => {
+router.get("/form/:id", DBMiddleware, async (req, res) => {
     try {
-      const formInfo = await formBuilderDB.findById(req.params.id);
+      const formInfo = await req.FormBuilder.findById(req.params.id);
   
       if (!formInfo) {
         return res.status(404).json({ error: "Form not found" });
@@ -159,9 +157,9 @@ router.get("/form/:id",  async (req, res) => {
   
 
 // Delete form by formId
-router.delete("/form/:formId", async (req, res) => {
-  try {
-    await formBuilderDB.findByIdAndDelete(req.params.formId);
+router.delete("/form/:formId", DBMiddleware , async (req, res) => {
+  try { 
+    await req.FormBuilder.findByIdAndDelete(req.params.formId);
     return res.status(200).json({ message: 'Form successfully deleted' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -169,9 +167,9 @@ router.delete("/form/:formId", async (req, res) => {
 });
 
 // Delete all forms by userId
-router.delete("/user/:userId", async (req, res) => {
+router.delete("/user/:userId", DBMiddleware, async (req, res) => {
   try {
-    await formBuilderDB.deleteMany({ user: req.params.userId });
+    await req.FormBuilder.deleteMany({ user: req.params.userId });
     return res.status(200).json({ message: 'Forms successfully deleted by user ID' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -179,9 +177,9 @@ router.delete("/user/:userId", async (req, res) => {
 });
 
 // Update form by formId
-router.put("/form/:formId", async (req, res) => {
+router.put("/form/:formId",DBMiddleware, async (req, res) => {
   try {
-    const updatedForm = await formBuilderDB.findByIdAndUpdate(req.params.formId, req.body, { new: true });
+    const updatedForm = await req.FormBuilder.findByIdAndUpdate(req.params.formId, req.body, { new: true });
     return res.status(200).json({ message: 'Form successfully updated', form: updatedForm });
   } catch (error) {
     return res.status(500).json({ error: error.message });

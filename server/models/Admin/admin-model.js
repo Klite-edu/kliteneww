@@ -1,14 +1,16 @@
 const mongoose = require("mongoose");
-const db = require("../../database/db");
+const { connectMainDB } = require("../../database/db");
+
+// Ensure the main DB connection is established
+connectMainDB();
 
 const adminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, default: "admin", enum: ["admin", "client", "user"] },
-  otpEnabled: { type: Boolean, default: false } // Add this flag to indicate OTP status
+  otpEnabled: { type: Boolean, default: false }, // OTP status flag
 });
-const Admin = db.model("AdminLogin", adminSchema);
+
+const Admin = mongoose.model("AdminLogin", adminSchema);
 
 module.exports = Admin;
-
-
