@@ -13,27 +13,56 @@ const AddTask = () => {
     department: "",
     frequency: "",
     plannedDate: "",
-    plannedTime: ""
+    plannedTime: "",
   });
   const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-  const [customPermissions, setCustomPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
 
   useEffect(() => {
-    const fetchEmployees = async () => {
+    const fetchInitialData = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/employee/contactinfo`);
-        setEmployees(res.data);
+        // Fetch token, role, and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true })
+        ]);
+
+        const userToken = tokenRes.data.token;
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+
+        if (!userToken || !userRole) {
+          navigate("/login");
+          return;
+        }
+
+        setToken(userToken);
+        setRole(userRole);
+        setCustomPermissions(userPermissions);
+
+        // Fetch employees
+        const employeesRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+          {
+            headers: { Authorization: `Bearer ${userToken}` },
+            withCredentials: true
+          }
+        );
+        setEmployees(employeesRes.data);
+
       } catch (error) {
-        console.error("Error fetching employees:", error);
+        console.error("Error fetching initial data:", error);
+        navigate("/login");
       }
     };
-    fetchEmployees();
-  }, []);
+
+    fetchInitialData();
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,47 +70,57 @@ const AddTask = () => {
       ...prevTask,
       [name]: value,
     }));
+    
     if (name === "doerName") {
       const selectedEmployee = employees.find((emp) => emp.fullName === value);
-      if (selectedEmployee) {
-        setTask((prevTask) => ({
-          ...prevTask,
-          department: selectedEmployee.designation,
-        }));
-      } else {
-        setTask((prevTask) => ({
-          ...prevTask,
-          department: "",
-        }));
-      }
+      setTask((prevTask) => ({
+        ...prevTask,
+        department: selectedEmployee ? selectedEmployee.designation : "",
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Combine date and time into a single datetime string
+      setLoading(true);
+      
+      // Combine date and time into ISO string
       const plannedDateTime = `${task.plannedDate}T${task.plannedTime}:00.000Z`;
-      
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/tasks/add`, {
-        ...task,
-        plannedDateTime
-      });
-      
+
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/tasks/add`,
+        {
+          ...task,
+          plannedDateTime,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true
+        }
+      );
+
       alert("Task added successfully!");
       navigate("/check-tasklist");
-      setTask({
-        taskName: "",
-        doerName: "",
-        department: "",
-        frequency: "",
-        plannedDate: "",
-        plannedTime: ""
-      });
+      resetForm();
+      
     } catch (error) {
       console.error("Error adding task:", error);
-      alert("Failed to add task.");
+      alert(error.response?.data?.message || "Failed to add task.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setTask({
+      taskName: "",
+      doerName: "",
+      department: "",
+      frequency: "",
+      plannedDate: "",
+      plannedTime: "",
+    });
   };
 
   const handleCancel = () => {
@@ -166,10 +205,18 @@ const AddTask = () => {
                   <option value="Quarterly">Quarterly</option>
                   <option value="Half-yearly">Half-yearly</option>
                   <option value="Yearly">Yearly</option>
-                  <option value="First of every month">First of every month</option>
-                  <option value="Second of every month">Second of every month</option>
-                  <option value="Third of every month">Third of every month</option>
-                  <option value="Fourth of every month">Fourth of every month</option>
+                  <option value="First of every month">
+                    First of every month
+                  </option>
+                  <option value="Second of every month">
+                    Second of every month
+                  </option>
+                  <option value="Third of every month">
+                    Third of every month
+                  </option>
+                  <option value="Fourth of every month">
+                    Fourth of every month
+                  </option>
                 </select>
               </div>
             </div>
@@ -201,7 +248,11 @@ const AddTask = () => {
             </div>
 
             <div className="form-actions">
-              <button type="button" className="cancel-btn" onClick={handleCancel}>
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={handleCancel}
+              >
                 Cancel
               </button>
               <button type="submit" className="submit-btn">

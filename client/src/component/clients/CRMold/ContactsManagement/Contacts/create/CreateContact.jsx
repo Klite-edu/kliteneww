@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./createcontact.css";
 import Sidebar from "../../../../../Sidebar/Sidebar";
 import Navbar from "../../../../../Navbar/Navbar";
@@ -27,31 +27,101 @@ const CreateEmployee = () => {
     receivedEmails: [],
     sentEmails: [],
   });
-
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-  const [customPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
+  useEffect(() => {
+    const fetchAuthData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch token, role and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            {
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            {
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            {
+              withCredentials: true,
+            }
+          ),
+        ]);
+
+        if (!tokenRes.data.token || !roleRes.data.role) {
+          throw new Error("Authentication data missing");
+        }
+
+        setToken(tokenRes.data.token);
+        setRole(roleRes.data.role);
+        setCustomPermissions(permissionsRes.data.permissions || {});
+      } catch (error) {
+        console.error("Authentication error:", error);
+        setError(error.message);
+        navigate("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAuthData();
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEmployee({ ...employee, [name]: value });
+    setEmployee((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(
+      const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/employee/create`,
-        employee
+        employee,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      navigate("/contactmgmt/contacts");
+
+      if (response.data.success) {
+        navigate("/contactmgmt/contacts");
+      } else {
+        setError(response.data.message || "Failed to create employee");
+      }
     } catch (error) {
       console.error("Error creating employee:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      } else {
+        setError(error.response?.data?.message || "Error creating employee");
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -61,7 +131,9 @@ const CreateEmployee = () => {
       <div className="edit-create-div">
         <div className="create-header-container">
           <h3 className="Edit-create-head">Create New Employee</h3>
-          <p className="create-subheading">Fill in the details below to add a new team member</p>
+          <p className="create-subheading">
+            Fill in the details below to add a new team member
+          </p>
         </div>
         <div className="employee-create-edit-info">
           <form onSubmit={handleSubmit}>
@@ -269,10 +341,18 @@ const CreateEmployee = () => {
               </div>
             </div>
             <div className="bottom-create-button">
-              <button className="discard-btn" type="button" onClick={() => navigate("/contactmgmt/contacts")}>
+              <button
+                className="discard-btn"
+                type="button"
+                onClick={() => navigate("/contactmgmt/contacts")}
+              >
                 Discard
               </button>
-              <button className="create-btn" type="submit">
+              <button
+                className="create-btn"
+                type="submit"
+                onClick={() => navigate("/contactmgmt/contacts")}
+              >
                 Create Employee
               </button>
             </div>

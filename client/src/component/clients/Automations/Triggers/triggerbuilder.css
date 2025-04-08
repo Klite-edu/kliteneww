@@ -36,7 +36,7 @@
 .trigger-builder-subtitle {
   color: var(--text-medium);
   font-size: 16px;
-  margin-bottom: 30px;
+  margin-top: 40px;
 }
 
 .trigger-builder-grid {
@@ -426,13 +426,124 @@
   color: #ff9800;
 }
 /* Responsive adjustments */
-@media (max-width: 992px) {
-  .trigger-builder-grid {
-    grid-template-columns: 1fr;
-  }
-  
+@media (min-width: 993px) and (max-width: 1250px) {
   .trigger-builder-content {
-    margin-left: 0;
-    padding: 20px 15px;
+   position: relative;
+   left: 4%;
+  }
+
+  .trigger-builder-grid {
+    grid-template-columns: 1.7fr 1fr;
+    gap: 20px;
+  }
+
+  .trigger-builder-title {
+    font-size: 26px;
+  }
+
+  .predefined-triggers-card {
+    width: 25vw;
+  }
+
+  .pipline-dash-buttons {
+    left: 30%;
+    top: 90px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 9px 11px;
+  }
+
+  .trigger-item {
+    padding: 14px 16px;
+  }
+
+  .automate-card-header h2 {
+    font-size: 19px;
+  }
+
+  .section-header h3 {
+    font-size: 16px;
+  }
+
+  .add-button,
+  .save-button {
+    padding: 9px 16px;
+  }
+
+  /* Optimize dropdowns */
+  select {
+    font-size: 14px;
+  }
+
+  /* Adjust trigger details layout */
+  .trigger-details {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .trigger-details span {
+    width: fit-content;
+  }
+}
+
+@media (min-width: 1250px) and (max-width: 1400px) {
+  .trigger-builder-content {
+    position: relative;
+    left: 5%;
+  }
+
+  .trigger-builder-grid {
+    grid-template-columns: 1.8fr 1.2fr;
+    gap: 22px;
+  }
+
+  .pipline-dash-buttons {
+    left: 32%;
+    top: 95px;
+  }
+
+  .trigger-form-card {
+    padding: 22px;
+  }
+
+  .predefined-triggers-card {
+    padding: 20px;
+  }
+
+  /* Slightly larger form elements */
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  /* Better spacing for trigger items */
+  .trigger-item {
+    padding: 15px 18px;
+  }
+
+  .trigger-item h4 {
+    font-size: 15px;
+  }
+
+  /* Restore horizontal trigger details */
+  .trigger-details {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  /* Adjust toggle switch */
+  .toggle-switch .slider {
+    width: 38px;
+  }
+
+  /* Button adjustments */
+  .add-button,
+  .save-button {
+    padding: 10px 18px;
   }
 }

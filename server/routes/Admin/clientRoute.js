@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const Client = require("../../models/Admin/client-modal");
-const ClientPlan = require("../../models/clients/clientplan");
+const { getClientPlanModel } = require("../../models/clients/clientplan");
 const Subscription = require("../../models/Admin/Subscription");
 const UserSubscription = require("../../models/Admin/userSubscription");
-const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const { verifyToken } = require("../../middlewares/auth");
+const { createClientDatabase } = require("../../database/db");
+const verifyToken = require("../../middlewares/auth")
 
 router.post("/register", async (req, res) => {
   try {
@@ -27,8 +27,12 @@ router.post("/register", async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create or get the client database
+    const clientDB = await createClientDatabase(companyName);
+    const ClientModel = clientDB.model("Clients", Client.schema);
+
     // Create and save the new client
-    const newClient = new Client({
+    const newClient = new ClientModel({
       fullName,
       email,
       phone,
@@ -37,80 +41,65 @@ router.post("/register", async (req, res) => {
       industryType,
       selectedPlan,
       selectedPlanId,
-      password: hashedPassword, 
+      password: hashedPassword,
     });
 
     const savedClient = await newClient.save();
-    
 
-    // Fetch the selected plan details from the Subscription model
+    // Fetch the selected plan details
     const planDetails = await Subscription.findById(selectedPlanId);
-    
-
     if (!planDetails) {
-      console.log("Invalid subscription plan.");
       return res.status(400).json({ error: "Invalid subscription plan" });
     }
 
     // Calculate subscription end date
-    let endDate;
     const currentDate = new Date();
-   
-    const duration = planDetails.duration.toLowerCase();
-    if (duration === "yearly") {
+    let endDate;
+
+    if (planDetails.duration.toLowerCase() === "yearly") {
       endDate = new Date(currentDate.setFullYear(currentDate.getFullYear() + 1));
-    } else if (duration === "monthly") {
+    } else if (planDetails.duration.toLowerCase() === "monthly") {
       endDate = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
-    } else if (duration === "7 days") {
-      endDate = new Date(currentDate.setDate(currentDate.getDate() + 7));
     } else {
-      const durationMatch = duration.match(/^(\d+)\s*days?$/i);
-      if (durationMatch) {
-        const daysToAdd = parseInt(durationMatch[1], 10);
-        endDate = new Date(currentDate.setDate(currentDate.getDate() + daysToAdd));
+      const daysMatch = planDetails.duration.match(/^(\d+)\s*days?$/i);
+      if (daysMatch) {
+        endDate = new Date(currentDate.setDate(currentDate.getDate() + parseInt(daysMatch[1], 10)));
       } else {
-        console.log("Invalid subscription duration.");
         return res.status(400).json({ error: "Invalid subscription duration" });
       }
     }
 
-    // Create and save user subscription
+    // Create user subscription
     const newSubscription = new UserSubscription({
-      clientId: savedClient._id, 
-      planId: selectedPlanId,   
-      endDate: endDate,        
+      clientId: savedClient._id,
+      planId: selectedPlanId,
+      endDate,
       status: "active",
     });
 
     const savedSubscription = await newSubscription.save();
 
-    // Fetch the subscription details again for `ClientPlan`
-    const userSub = await UserSubscription.findOne({ clientId: savedClient._id }).populate("planId");
-    if (!userSub || !userSub.planId) {
-      return res.status(400).json({ error: "User subscription not found" });
-    }
-
-    // Create and save ClientPlan entry
+    // Create Client Plan Entry
+    const ClientPlan = await getClientPlanModel(companyName);
     const clientPlanData = new ClientPlan({
       email: savedClient.email,
-      selectedPlanID: userSub.planId._id,
+      selectedPlanID: savedSubscription.planId,
       selectedPlan: {
-        id: userSub.planId._id,
-        name: userSub.planId.name,
-        price: userSub.planId.price,
-        duration: userSub.planId.duration,
-        status: userSub.status,
+        id: savedSubscription.planId,
+        name: planDetails.name,
+        price: planDetails.price,
+        duration: planDetails.duration,
+        status: savedSubscription.status,
       },
     });
 
     await clientPlanData.save();
 
-    // Respond with success
-    res.status(201).json({ 
-      message: "User added successfully", 
-      client: savedClient, 
-      subscription: savedSubscription, 
-      clientPlan: clientPlanData 
+    res.status(201).json({
+      message: "Client registered successfully",
+      client: savedClient,
+      subscription: savedSubscription,
+      clientPlan: clientPlanData,
     });
 
   } catch (error) {
@@ -118,8 +107,6 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ error: "Error adding user", details: error.message });
   }
 });
-
-
 
 router.get("/total-clients", async (req, res) => {
   try {

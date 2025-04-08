@@ -11,26 +11,70 @@ const Form = () => {
   const [error, setError] = useState("");
   const [selectedForm, setSelectedForm] = useState(null);
   const [viewMode, setViewMode] = useState("grid");
-  const role = localStorage.getItem("role");
-  const [customPermissions, setCustomPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [token, setToken] = useState("");
+  const [clientId, setClientId] = useState(null);
+  const [userEmail, setUserEmail] = useState("");
   const navigate = useNavigate();
-
   const [formCategories, setFormCategories] = useState({
     "Next form": [],
   });
 
   useEffect(() => {
-    const fetchAllForms = async () => {
-      setLoading(true);
+    const fetchInitialData = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/builder/forms`
+        setLoading(true);
+        // Fetch token, role, permissions, and email in parallel
+        const [tokenRes, roleRes, permissionsRes, emailRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
+            { withCredentials: true }
+          ),
+        ]);
+
+        const userToken = tokenRes.data.token;
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+        const email = emailRes.data.email;
+        const userId = tokenRes.data.userId || email; // Fallback to email if userId not available
+
+        if (!userToken || !userId) {
+          alert("Authentication required. Please login.");
+          navigate("/login");
+          return;
+        }
+
+        setToken(userToken);
+        setRole(userRole);
+        setCustomPermissions(userPermissions);
+        setClientId(userId);
+        setUserEmail(email);
+
+        // Now fetch forms data
+        const formsResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/builder/forms`,
+          {
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+            withCredentials: true,
+          }
         );
 
-        const formsData = response.data.forms;
+        const formsData = formsResponse.data.forms;
         setForms(formsData);
 
         const categorized = {
@@ -39,15 +83,16 @@ const Form = () => {
 
         setFormCategories(categorized);
       } catch (error) {
-        console.error("Error fetching forms:", error);
-        setError("Failed to fetch forms. Please try again.");
+        console.error("Error fetching initial data:", error);
+        setError("Failed to fetch data. Please try again.");
+        navigate("/login");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAllForms();
-  }, []);
+    fetchInitialData();
+  }, [navigate]);
 
   const handleFormClick = (form) => {
     setSelectedForm(form);
@@ -74,6 +119,9 @@ const Form = () => {
         onBack={handleBackToGrid}
         role={role}
         customPermissions={customPermissions}
+        token={token}
+        clientId={clientId}
+        userEmail={userEmail}
       />
     );
   }
@@ -89,7 +137,7 @@ const Form = () => {
             className="form-dash-new-btn"
             onClick={() => navigate("/FormBuilder")}
           >
-            Start a new form
+            Create a new form
           </button>
         </div>
 
@@ -149,7 +197,15 @@ const Form = () => {
   );
 };
 
-const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
+const FormDashFullView = ({ 
+  form, 
+  onBack, 
+  role, 
+  customPermissions, 
+  token,
+  clientId,
+  userEmail
+}) => {
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -175,9 +231,6 @@ const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
     setSubmitError("");
 
     try {
-      const clientId = localStorage.getItem("userId");
-      const user_email = localStorage.getItem("userEmail") || "";
-
       const submissions = form.fields.map((field) => ({
         fieldLabel: field.label,
         value: formData[field.label] || "",
@@ -185,14 +238,20 @@ const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
 
       const payload = {
         submissions,
-        user_email,
+        user_email: userEmail,
         data: submissions,
         clientId,
       };
 
       await axios.post(
         `${process.env.REACT_APP_API_URL}/api/form/submit/${form._id}`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
       );
 
       alert("Form submitted successfully!");
@@ -243,7 +302,9 @@ const FormDashFullView = ({ form, onBack, role, customPermissions }) => {
               <div key={index} className="form-dash-field">
                 <label className="form-dash-field-label">
                   {field.label}
-                  {field.required && <span className="required-asterisk">*</span>}
+                  {field.required && (
+                    <span className="required-asterisk">*</span>
+                  )}
                 </label>
                 {field.type === "select" ? (
                   <select

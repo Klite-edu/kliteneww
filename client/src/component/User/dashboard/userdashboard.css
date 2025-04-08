@@ -1,0 +1,698 @@
+:root {
+    --user-primary-color: #0d6e6e;
+    --user-primary-light: #e0f2f1;
+    --user-primary-dark: #0b5d5d;
+    --user-secondary-color: #4caf50;
+    --user-accent-color: #ff9800;
+    --user-gray: #f8f8f8;
+    --user-gray-dark: #e0e0e0;
+    --user-text-color: #333;
+    --user-text-light: #666;
+    --user-white: #ffffff;
+    --user-error-color: #f44336;
+    --user-warning-color: #ffc107;
+    --user-success-color: #4caf50;
+    --user-info-color: #2196f3;
+    --user-border-radius: 8px;
+    --user-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Base styles */
+  .user-dashboard {
+    padding: 15px;
+    background-color: var(--user-gray);
+    min-height: 100vh;
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .user-dashboard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--user-white);
+    border-radius: var(--user-border-radius);
+    box-shadow: var(--user-box-shadow);
+  }
+  
+  .user-dashboard-header h2 {
+    color: var(--user-primary-color);
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .user-user-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .user-user-info span {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+  }
+  
+  .user-user-email {
+    color: var(--user-text-light);
+    font-size: 0.8rem;
+  }
+  
+  .user-dashboard-graphs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .user-block-data {
+    background-color: var(--user-white);
+    padding: 15px;
+    border-radius: var(--user-border-radius);
+    box-shadow: var(--user-box-shadow);
+    transition: transform 0.3s ease;
+  }
+  
+  .user-block-data:hover {
+    transform: translateY(-5px);
+  }
+  
+  .user-block-data h3 {
+    color: var(--user-text-color);
+    margin-top: 10px;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .user-icon {
+    font-size: 1.5rem;
+  }
+  
+  .user-bar-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .user-bar-progress h5 {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    margin: 0;
+  }
+  
+  .user-bar-progress p {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--user-text-color);
+    margin: 0;
+  }
+  
+  .user-revenue-subCancel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .user-revenue-chart,
+  .user-subscription-chart {
+    background-color: var(--user-white);
+    padding: 15px;
+    border-radius: var(--user-border-radius);
+    box-shadow: var(--user-box-shadow);
+  }
+  
+  .user-revenue-chart h3,
+  .user-subscription-chart h3 {
+    color: var(--user-primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  .user-revenue-container {
+    height: 250px;
+  }
+  
+  .user-sub-recent {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .user-transaction-table {
+    background-color: var(--user-white);
+    padding: 15px;
+    border-radius: var(--user-border-radius);
+    box-shadow: var(--user-box-shadow);
+  }
+  
+  .user-recent-transHead {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .user-recent-transHead h3 {
+    color: var(--user-primary-color);
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  .user-recent-transHead button {
+    background-color: var(--user-primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: var(--user-border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 0.9rem;
+    align-self: flex-start;
+  }
+  
+  .user-recent-transHead button:hover {
+    background-color: var(--user-primary-dark);
+  }
+  
+  .user-transaction-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .user-transaction-item {
+    padding: 10px 0;
+  }
+  
+  .user-recent-transaction {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .user-task-index {
+    background-color: var(--user-primary-color);
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  
+  .user-trans-name-date {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .user-trans-name-date h5 {
+    color: var(--user-text-color);
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  
+  .user-trans-name-date p {
+    color: var(--user-text-light);
+    margin: 0;
+    font-size: 0.75rem;
+  }
+  
+  .user-trans-plan-price {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  
+  .user-trans-plan-price p {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+  
+  .user-trans-plan-price p:first-child {
+    color: var(--user-text-color);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .user-status-pending {
+    color: var(--user-warning-color);
+    font-weight: bold;
+  }
+  
+  .user-status-in-progress {
+    color: var(--user-info-color);
+    font-weight: bold;
+  }
+  
+  .user-status-completed {
+    color: var(--user-success-color);
+    font-weight: bold;
+  }
+  
+  .user-status-revised {
+    color: var(--user-accent-color);
+    font-weight: bold;
+  }
+  
+  .user-issue-container {
+    background-color: var(--user-white);
+    padding: 15px;
+    border-radius: var(--user-border-radius);
+    box-shadow: var(--user-box-shadow);
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+  
+  .user-issue-button-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .user-issue-button-head h3 {
+    color: var(--user-primary-color);
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  .user-issue-button-head button {
+    background-color: var(--user-primary-color);
+    padding: 8px 15px;
+    color: white;
+    border: none;
+    border-radius: var(--user-border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 0.9rem;
+  }
+  
+  .user-issue-button-head button:hover {
+    background-color: var(--user-primary-dark);
+  }
+  
+  .user-issue-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .user-issue-table th,
+  .user-issue-table td {
+    padding: 12px 15px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  
+  .user-issue-table th {
+    background-color: var(--user-primary-color);
+    color: white;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+  }
+  
+  .user-issue-table td {
+    border-bottom: 1px solid var(--user-gray-dark);
+    font-size: 0.9rem;
+  }
+  
+  .user-issue-table tr:nth-child(even) {
+    background-color: var(--user-gray);
+  }
+  
+  .user-issue-table tr:hover {
+    background-color: var(--user-primary-light);
+  }
+  
+  .user-priority-critical {
+    color: var(--user-error-color);
+    font-weight: bold;
+  }
+  
+  .user-priority-high {
+    color: var(--user-warning-color);
+    font-weight: bold;
+  }
+  
+  .user-priority-medium {
+    color: var(--user-accent-color);
+    font-weight: bold;
+  }
+  
+  .user-status-open {
+    color: var(--user-error-color);
+    font-weight: bold;
+  }
+  
+  .user-no-tasks {
+    text-align: center;
+    padding: 20px;
+    color: var(--user-text-light);
+  }
+  
+  .user-hr {
+    border: none;
+    border-top: 1px solid var(--user-gray-dark);
+    margin: 10px 0;
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--user-gray-dark);
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--user-primary-color);
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--user-primary-dark);
+  }
+  
+  /* 350px - 599px */
+  @media (min-width: 350px) and (max-width: 599px) {
+    .user-dashboard {
+      padding: 10px;
+    }
+  
+    .user-dashboard-header {
+      padding: 12px;
+    }
+  
+    .user-dashboard-header h2 {
+      font-size: 1.3rem;
+    }
+  
+    .user-user-info {
+      gap: 8px;
+    }
+  
+    .user-user-info span {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+    }
+  
+    .user-block-data {
+      padding: 12px;
+    }
+  
+    .user-block-data h3 {
+      font-size: 0.9rem;
+    }
+  
+    .user-bar-progress p {
+      font-size: 1.1rem;
+    }
+  
+    .user-revenue-chart h3,
+    .user-subscription-chart h3,
+    .user-recent-transHead h3,
+    .user-issue-button-head h3 {
+      font-size: 1.1rem;
+    }
+  
+    .user-recent-transHead button,
+    .user-issue-button-head button {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+  
+    .user-transaction-item,
+    .user-issue-table td {
+      padding: 8px 10px;
+    }
+  
+    .user-issue-table {
+      font-size: 0.8rem;
+    }
+  
+    .user-trans-name-date h5 {
+      font-size: 0.8rem;
+    }
+  
+    .user-trans-plan-price p {
+      font-size: 0.7rem;
+    }
+  }
+  
+  /* 600px and up */
+  @media (min-width: 600px) {
+    .user-dashboard {
+      padding: 20px;
+    }
+  
+    .user-dashboard-header {
+      padding: 15px 20px;
+    }
+  
+    .user-dashboard-graphs {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .user-revenue-subCancel {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .user-sub-recent {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .user-recent-transHead,
+    .user-issue-button-head {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  
+    .user-user-info {
+      flex-wrap: nowrap;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .user-dashboard {
+      left: 60px;
+      top: 30px;
+      width: calc(100% - 60px);
+    }
+  
+    .user-dashboard-header h2 {
+      font-size: 1.6rem;
+    }
+  
+    .user-block-data h3 {
+      font-size: 1.1rem;
+    }
+  
+    .user-bar-progress p {
+      font-size: 1.4rem;
+    }
+  
+    .user-revenue-chart h3,
+    .user-subscription-chart h3,
+    .user-recent-transHead h3,
+    .user-issue-button-head h3 {
+      font-size: 1.3rem;
+    }
+  }
+  
+  @media (min-width: 950px) and (max-width: 1050px) {
+    .user-dashboard {
+      left: 100px;
+      top: 25px;
+      width: calc(100% - 80px);
+      padding: 20px 25px;
+    }
+  
+    .user-dashboard-header {
+      flex-direction: row;
+      padding: 18px 25px;
+    }
+  
+    .user-dashboard-header h2 {
+      font-size: 1.7rem;
+    }
+  
+    .user-user-info span {
+      font-size: 0.85rem;
+      padding: 6px 12px;
+    }
+  
+    .user-dashboard-graphs {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+  
+    .user-revenue-subCancel {
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+    }
+  
+    .user-sub-recent {
+      grid-template-columns: 1fr 1.5fr;
+      gap: 18px;
+    }
+  
+    .user-block-data {
+      padding: 18px;
+    }
+  
+    .user-block-data h3 {
+      font-size: 1.05rem;
+    }
+  
+    .user-bar-progress p {
+      font-size: 1.45rem;
+    }
+  
+    .user-revenue-chart,
+    .user-subscription-chart,
+    .user-transaction-table,
+    .user-analytics-container {
+      padding: 18px;
+    }
+  
+    .user-revenue-chart h3,
+    .user-subscription-chart h3,
+    .user-recent-transHead h3,
+    .user-issue-button-head h3 {
+      font-size: 1.35rem;
+    }
+  }
+  
+  @media (min-width: 1051px) and (max-width: 1199px) {
+    .user-dashboard {
+      left: 9.5%;
+      top: 20px;
+      width: 92%;
+    }
+  
+    .user-dashboard-graphs {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+  
+    .user-revenue-subCancel {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  
+    .user-sub-recent {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+  
+  @media (min-width: 1200px) and (max-width: 1299px) {
+    .user-dashboard {
+      width: 76vw;
+      left: 12.5%;
+      top: 30px;
+    }
+  
+    .user-dashboard-header h2 {
+      font-size: 1.8rem;
+    }
+  
+    .user-user-info span {
+      font-size: 0.9rem;
+    }
+  
+    .user-dashboard-graphs {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+  
+    .user-block-data h3 {
+      font-size: 1.1rem;
+    }
+  
+    .user-bar-progress p {
+      font-size: 1.5rem;
+    }
+  
+    .user-revenue-subCancel {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+  
+    .user-sub-recent {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+  
+    .user-revenue-chart h3,
+    .user-subscription-chart h3,
+    .user-recent-transHead h3,
+    .user-issue-button-head h3 {
+      font-size: 1.4rem;
+    }
+  }
+  
+  @media (min-width: 1300px) {
+    .user-dashboard {
+      width: 76vw;
+      left: 19%;
+      top: 80px;
+    }
+  
+    .user-dashboard-header h2 {
+      font-size: 1.8rem;
+    }
+  
+    .user-user-info span {
+      font-size: 0.9rem;
+    }
+  
+    .user-dashboard-graphs {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+  
+    .user-block-data h3 {
+      font-size: 1.1rem;
+    }
+  
+    .user-bar-progress p {
+      font-size: 1.5rem;
+    }
+  
+    .user-revenue-subCancel {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+  
+    .user-sub-recent {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+  
+    .user-revenue-chart h3,
+    .user-subscription-chart h3,
+    .user-recent-transHead h3,
+    .user-issue-button-head h3 {
+      font-size: 1.4rem;
+    }
+  }

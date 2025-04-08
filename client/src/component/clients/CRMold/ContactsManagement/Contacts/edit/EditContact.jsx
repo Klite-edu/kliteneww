@@ -8,8 +8,6 @@ import { useNavigate, useParams } from "react-router-dom";
 const EditContact = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-
   const [employee, setEmployee] = useState({
     fullName: "",
     employeeID: "",
@@ -22,60 +20,161 @@ const EditContact = () => {
     workAssigned: "",
     notes: "",
     callData: "",
+    password: "",
     status: "Active",
     permissionAccessLevel: "Employee",
     teamAssociation: "",
     activityLog: "",
     pastDataHistory: "",
   });
-
-  const [customPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchEmployee = async () => {
+    const fetchAuthData = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/${id}`
-        );
-        setEmployee(response.data);
+        setLoading(true);
+
+        // Fetch token, role and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            {
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            {
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            {
+              withCredentials: true,
+            }
+          ),
+        ]);
+
+        if (!tokenRes.data.token || !roleRes.data.role) {
+          throw new Error("Authentication data missing");
+        }
+
+        setToken(tokenRes.data.token);
+        setRole(roleRes.data.role);
+        setCustomPermissions(permissionsRes.data.permissions || {});
+        // Fetch employee data after successful auth
+        await fetchEmployee(tokenRes.data.token);
       } catch (error) {
-        console.error("Error fetching employee data:", error);
+        console.error("Authentication error:", error);
+        setError(error.message);
+        navigate("/login");
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (id) fetchEmployee();
-  }, [id]);
+    const fetchEmployee = async (authToken) => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/employee/${id}`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        const formattedEmployee = { ...response.data };
+        if (formattedEmployee.joiningDate) {
+          formattedEmployee.joiningDate = new Date(
+            formattedEmployee.joiningDate
+          )
+            .toISOString()
+            .split("T")[0];
+        }
+
+        setEmployee(formattedEmployee);
+      } catch (error) {
+        console.error("Error fetching employee data:", error);
+        setError(error.message);
+        if (error.response?.status === 401) {
+          navigate("/login");
+        }
+      }
+    };
+
+    fetchAuthData();
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEmployee({ ...employee, [name]: value });
+
+    // If the password field is empty, set it to an empty string (optional)
+    if (name === "password" && value.trim() === "") {
+      setEmployee({ ...employee, [name]: "" });
+    } else {
+      setEmployee({ ...employee, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const updatedEmployee = { ...employee };
+    if (!updatedEmployee.password) {
+      delete updatedEmployee.password;
+    }
     try {
-      await axios.put(
+      const response = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/employee/update/${id}`,
-        employee
+        employee,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      navigate("/contactmgmt/contacts");
+
+      if (response.data.success) {
+        navigate("/contactmgmt/contacts");
+      } else {
+        setError("Failed to update employee");
+      }
     } catch (error) {
       console.error("Error updating employee:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      } else {
+        setError(error.response?.data?.message || "Error updating employee");
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
-
       <div className="edit-create-div">
         <div className="create-header-container">
           <h3 className="Edit-create-head">Edit Employee</h3>
-          <p className="create-subheading">Update the details below to modify employee information</p>
+          <p className="create-subheading">
+            Update the details below to modify employee information
+          </p>
         </div>
         <div className="employee-create-edit-info">
           <form onSubmit={handleSubmit}>
@@ -173,6 +272,16 @@ const EditContact = () => {
                 <h4 className="section-title">Account Settings</h4>
                 <div className="form-grid">
                   <div className="form-employee-input">
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={employee.password || ""} // Keep empty if not updating
+                      onChange={handleChange}
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <div className="form-employee-input">
                     <label>Status</label>
                     <select
                       name="status"
@@ -262,14 +371,18 @@ const EditContact = () => {
               </div>
             </div>
             <div className="bottom-create-button">
-              <button 
-                className="discard-btn" 
-                type="button" 
+              <button
+                className="discard-btn"
+                type="button"
                 onClick={() => navigate("/contactmgmt/contacts")}
               >
                 Discard
               </button>
-              <button className="create-btn" type="submit">
+              <button
+                className="create-btn"
+                type="submit"
+                onClick={() => navigate("/contactmgmt/contacts")}
+              >
                 Update Employee
               </button>
             </div>

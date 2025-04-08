@@ -1,20 +1,29 @@
-/* .dashboard-tabs {
+.Admin-dashboard {
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.Admin-dashboard-tabs {
   display: flex;
   gap: 30px;
+  margin-bottom: 30px;
 }
 
-.admin-dashboard h1 {
+.Admin-dashboard h1 {
   position: relative;
   left: 20%;
+  color: #333;
+  margin-bottom: 30px;
 }
 
-.dashboard-graphs {
+.Admin-dashboard-graphs {
   display: flex;
   gap: 20px;
   justify-content: flex-start;
+  margin-bottom: 30px;
 }
 
-.dashboard-tabs-info {
+.Admin-dashboard-tabs-info {
   background-color: #e5e5e5;
   border-radius: 15px;
   padding: 10px;
@@ -22,13 +31,13 @@
   width: 12vw;
 }
 
-.dashboard-tabs-info p {
+.Admin-dashboard-tabs-info p {
   color: orangered;
   font-weight: 700;
   font-size: 1.2rem;
 }
 
-.tabs-icon {
+.Admin-tabs-icon {
   background-color: violet;
   border-radius: 15px;
   padding: 10px;
@@ -37,7 +46,7 @@
   margin-bottom: 10px;
 }
 
-.block-data {
+.Admin-block-data {
   position: relative;
   left: 4%;
   padding: 20px;
@@ -46,49 +55,49 @@
   height: 30vh;
   border-radius: 15px;
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+  background-color: white;
 }
 
-.icon-client {
-  font-size: 2rem
+.Admin-icon-client {
+  font-size: 2rem;
+  color: #3e98c7;
 }
 
-.block-data h3 {
+.Admin-block-data h3 {
   margin-top: 10px;
+  color: #555;
 }
 
-.bar-progress {
+.Admin-bar-progress {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   padding: 0px 20px;
+  margin-top: 20px;
 }
 
-.bar-progress h5 {
+.Admin-bar-progress h5 {
   font-size: 1rem;
   font-weight: 700;
   margin-bottom: 0;
   color: white;
   height: auto;
-
   background-color: green;
   border-radius: 15px;
   padding: 5px 10px;
   display: flex;
   align-items: center;
-
 }
 
-.bar-progress p {
+.Admin-bar-progress p {
   color: grey;
   font-weight: 500;
   margin-top: 15px;
   font-size: 1.7rem;
   margin-left: 10px;
-
 }
 
-.revenue-chart {
+.Admin-revenue-chart {
   width: 47%;
   background: #fff;
   padding: 20px;
@@ -100,43 +109,42 @@
   text-align: center;
 }
 
-
-.revenue-chart h3 {
+.Admin-revenue-chart h3 {
   font-size: 1.5rem;
   color: #333;
   margin-bottom: 15px;
 }
 
-.revenue-container {
+.Admin-revenue-container {
   width: 100%;
   height: 300px;
 }
 
-
-.revenue-chart .recharts-cartesian-axis-tick {
+.Admin-revenue-chart .recharts-cartesian-axis-tick {
   font-size: 14px;
   font-weight: 500;
   color: #666;
 }
 
-.revenue-chart .recharts-tooltip-wrapper {
+.Admin-revenue-chart .recharts-tooltip-wrapper {
   font-size: 14px;
   background: white;
   padding: 5px;
   border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-
-.revenue-chart .recharts-bar-rectangle {
+.Admin-revenue-chart .recharts-bar-rectangle {
   border-radius: 5px;
 }
 
-.revenue-subCancel {
+.Admin-revenue-subCancel {
   display: flex;
   gap: 40px;
+  margin-bottom: 30px;
 }
 
-.subscription-chart {
+.Admin-subscription-chart {
   width: 47%;
   max-width: 900px;
   background: #fff;
@@ -149,33 +157,33 @@
   top: 20px;
 }
 
-.subscription-chart h3 {
+.Admin-subscription-chart h3 {
   font-size: 1.5rem;
   color: #333;
   margin-bottom: 15px;
 }
 
-.subscription-chart .recharts-wrapper {
+.Admin-subscription-chart .recharts-wrapper {
   display: flex;
   justify-content: center;
 }
 
-.subscription-chart .recharts-cartesian-grid line {
+.Admin-subscription-chart .recharts-cartesian-grid line {
   stroke: #ccc;
   stroke-dasharray: 3 3;
 }
 
-.subscription-chart .recharts-legend {
+.Admin-subscription-chart .recharts-legend {
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-.subscription-chart .recharts-tooltip {
+.Admin-subscription-chart .recharts-tooltip {
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-.top-subscription-chart {
+.Admin-top-subscription-chart {
   width: 47%;
   max-width: 900px;
   background: #fff;
@@ -189,12 +197,13 @@
   height: 70vh;
 }
 
-.admin-sub-recent {
+.Admin-sub-recent {
   display: flex;
   gap: 40px;
+  margin-bottom: 30px;
 }
 
-.transaction-table {
+.Admin-transaction-table {
   width: 47%;
   max-width: 900px;
   background: #fff;
@@ -208,24 +217,31 @@
   height: 70vh;
 }
 
-.recent-transHead {
+.Admin-recent-transHead {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.recent-transHead button {
+.Admin-recent-transHead button {
   padding: 10px;
   border-radius: 15px;
   background-color: white;
   border: 1px solid grey;
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.recent-transaction {
-  display: flex;
-  justify-content: space-between;
+.Admin-recent-transHead button:hover {
+  background-color: #f5f5f5;
 }
 
-.recent-transaction {
+.Admin-transaction-item {
+  margin-bottom: 10px;
+}
+
+.Admin-recent-transaction {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -233,38 +249,38 @@
   border-bottom: 1px solid #ddd;
 }
 
-.trans-name-date {
+.Admin-trans-name-date {
   display: flex;
   flex-direction: column;
   flex: 2;
 }
 
-.trans-name-date h5 {
+.Admin-trans-name-date h5 {
   margin-bottom: 2px;
   color: black;
   font-weight: 700;
 }
 
-.trans-name-date p {
+.Admin-trans-name-date p {
   font-size: 0.8rem;
   color: grey;
   font-weight: 500;
   margin-bottom: 0;
 }
 
-.trans-plan-price {
+.Admin-trans-plan-price {
   flex: 1;
   display: flex;
   justify-content: space-between;
   text-align: right;
 }
 
-.trans-plan-price p {
+.Admin-trans-plan-price p {
   margin-bottom: 0;
   font-size: 1rem;
 }
 
-.subscription-container {
+.Admin-subscription-container {
   width: 98%;
   max-width: 100%;
   background: #fff;
@@ -276,9 +292,11 @@
   left: 5%;
   top: 60px;
   height: 70vh;
+  margin-bottom: 30px;
+  overflow-y: auto;
 }
 
-.subscription-entry {
+.Admin-subscription-entry {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -287,7 +305,7 @@
   gap: 15px;
 }
 
-.client-info {
+.Admin-client-info {
   flex: 2;
   display: flex;
   flex-direction: column;
@@ -295,19 +313,19 @@
   min-width: 180px;
 }
 
-.client-info h5 {
+.Admin-client-info h5 {
   margin-bottom: 2px;
   color: black;
   font-weight: 700;
 }
 
-.client-info p {
+.Admin-client-info p {
   font-size: 0.8rem;
   color: grey;
   font-weight: 500;
 }
 
-.plan-details {
+.Admin-plan-details {
   flex: 1;
   display: flex;
   justify-content: space-between;
@@ -315,12 +333,12 @@
   min-width: 120px;
 }
 
-.plan-details p {
+.Admin-plan-details p {
   margin-bottom: 0;
   font-size: 1rem;
 }
 
-.status-badge {
+.Admin-status-badge {
   padding: 5px 10px;
   border-radius: 8px;
   font-weight: bold;
@@ -329,22 +347,23 @@
   text-align: center;
 }
 
-.status-badge.expired {
+.Admin-status-badge.expired {
   background-color: #f8d7da;
   color: #721c24;
 }
 
-.status-badge.renewed {
+.Admin-status-badge.renewed {
   background-color: #d4edda;
   color: #155724;
 }
 
-.api-store {
+.Admin-api-store {
   display: flex;
   gap: 40px;
+  margin-bottom: 30px;
 }
 
-.analytics-container {
+.Admin-analytics-container {
   max-width: 100%;
   width: 100%;
   margin: auto;
@@ -354,13 +373,13 @@
   left: 5%;
 }
 
-.kpi-cards {
+.Admin-kpi-cards {
   display: flex;
   justify-content: space-around;
   margin-bottom: 20px;
 }
 
-.kpi-card {
+.Admin-kpi-card {
   background: white;
   padding: 15px;
   border-radius: 10px;
@@ -368,9 +387,25 @@
   text-align: center;
   cursor: pointer;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
 }
 
-.api-container {
+.Admin-kpi-card:hover {
+  transform: translateY(-5px);
+}
+
+.Admin-kpi-card h4 {
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.Admin-kpi-card p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.Admin-api-container {
   width: 47%;
   max-width: 900px;
   background: #fff;
@@ -383,7 +418,12 @@
   height: 55vh;
 }
 
-.chart-container {
+.Admin-api-container h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.Admin-chart-container {
   width: 30%;
   background: #fff;
   padding: 20px;
@@ -395,7 +435,7 @@
   height: 50vh;
 }
 
-.tenant-table table {
+.Admin-tenant-table table {
   width: 117%;
   background: #fff;
   padding: 20px;
@@ -407,29 +447,28 @@
   border-collapse: collapse;
 }
 
-.tenant-table th,
-.tenant-table td {
+.Admin-tenant-table th,
+.Admin-tenant-table td {
   padding: 10px;
   border: 1px solid #ddd;
 }
 
-.active-status {
+.Admin-active-status {
   color: green;
   font-weight: bold;
 }
 
-.inactive-status {
+.Admin-inactive-status {
   color: red;
   font-weight: bold;
 }
 
-.activeTable-modules {
+.Admin-activeTable-modules {
   display: flex;
   gap: 40px;
 }
 
-
-.issue-container {
+.Admin-issue-container {
   width: 100%;
   background: #fff;
   padding: 20px;
@@ -439,26 +478,41 @@
   position: relative;
   top: 20px;
   height: 65vh;
+  margin-bottom: 50px;
 }
 
-.issue-container h2 {
+.Admin-issue-container h2 {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 16px;
   color: #333;
 }
 
-
-.issuetable-container {
+.Admin-issuetable-container {
   overflow-x: auto;
 }
 
-.issue-button-head{
+.Admin-issue-button-head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.issue-table {
+.Admin-issue-button-head button {
+  padding: 8px 16px;
+  border-radius: 5px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.Admin-issue-button-head button:hover {
+  background-color: #e9e9e9;
+}
+
+.Admin-issue-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
@@ -467,70 +521,111 @@
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.issue-table th,
-.issue-table td {
+.Admin-issue-table th,
+.Admin-issue-table td {
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid #ddd;
 }
 
-.issue-table thead {
+.Admin-issue-table thead {
   background: #e9ecef;
   text-transform: uppercase;
   font-size: 14px;
   color: #555;
 }
 
-
-.issue-table tbody tr:nth-child(even) {
+.Admin-issue-table tbody tr:nth-child(even) {
   background-color: #f1f3f5;
 }
 
-.priority-critical {
+.Admin-priority-critical {
   background-color: #ffebee;
   color: #d32f2f;
   font-weight: bold;
 }
 
-.priority-high {
+.Admin-priority-high {
   background-color: #fff3e0;
   color: #f57c00;
   font-weight: bold;
 }
 
-.priority-medium {
+.Admin-priority-medium {
   background-color: #fffde7;
   color: #ffa000;
   font-weight: bold;
 }
 
-.priority-low {
+.Admin-priority-low {
   background-color: #e8f5e9;
   color: #388e3c;
   font-weight: bold;
 }
 
-
-.status-open {
+.Admin-status-open {
   background-color: #ffebee;
   color: #d32f2f;
   font-weight: bold;
 }
 
-.status-in-progress {
+.Admin-status-in-progress {
   background-color: #fff3e0;
   color: #f57c00;
   font-weight: bold;
 }
 
-.status-pending {
+.Admin-status-pending {
   background-color: #fffde7;
   color: #ffa000;
   font-weight: bold;
 }
 
-.status-resolved {
+.Admin-status-resolved {
   background-color: #e8f5e9;
   color: #388e3c;
   font-weight: bold;
-} */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .Admin-dashboard-graphs {
+    flex-wrap: wrap;
+  }
+  
+  .Admin-block-data {
+    width: 40%;
+    margin-bottom: 20px;
+  }
+  
+  .Admin-revenue-subCancel,
+  .Admin-sub-recent,
+  .Admin-api-store {
+    flex-direction: column;
+  }
+  
+  .Admin-revenue-chart,
+  .Admin-subscription-chart,
+  .Admin-top-subscription-chart,
+  .Admin-transaction-table,
+  .Admin-api-container {
+    width: 90%;
+    left: 5%;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Admin-block-data {
+    width: 100%;
+  }
+  
+  .Admin-kpi-cards {
+    flex-wrap: wrap;
+  }
+  
+  .Admin-kpi-card {
+    width: 45%;
+    margin-bottom: 15px;
+  }
+}

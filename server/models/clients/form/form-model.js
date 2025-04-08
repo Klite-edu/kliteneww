@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { createClientDatabase } = require("../../../database/db");
 
 const formSubmissionSchema = new mongoose.Schema({
   formId: {
@@ -27,7 +28,19 @@ const formSubmissionSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
-const Submission = mongoose.model("Submission", formSubmissionSchema);
-module.exports = Submission;
+formSubmissionSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Function to get the Submission model from the dynamic database
+const getSubmissionModel = async (companyName) => {
+  const clientDB = await createClientDatabase(companyName);
+  return clientDB.model("Submission", formSubmissionSchema);
+};
+
+module.exports = { getSubmissionModel };

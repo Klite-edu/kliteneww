@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
-// const { db2 } = require("../../database/db");
-const  db1  = require("../../database/db");
-const Subscription = require("./Subscription")
+const { connectMainDB } = require("../../database/db");
+connectMainDB();
 
 const clientSchema = new mongoose.Schema(
   {
@@ -24,7 +23,7 @@ const clientSchema = new mongoose.Schema(
     industryType: { type: String },
     selectedPlan: { type: String, required: true },
     selectedPlanId: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to Subscription model
+      type: mongoose.Schema.Types.ObjectId, 
       ref: "Subscription", // Ensure this points to the Subscription model
       required: true
     },
@@ -39,6 +38,6 @@ const clientSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-const Client = db1.model("Clients", clientSchema);
+const Client = mongoose.model("Clients", clientSchema);
 
 module.exports = Client;

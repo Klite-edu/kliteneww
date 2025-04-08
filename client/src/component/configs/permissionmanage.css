@@ -1,0 +1,153 @@
+/* Permission Manager Styles */
+.permission-manager {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 25px;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-primary);
+  }
+  
+  .permission-manager h2 {
+    color: var(--primary-dark);
+    font-size: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--gray);
+  }
+  
+  .role-section {
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: var(--gray);
+    border-radius: var(--border-radius);
+  }
+  
+  .role-section h3 {
+    color: var(--primary-color);
+    font-size: 18px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .role-section h3::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+  }
+  
+  .permission-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 10px 15px;
+    background-color: var(--white);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .permission-option:hover {
+    background-color: var(--primary-light);
+  }
+  
+  .permission-option label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+    color: var(--text-dark);
+    font-weight: 500;
+  }
+  
+  /* Custom checkbox styling */
+  .permission-option input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .permission-option input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+  }
+  
+  .permission-option input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: var(--white);
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .permission-option input[type="checkbox"]:disabled {
+    border-color: var(--text-light);
+    background-color: var(--gray);
+    cursor: not-allowed;
+  }
+  
+  .permission-option input[type="checkbox"]:disabled:checked {
+    background-color: var(--text-light);
+  }
+  
+  .save-button {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 25px auto 0;
+  }
+  
+  .save-button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 110, 0.2);
+  }
+  
+  .save-button:active {
+    transform: translateY(0);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .permission-manager {
+      padding: 15px;
+    }
+    
+    .role-section {
+      padding: 10px;
+    }
+    
+    .permission-option {
+      padding: 8px 12px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .permission-option label {
+      font-size: 14px;
+    }
+    
+    .save-button {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  }

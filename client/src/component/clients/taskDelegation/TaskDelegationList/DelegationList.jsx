@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Navbar from "../../../Navbar/Navbar";
 import Sidebar from "../../../Sidebar/Sidebar";
 import "./delegationlist.css";
 import { FaCheck } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const DelegationList = () => {
   const [tasks, setTasks] = useState([]);
@@ -23,7 +24,7 @@ const DelegationList = () => {
   const [reviseFormData, setReviseFormData] = useState({
     revisedDate: "",
     revisedTime: "",
-    revisedReason: ""
+    revisedReason: "",
   });
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketData, setTicketData] = useState({
@@ -35,49 +36,91 @@ const DelegationList = () => {
   });
   const [employees, setEmployees] = useState([]);
   const [completedTasks, setCompletedTasks] = useState({});
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [role, setRole] = useState(null);
+  const [token, setToken] = useState("");
+  const navigate = useNavigate();
 
-  const role = localStorage.getItem("role");
-  const userName = localStorage.getItem("userName") || "User";
-  const userId = localStorage.getItem("userId");
-
-  const [customPermissions, setCustomPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async (token) => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/delegation/list`
+        `${process.env.REACT_APP_API_URL}/api/delegation/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
       );
-      let taskList = response.data;
-      if (role === "user" && userId) {
-        taskList = taskList.filter((task) => task.doer?._id === userId);
-      }
-      setTasks(taskList);
-      setFilteredTasks(taskList);
+      setTasks(response.data);
+      setFilteredTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
-  };
+  }, []);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async (token) => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
       );
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
     }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-    fetchEmployees();
   }, []);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        // Fetch token, role, and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+        ]);
+
+        const userToken = tokenRes.data.token;
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+
+        if (!userToken || !userRole) {
+          navigate("/login");
+          return;
+        }
+
+        setToken(userToken);
+        setRole(userRole);
+        setCustomPermissions(userPermissions);
+
+        // Fetch other data
+        await fetchEmployees(userToken);
+        await fetchTasks(userToken);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchInitialData();
+  }, [navigate, fetchTasks, fetchEmployees]);
+
+  const handleSearch = useCallback(() => {
     let filtered = [...tasks];
     if (searchTerm) {
       filtered = filtered.filter(
@@ -101,7 +144,11 @@ const DelegationList = () => {
       });
     }
     setFilteredTasks(filtered);
-  };
+  }, [searchTerm, statusFilter, dateRange, tasks]);
+
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch]);
 
   useEffect(() => {
     handleSearch();
@@ -128,11 +175,17 @@ const DelegationList = () => {
     try {
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/edit/${editingTask._id}`,
-        editFormData
+        editFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
       );
       alert("Task updated successfully!");
       setEditingTask(null);
-      fetchTasks();
+      fetchTasks(token);
     } catch (error) {
       console.error("Error updating task:", error);
     }
@@ -141,10 +194,16 @@ const DelegationList = () => {
   const handleDeleteTask = async (taskId) => {
     try {
       await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`
+        `${process.env.REACT_APP_API_URL}/api/delegation/delete/${taskId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
       );
       alert("Task deleted successfully!");
-      fetchTasks();
+      fetchTasks(token);
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -152,22 +211,22 @@ const DelegationList = () => {
 
   const handleCompleteTask = async (taskId) => {
     try {
-      setCompletedTasks(prev => ({ ...prev, [taskId]: true }));
-      
+      setCompletedTasks((prev) => ({ ...prev, [taskId]: true }));
+
       await axios.put(
         `${process.env.REACT_APP_API_URL}/api/delegation/complete/${taskId}`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      
+
       fetchTasks();
     } catch (error) {
       console.error("Error completing task:", error);
-      setCompletedTasks(prev => {
+      setCompletedTasks((prev) => {
         const newState = { ...prev };
         delete newState[taskId];
         return newState;
@@ -181,7 +240,7 @@ const DelegationList = () => {
     setReviseFormData({
       revisedDate: task.revisedDate ? task.revisedDate.split("T")[0] : "",
       revisedTime: task.revisedTime || "",
-      revisedReason: task.revisedReason || ""
+      revisedReason: task.revisedReason || "",
     });
   };
 
@@ -198,7 +257,7 @@ const DelegationList = () => {
         reviseFormData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -211,33 +270,33 @@ const DelegationList = () => {
     }
   };
 
-  const handleTicketSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      ...ticketData,
-      employeeName: userName,
-      date: new Date().toISOString().split("T")[0],
-      status: "Pending",
-    };
+  // const handleTicketSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const payload = {
+  //     ...ticketData,
+  //     employeeName: userName,
+  //     date: new Date().toISOString().split("T")[0],
+  //     status: "Pending",
+  //   };
 
-    try {
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/ticketRaise/add`,
-        payload
-      );
-      alert("Ticket raised successfully!");
-      setShowTicketModal(false);
-      setTicketData({
-        title: "",
-        description: "",
-        category: "Delegation",
-        type: "Help",
-        priority: "Medium",
-      });
-    } catch (error) {
-      console.error("Error submitting ticket:", error);
-    }
-  };
+  //   try {
+  //     await axios.post(
+  //       `${process.env.REACT_APP_API_URL}/api/ticketRaise/add`,
+  //       payload
+  //     );
+  //     alert("Ticket raised successfully!");
+  //     setShowTicketModal(false);
+  //     setTicketData({
+  //       title: "",
+  //       description: "",
+  //       category: "Delegation",
+  //       type: "Help",
+  //       priority: "Medium",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error submitting ticket:", error);
+  //   }
+  // };
 
   return (
     <>
@@ -246,13 +305,16 @@ const DelegationList = () => {
       <div className="delegation-wrapper">
         <h2 className="title">TASK DELEGATION DASHBOARD</h2>
 
-        {role === "user" && (
+        {/* {role === "user" && (
           <div style={{ textAlign: "right", marginBottom: "15px" }}>
-            <button className="btn blue" onClick={() => setShowTicketModal(true)}>
+            <button
+              className="btn blue"
+              onClick={() => setShowTicketModal(true)}
+            >
               Raise Ticket
             </button>
           </div>
-        )}
+        )} */}
 
         <div className="filters">
           <input
@@ -278,13 +340,17 @@ const DelegationList = () => {
             <input
               type="date"
               value={dateRange.from}
-              onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, from: e.target.value })
+              }
             />
             <label>To:</label>
             <input
               type="date"
               value={dateRange.to}
-              onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, to: e.target.value })
+              }
             />
           </div>
         </div>
@@ -359,13 +425,32 @@ const DelegationList = () => {
                           />
                         </td>
                         <td>{task.status || "Pending"}</td>
-                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
-                        <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          {task.completedAt
+                            ? new Date(task.completedAt).toLocaleString()
+                            : "N/A"}
+                        </td>
+                        <td>
+                          {task.revisedDate
+                            ? new Date(task.revisedDate).toLocaleDateString()
+                            : "N/A"}
+                        </td>
                         <td>{task.revisedTime || "N/A"}</td>
                         <td>{task.revisedReason || "N/A"}</td>
                         <td>
-                          <button className="btn green" onClick={handleUpdateTask}>Save</button>
-                          <button className="btn red" onClick={() => setEditingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                          <button
+                            className="btn green"
+                            onClick={handleUpdateTask}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn red"
+                            onClick={() => setEditingTask(null)}
+                            style={{ marginLeft: "8px" }}
+                          >
+                            Cancel
+                          </button>
                         </td>
                       </tr>
                     );
@@ -378,7 +463,11 @@ const DelegationList = () => {
                         <td>{new Date(task.dueDate).toLocaleDateString()}</td>
                         <td>{task.time}</td>
                         <td>{task.status || "Pending"}</td>
-                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                        <td>
+                          {task.completedAt
+                            ? new Date(task.completedAt).toLocaleString()
+                            : "N/A"}
+                        </td>
                         <td>
                           <input
                             type="date"
@@ -405,8 +494,19 @@ const DelegationList = () => {
                           />
                         </td>
                         <td>
-                          <button className="btn green" onClick={handleReviseSubmit}>Save</button>
-                          <button className="btn red" onClick={() => setRevisingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                          <button
+                            className="btn green"
+                            onClick={handleReviseSubmit}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="btn red"
+                            onClick={() => setRevisingTask(null)}
+                            style={{ marginLeft: "8px" }}
+                          >
+                            Cancel
+                          </button>
                         </td>
                       </tr>
                     );
@@ -419,34 +519,61 @@ const DelegationList = () => {
                         <td>{new Date(task.dueDate).toLocaleDateString()}</td>
                         <td>{task.time}</td>
                         <td>{task.status || "Pending"}</td>
-                        <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
-                        <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          {task.completedAt
+                            ? new Date(task.completedAt).toLocaleString()
+                            : "N/A"}
+                        </td>
+                        <td>
+                          {task.revisedDate
+                            ? new Date(task.revisedDate).toLocaleDateString()
+                            : "N/A"}
+                        </td>
                         <td>{task.revisedTime || "N/A"}</td>
                         <td>{task.revisedReason || "N/A"}</td>
                         <td>
                           {role === "user" ? (
                             <>
-                              {task.status === "Completed" || completedTasks[task._id] ? (
+                              {task.status === "Completed" ||
+                              completedTasks[task._id] ? (
                                 <span className="completed-icon">
-                                  <FaCheck style={{ color: 'green', fontSize: '20px' }} />
+                                  <FaCheck
+                                    style={{ color: "green", fontSize: "20px" }}
+                                  />
                                 </span>
                               ) : (
-                                <button 
-                                  className="btn green" 
+                                <button
+                                  className="btn green"
                                   onClick={() => handleCompleteTask(task._id)}
                                   disabled={completedTasks[task._id]}
                                 >
                                   Complete
                                 </button>
                               )}
-                              {task.status !== "Completed" && !completedTasks[task._id] && (
-                                <button className="btn blue" onClick={() => handleReviseClick(task)}>Revise</button>
-                              )}
+                              {task.status !== "Completed" &&
+                                !completedTasks[task._id] && (
+                                  <button
+                                    className="btn blue"
+                                    onClick={() => handleReviseClick(task)}
+                                  >
+                                    Revise
+                                  </button>
+                                )}
                             </>
                           ) : role === "client" ? (
                             <>
-                              <button className="btn green" onClick={() => handleEditClick(task)}>Edit</button>
-                              <button className="btn red" onClick={() => handleDeleteTask(task._id)}>Delete</button>
+                              <button
+                                className="btn green"
+                                onClick={() => handleEditClick(task)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn red"
+                                onClick={() => handleDeleteTask(task._id)}
+                              >
+                                Delete
+                              </button>
                             </>
                           ) : null}
                         </td>
@@ -461,7 +588,7 @@ const DelegationList = () => {
           <p style={{ marginTop: "20px" }}>No tasks found.</p>
         )}
 
-        {showTicketModal && (
+        {/* {showTicketModal && (
           <div className="modal">
             <div className="modal-content">
               <h3>Raise Ticket</h3>
@@ -484,7 +611,10 @@ const DelegationList = () => {
                     placeholder="Describe your issue..."
                     value={ticketData.description}
                     onChange={(e) =>
-                      setTicketData({ ...ticketData, description: e.target.value })
+                      setTicketData({
+                        ...ticketData,
+                        description: e.target.value,
+                      })
                     }
                     required
                   />
@@ -503,13 +633,21 @@ const DelegationList = () => {
                   </select>
                 </div>
                 <div className="modal-buttons">
-                  <button type="submit" className="btn green">Submit</button>
-                  <button type="button" className="btn red" onClick={() => setShowTicketModal(false)}>Cancel</button>
+                  <button type="submit" className="btn green">
+                    Submit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn red"
+                    onClick={() => setShowTicketModal(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </form>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </>
   );

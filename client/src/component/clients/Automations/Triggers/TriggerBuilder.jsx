@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
 import "./triggerbuilder.css";
-import { FiPlus, FiTrash2, FiChevronDown, FiChevronUp, FiSave } from "react-icons/fi";
+import {
+  FiPlus,
+  FiTrash2,
+  FiChevronDown,
+  FiChevronUp,
+  FiSave,
+} from "react-icons/fi";
 
 const TriggerBuilder = () => {
   const [triggerData, setTriggerData] = useState({
@@ -23,51 +30,140 @@ const TriggerBuilder = () => {
   const [selectedTrigger, setSelectedTrigger] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const role = localStorage.getItem("role");
-  const [customPermissions, setCustomPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [clientId, setClientId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
+        // Fetch token, role, and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+        ]);
+
+        const userToken = tokenRes.data.token;
+        let userId = tokenRes.data.userId;
+
+        // If userId is not obtained from token response, try fetching via email endpoint
+        if (!userId) {
+          try {
+            const userIdRes = await axios.get(
+              `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
+              { withCredentials: true }
+            );
+            userId = userIdRes.data.email;
+          } catch (error) {
+            console.error("Error fetching user email:", error);
+          }
+        }
+
+        // Check if both token and userId are present
+        if (!userToken || !userId) {
+          alert("Client ID is missing. Please login as a client.");
+          navigate("/login");
+          return;
+        }
+
+        setToken(userToken);
+        setClientId(userId);
+
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+
+        if (!userRole) {
+          navigate("/login");
+          return;
+        }
+
+        if (userRole !== "client") {
+          alert("Unauthorized: Only clients can access this section.");
+          navigate("/");
+          return;
+        }
+
+        setRole(userRole);
+        setCustomPermissions(userPermissions);
+
+        // Now fetch the trigger-related data
         setIsLoading(true);
-        
-        // Fetch all data in parallel
         const [
           formsResponse,
           stagesResponse,
           eventSourcesResponse,
           triggersResponse,
         ] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/builder/formDetails`),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/stages/list`),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/event-sources`),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/builder/formDetails`,
+            {
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/stages/list`,
+            {
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/triggers/event-sources`,
+            {
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/triggers/list`,
+            {
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+              withCredentials: true,
+            }
+          ),
         ]);
 
         // Transform forms data to only include what we need
-        const formattedForms = formsResponse.data.data.map(form => ({
+        const formattedForms = formsResponse.data.data.map((form) => ({
           _id: form._id,
-          form_name: form.formInfo?.title || 'Untitled Form'
+          form_name: form.formInfo?.title || "Untitled Form",
         }));
 
         setForms(formattedForms);
         setStages(stagesResponse.data);
         setEventSources(eventSourcesResponse.data);
         setTriggers(triggersResponse.data);
-
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("❌ Error fetching data:", error);
+        navigate("/login");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchInitialData();
+  }, [navigate]);
 
   const handleCreateTrigger = async (e) => {
     e.preventDefault();
@@ -75,7 +171,13 @@ const TriggerBuilder = () => {
       setIsLoading(true);
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/triggers/create`,
-        triggerData
+        triggerData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
       );
       alert(response.data.message);
       // Reset form after successful creation
@@ -88,7 +190,15 @@ const TriggerBuilder = () => {
         is_active: true,
       });
       // Refresh triggers list
-      const triggersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`);
+      const triggersResponse = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/triggers/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
       setTriggers(triggersResponse.data);
     } catch (error) {
       console.error("Error creating trigger:", error);
@@ -106,11 +216,25 @@ const TriggerBuilder = () => {
     try {
       setIsDeleting(true);
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/triggers/delete/${triggerId}`
+        `${process.env.REACT_APP_API_URL}/api/triggers/delete/${triggerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
       );
       alert(response.data.message);
       // Refresh triggers list
-      const triggersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`);
+      const triggersResponse = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/triggers/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
       setTriggers(triggersResponse.data);
       // Clear selection if deleting the currently selected trigger
       if (selectedTrigger?._id === triggerId) {
@@ -349,9 +473,7 @@ const TriggerBuilder = () => {
                 ) : (
                   <>
                     {triggers.length === 0 ? (
-                      <div className="empty-state">
-                        No triggers available
-                      </div>
+                      <div className="empty-state">No triggers available</div>
                     ) : (
                       triggers.map((trigger) => (
                         <div
@@ -362,7 +484,10 @@ const TriggerBuilder = () => {
                               : ""
                           }`}
                         >
-                          <div className="trigger-item-content" onClick={() => handleUseTrigger(trigger)}>
+                          <div
+                            className="trigger-item-content"
+                            onClick={() => handleUseTrigger(trigger)}
+                          >
                             <h4>{trigger.name || "Unnamed Trigger"}</h4>
                             <p className="trigger-description">
                               {trigger.description || "No description provided"}
@@ -381,7 +506,8 @@ const TriggerBuilder = () => {
                                     )
                                   )
                                   ?.stages.find(
-                                    (s) => s._id === trigger.action.move_to_stage
+                                    (s) =>
+                                      s._id === trigger.action.move_to_stage
                                   )?.stageName || "Unknown stage"}
                               </span>
                             </div>

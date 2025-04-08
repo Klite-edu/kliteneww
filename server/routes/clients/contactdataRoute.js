@@ -1,18 +1,18 @@
 // routes/contacts.js
 const express = require("express");
 const router = express.Router();
-const ContactData = require("../../models/clients/contactdata"); 
+const dbMiddleware = require("../../middlewares/dbMiddleware");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 
 // GET all contacts
-router.get("/contactinfo", async (req, res) => {
-    console.log("enterting to route");
-    
+router.get("/contactinfo", dbMiddleware, async (req, res) => {
+  console.log("enterting to route");
+
   try {
-    const contacts = await ContactData.find();
+    const contacts = await req.Employee.find();
     console.log("employee data", contacts);
-    
+
     res.json(contacts);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -20,7 +20,7 @@ router.get("/contactinfo", async (req, res) => {
 });
 
 // GET a single contact
-router.get("/:id", async (req, res) => {
+router.get("/:id", dbMiddleware, async (req, res) => {
   try {
     console.log("\n📡 Incoming request to fetch employee details...");
     console.log("🔹 Requested Employee ID:", req.params.id);
@@ -33,7 +33,7 @@ router.get("/:id", async (req, res) => {
     }
 
     console.log("📡 Fetching employee details for ID:", id);
-    const employee = await ContactData.findById(id);
+    const employee = await req.Employee.findById(id);
 
     if (!employee) {
       console.warn("❌ Employee not found in the database.");
@@ -42,23 +42,28 @@ router.get("/:id", async (req, res) => {
 
     console.log("✅ Employee found:", employee.fullName);
     res.json(employee);
-
   } catch (error) {
     console.error("❌ Error fetching employee:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 });
 
-
-
 // CREATE a new contact
-router.post("/create", async (req, res) => {
+router.post("/create", dbMiddleware, async (req, res) => {
   try {
-    console.log("📩 Received Employee Data:", JSON.stringify(req.body, null, 2));
+    console.log(
+      "📩 Received Employee Data:",
+      JSON.stringify(req.body, null, 2)
+    );
 
     // Extract password separately
     const { password, ...employeeData } = req.body;
-    console.log("🔹 Extracted Employee Data (without password):", JSON.stringify(employeeData, null, 2));
+    console.log(
+      "🔹 Extracted Employee Data (without password):",
+      JSON.stringify(employeeData, null, 2)
+    );
 
     // Hash the password before saving
     console.log("🔐 Generating Salt for Hashing...");
@@ -70,8 +75,14 @@ router.post("/create", async (req, res) => {
     console.log("🛡️ Hashed Password:", hashedPassword);
 
     // Create new Employee with hashed password
-    const newEmployee = new ContactData({ ...employeeData, password: hashedPassword });
-    console.log("📌 New Employee Object (Before Save):", JSON.stringify(newEmployee, null, 2));
+    const newEmployee = new req.Employee({
+      ...employeeData,
+      password: hashedPassword,
+    });
+    console.log(
+      "📌 New Employee Object (Before Save):",
+      JSON.stringify(newEmployee, null, 2)
+    );
 
     // Save Employee to MongoDB
     await newEmployee.save();
@@ -84,13 +95,25 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", dbMiddleware, async (req, res) => {
   try {
-    const updatedEmployee = await ContactData.findByIdAndUpdate(
+    const { password, ...updateData } = req.body;
+
+    // If a new password is provided, hash it
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
+    } else {
+      // Remove password field from updateData if it is empty or not provided
+      delete updateData.password;
+    }
+
+    const updatedEmployee = await req.Employee.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true } // Return updated document
     );
+
     res.status(200).json(updatedEmployee);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -98,9 +121,9 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // DELETE a contact
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/delete/:id", dbMiddleware, async (req, res) => {
   try {
-    const employee = await ContactData.findById(req.params.id);
+    const employee = await req.Employee.findById(req.params.id);
 
     if (!employee) {
       return res.status(404).json({ message: "Employee not found" });

@@ -2,7 +2,7 @@ import { faCircleUser, faGear, faMagnifyingGlass, faBars } from "@fortawesome/fr
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import { Dropdown } from "react-bootstrap";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import "./navbar.css";
 
 const Navbar = () => {
@@ -23,7 +23,9 @@ const Navbar = () => {
         />
       </div>
       <div className="nav-right">
+        <Link to="/contactmgmt/contacts">
         <FontAwesomeIcon icon={faGear} className="admin-icon gear" />
+        </Link>
 
         <Dropdown align="end">
           <Dropdown.Toggle
@@ -37,7 +39,7 @@ const Navbar = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu className="custom-dropdown-menu">
-            <Dropdown.Item href="/admin/account/settings/profile">
+            <Dropdown.Item href="/profile">
               <FontAwesomeIcon icon={faCircleUser} /> Profile
             </Dropdown.Item>
             <Dropdown.Item onClick={handleLogout}>

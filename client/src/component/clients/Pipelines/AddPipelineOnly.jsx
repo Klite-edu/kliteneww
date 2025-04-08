@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "./AddPipelineOnly.css";
 
 const AddPipelineOnly = ({
@@ -12,10 +14,57 @@ const AddPipelineOnly = ({
     pipelineName: "",
     stages: [],
   });
+  const navigate = useNavigate();
+  const [token, setToken] = useState("");
 
   useEffect(() => {
-    fetchEmployees();
+    const fetchInitialData = async () => {
+      try {
+        // Fetch token from cookies
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
 
+        const userToken = tokenRes.data.token;
+        if (!userToken) {
+          navigate("/login");
+          return;
+        }
+
+        setToken(userToken);
+
+        // Fetch employees and initialize pipeline data
+        await Promise.all([
+          fetchEmployees(userToken),
+          initializePipelineData()
+        ]);
+
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchInitialData();
+  }, [navigate, pipelineData]);
+
+  const fetchEmployees = async (token) => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/stages/contactinfo`,
+        { 
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
+      );
+      setEmployees(response.data || []);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
+  const initializePipelineData = () => {
     if (pipelineData) {
       setNewPipeline({
         pipelineName: pipelineData.pipelineName,
@@ -27,18 +76,6 @@ const AddPipelineOnly = ({
         pipelineName: "",
         stages: [createEmptyStage()],
       });
-    }
-  }, [pipelineData]);
-
-  const fetchEmployees = async () => {
-    try {
-      const response = await fetch(
-        "https://api.autopilotmybusiness.com/api/stages/contactinfo"
-      );
-      const data = await response.json();
-      setEmployees(data || []);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
     }
   };
 
@@ -77,41 +114,46 @@ const AddPipelineOnly = ({
   };
 
   const savePipeline = async () => {
-    if (!newPipeline.pipelineName.trim())
-      return alert("Please enter a pipeline name");
+    if (!newPipeline.pipelineName.trim()) {
+      alert("Please enter a pipeline name");
+      return;
+    }
 
     const invalidStages = newPipeline.stages.some(
       (stage) => !stage.stageName.trim()
     );
-    if (invalidStages) return alert("Please fill in all stage names");
+    if (invalidStages) {
+      alert("Please fill in all stage names");
+      return;
+    }
 
     try {
       const url = pipelineData
-        ? `https://api.autopilotmybusiness.com/api/stages/${pipelineData._id}`
-        : "https://api.autopilotmybusiness.com/api/stages/add";
-      const method = pipelineData ? "PUT" : "POST";
+        ? `${process.env.REACT_APP_API_URL}/api/stages/${pipelineData._id}`
+        : `${process.env.REACT_APP_API_URL}/api/stages/add`;
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newPipeline),
+      await axios({
+        method: pipelineData ? "put" : "post",
+        url,
+        data: newPipeline,
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` })
+        }
       });
 
-      if (response.ok) {
-        alert(
-          pipelineData
-            ? "Pipeline updated successfully!"
-            : "Pipeline added successfully!"
-        );
-        setShowModal(false);
-        onClose();
-        refreshList();
-      } else {
-        const errorText = await response.text();
-        alert("Operation failed. Check console for details.");
-      }
+      alert(
+        pipelineData
+          ? "Pipeline updated successfully!"
+          : "Pipeline added successfully!"
+      );
+      setShowModal(false);
+      onClose();
+      refreshList();
     } catch (error) {
-      alert("Operation failed. Please try again.");
+      console.error("Error saving pipeline:", error);
+      alert(`Operation failed: ${error.response?.data?.message || "Unknown error"}`);
     }
   };
 
@@ -123,7 +165,7 @@ const AddPipelineOnly = ({
           className="abhi-create-pipeline-btn"
         >
           <i className="bi bi-plus-lg abhi-me-2"></i>
-          Create Pipeline
+          Create FMS/Pipeline
         </button>
       )}
 
@@ -133,7 +175,7 @@ const AddPipelineOnly = ({
             <div className="abhi-modal-header">
               <h3 className="abhi-modal-title text-light">
                 <i className="bi bi-diagram-3-fill abhi-me-2"></i>
-                {pipelineData ? "Edit Pipeline" : "Add New Pipeline"}
+                {pipelineData ? "Edit FMS/Pipeline" : "Add New FMS/Pipeline"}
               </h3>
               <button
                 className="bg-transparent fs-3"
@@ -148,10 +190,10 @@ const AddPipelineOnly = ({
 
             <div className="abhi-modal-body">
               <div className="abhi-form-group abhi-mb-4">
-                <label className="abhi-form-label">Pipeline Name</label>
+                <label className="abhi-form-label">FMS/Pipeline Name</label>
                 <input
                   type="text"
-                  placeholder="Enter pipeline name"
+                  placeholder="Enter FMS/pipeline name"
                   className="abhi-form-control abhi-pipeline-input"
                   value={newPipeline.pipelineName}
                   onChange={(e) =>

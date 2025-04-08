@@ -1,3 +1,194 @@
+// import React, { useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import axios from "axios";
+// import "./panellogin.css";
+// import sidebarConfig from "../configs/Sidebarconfig";
+
+// const PanelLogin = () => {
+//   const [email, setEmail] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [error, setError] = useState("");
+//   const [isRegistering, setIsRegistering] = useState(false);
+//   const navigate = useNavigate();
+
+//   // ✅ Enhanced Login Handler with Detailed Logs
+//   const handleLoginSubmit = async (e) => {
+//     e.preventDefault();
+
+//     try {
+//       console.log(`🔑 [LOGIN] Attempting login for email: ${email}`);
+      
+//       // Log input values before sending the request
+//       console.log("📥 [LOGIN] Input Data:", { email, password });
+
+//       const response = await axios.post(
+//         `${process.env.REACT_APP_API_URL}/api/admin/login`,
+//         { email, password },
+//         {
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+
+//       // Log the complete response from the server
+//       console.log("✅ [LOGIN] Response received:", response);
+
+//       const { token, userId, role, companyName } = response.data;
+
+//       // ✅ Store user details in localStorage
+//       console.log("🗃️ [LOGIN] Storing user data in localStorage...");
+//       localStorage.setItem("token", token);
+//       localStorage.setItem("email", email);
+//       localStorage.setItem("userId", userId); 
+//       localStorage.setItem("role", role);
+//       localStorage.setItem("companyName", companyName);
+
+//       console.log("🔑 [LOGIN] Success!");
+//       console.log("🔹 [LOGIN] Stored User ID:", userId);
+//       console.log("🔹 [LOGIN] Stored Email:", email);
+//       console.log("🔹 [LOGIN] User Role:", role);
+//       console.log("🔹 [LOGIN] Company Name:", companyName);
+
+//       // Redirect user based on role
+//       const config = sidebarConfig[role]; 
+//       const redirectPath = config && config[0]?.path;
+//       console.log("➡️ [LOGIN] Redirecting to:", redirectPath || "/");
+//       navigate(redirectPath || "/");
+//     } catch (error) {
+//       console.error("❌ [LOGIN] Login Error:", error.response?.data || error.message);
+
+//       // Specific error logging
+//       if (error.response) {
+//         console.error("❌ [LOGIN] Response Data:", error.response.data);
+//         console.error("❌ [LOGIN] Status Code:", error.response.status);
+//         console.error("❌ [LOGIN] Headers:", error.response.headers);
+//       } else if (error.request) {
+//         console.error("❌ [LOGIN] No response received:", error.request);
+//       } else {
+//         console.error("❌ [LOGIN] Error Message:", error.message);
+//       }
+
+//       setError("Invalid email or password");
+//     }
+//   };
+
+//   // ✅ Enhanced Registration Handler with Detailed Logs
+//   const handleRegisterSubmit = async (e) => {
+//     e.preventDefault();
+
+//     try {
+//       console.log(`🔑 [REGISTER] Attempting registration for email: ${email}`);
+      
+//       const response = await axios.post(
+//         `${process.env.REACT_APP_API_URL}/api/admin/register`,
+//         { email, password }
+//       );
+
+//       console.log("✅ [REGISTER] Response received:", response);
+//       alert("✅ Registration successful! Please log in.");
+//       setIsRegistering(false);
+//     } catch (error) {
+//       console.error("❌ [REGISTER] Registration Error:", error.response?.data || error.message);
+
+//       // Specific error logging
+//       if (error.response) {
+//         console.error("❌ [REGISTER] Response Data:", error.response.data);
+//         console.error("❌ [REGISTER] Status Code:", error.response.status);
+//         console.error("❌ [REGISTER] Headers:", error.response.headers);
+//       } else if (error.request) {
+//         console.error("❌ [REGISTER] No response received:", error.request);
+//       } else {
+//         console.error("❌ [REGISTER] Error Message:", error.message);
+//       }
+
+//       setError("Error registering user");
+//     }
+//   };
+
+//   return (
+//     <div className="login-container">
+//       {isRegistering ? (
+//         <form className="login-form" onSubmit={handleRegisterSubmit}>
+//           <h2>Register</h2>
+//           {error && <p className="error-message">{error}</p>}
+//           <div className="input-group">
+//             <label>Email</label>
+//             <input
+//               type="email"
+//               placeholder="Enter your email"
+//               value={email}
+//               onChange={(e) => setEmail(e.target.value)}
+//               required
+//             />
+//           </div>
+//           <div className="input-group">
+//             <label>Password</label>
+//             <input
+//               type="password"
+//               placeholder="Enter your password"
+//               value={password}
+//               onChange={(e) => setPassword(e.target.value)}
+//               required
+//             />
+//           </div>
+//           <button type="submit" className="login-btn">
+//             Register
+//           </button>
+//           <p>
+//             Already have an account?{" "}
+//             <span
+//               style={{ cursor: "pointer", color: "#1e90ff" }}
+//               onClick={() => setIsRegistering(false)}
+//             >
+//               Login here
+//             </span>
+//           </p>
+//         </form>
+//       ) : (
+//         <form className="login-form" onSubmit={handleLoginSubmit}>
+//           <h2>Login</h2>
+//           {error && <p className="error-message">{error}</p>}
+//           <div className="input-group">
+//             <label>Email</label>
+//             <input
+//               type="email"
+//               placeholder="Enter your email"
+//               value={email}
+//               onChange={(e) => setEmail(e.target.value)}
+//               required
+//             />
+//           </div>
+//           <div className="input-group">
+//             <label>Password</label>
+//             <input
+//               type="password"
+//               placeholder="Enter your password"
+//               value={password}
+//               onChange={(e) => setPassword(e.target.value)}
+//               required
+//             />
+//           </div>
+//           <button type="submit" className="login-btn">
+//             Login
+//           </button>
+//           <p>
+//             Don't have an account?{" "}
+//             <span
+//               style={{ cursor: "pointer", color: "#1e90ff" }}
+//               onClick={() => setIsRegistering(true)}
+//             >
+//               Register here
+//             </span>
+//           </p>
+//         </form>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default PanelLogin;
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -13,117 +204,95 @@ const PanelLogin = () => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-  
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/login`, { email, password });
-      const { token, userId, role } = response.data;
-  
-      // ✅ Store user details in localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("email", email);
-      localStorage.setItem("userId", userId); // Store User ID
-      localStorage.setItem("role", role);
-  
-      console.log("🔹 Stored User ID:", userId);
-      console.log("🔹 Stored Email:", email);
-      console.log("🔹 User Role:", role);
-  
-      // Redirect user based on role
-      const config = sidebarConfig[role]; // Fetch sidebar configuration
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/admin/login`,
+        { email, password },
+        { withCredentials: true }
+      );
+      const { role } = response.data;
+      const config = sidebarConfig[role];
       const redirectPath = config && config[0]?.path;
       navigate(redirectPath || "/");
     } catch (error) {
-      console.error("❌ Login Error:", error);
       setError("Invalid email or password");
     }
   };
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/register`, { email, password });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/admin/register`,
+        { email, password },
+        { withCredentials: true }
+      );
       alert("Registration successful! Please log in.");
-      setIsRegistering(false); // Switch to login after successful registration
+      setIsRegistering(false);
     } catch (error) {
-      console.error("❌ Registration Error:", error);
       setError("Error registering user");
     }
   };
 
   return (
-    <div className="login-container">
-      {isRegistering ? (
-        <form className="login-form" onSubmit={handleRegisterSubmit}>
-          <h2>Register</h2>
-          {error && <p className="error-message">{error}</p>}
-          <div className="input-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="login-btn">Register</button>
-          <p>
-            Already have an account?{" "}
-            <span
-              style={{ cursor: "pointer", color: "#1e90ff" }}
-              onClick={() => setIsRegistering(false)}
-            >
-              Login here
-            </span>
+    <div className="panel-login-container">
+      <div className="panel-login-card">
+        <div className="panel-login-header">
+          <h2>{isRegistering ? "Create Admin Account" : "Admin Portal Login"}</h2>
+          <p className="panel-login-subtitle">
+            {isRegistering 
+              ? "Register for admin access" 
+              : "Sign in to access the dashboard"}
           </p>
-        </form>
-      ) : (
-        <form className="login-form" onSubmit={handleLoginSubmit}>
-          <h2>Login</h2>
-          {error && <p className="error-message">{error}</p>}
-          <div className="input-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+        </div>
+        
+        {error && <div className="panel-error-message">{error}</div>}
+        
+        <form onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit}>
+          <div className="panel-input-group">
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
             />
           </div>
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+          <div className="panel-input-group">
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
             />
           </div>
-          <button type="submit" className="login-btn">Login</button>
-          <p>
-            Don't have an account?{" "}
-            <span
-              style={{ cursor: "pointer", color: "#1e90ff" }}
-              onClick={() => setIsRegistering(true)}
-            >
-              Register here
-            </span>
-          </p>
+          
+          <button type="submit" className="panel-submit-btn">
+            {isRegistering ? "Register" : "Login"}
+          </button>
         </form>
-      )}
+        
+        <div className="panel-toggle-mode">
+          {isRegistering ? (
+            <p>
+              Already have an account?{" "}
+              <span onClick={() => setIsRegistering(false)}>Sign in</span>
+            </p>
+          ) : (
+            <p>
+              Need an account?{" "}
+              <span onClick={() => setIsRegistering(true)}>Register</span>
+            </p>
+          )}
+        </div>
+        
+        <div className="panel-decoration">
+          <div className="panel-decoration-circle"></div>
+          <div className="panel-decoration-circle"></div>
+          <div className="panel-decoration-circle"></div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -258,9 +427,6 @@ export default PanelLogin;
 
 // export default PanelLogin;
 
-
-
-
 // import React, { useState } from "react";
 // import axios from "axios";
 // import { useNavigate } from "react-router-dom";
@@ -270,7 +436,7 @@ export default PanelLogin;
 //   const [email, setEmail] = useState("");
 //   const [password, setPassword] = useState("");
 //   const [otp, setOtp] = useState("");
-//   const [isOtpRequired, setIsOtpRequired] = useState(false); 
+//   const [isOtpRequired, setIsOtpRequired] = useState(false);
 //   const [error, setError] = useState("");
 //   const navigate = useNavigate();
 
@@ -278,7 +444,7 @@ export default PanelLogin;
 //     e.preventDefault();
 //     try {
 //       const response = await axios.post("http://localhost:5000/api/admin/login", { email, password });
-//       const { token, otpRequired } = response.data;  
+//       const { token, otpRequired } = response.data;
 
 //       const decodedToken = JSON.parse(atob(token.split(".")[1]));
 //       localStorage.setItem("role", decodedToken.role);
@@ -340,9 +506,3 @@ export default PanelLogin;
 // };
 
 // export default PanelLogin;
-
-
-
-
-
-

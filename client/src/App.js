@@ -46,6 +46,7 @@ import ChatRoomUI from "./component/clients/Chats/ChatRoomUI";
 import Sites from "./component/clients/HRM/Sites/Sites";
 import TicketRaise from "./component/clients/TicketRaise/TicketRaise";
 import PipelinesDashboard from "./component/clients/Pipelines/PipelinesDashboard";
+import Profile from "./component/clients/Profile/Profile";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -109,6 +110,7 @@ const App = () => {
         <Route path="/metatemplate" element={<MetaTemplate />} />
         <Route path="/sites" element={<Sites />} />
         <Route path="/ticketraise" element={<TicketRaise />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </div>
   );

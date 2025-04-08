@@ -14,7 +14,7 @@ const Permisssions = ({ onSave }) => {
 
   const handlePermissionsSave = (permissions) => {
     // Save permissions to localStorage
-    localStorage.setItem("permissions", JSON.stringify(permissions));
+    // localStorage.setItem("permissions", JSON.stringify(permissions));
     setCustomPermissions(permissions); // Update the custom permissions state
   };
   return (

@@ -10,47 +10,111 @@ import "./view.css";
 const View = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-  const [customPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
-
   const [employee, setEmployee] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
 
   useEffect(() => {
-    const fetchEmployee = async () => {
+    const fetchAuthData = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/${id}`
-        );
-        setEmployee(response.data);
-      } catch (err) {
-        setError(err.message);
+        setLoading(true);
+        
+        // Fetch token, role and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { 
+            withCredentials: true 
+          }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { 
+            withCredentials: true 
+          }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { 
+            withCredentials: true 
+          })
+        ]);
+
+        if (!tokenRes.data.token || !roleRes.data.role) {
+          throw new Error("Authentication data missing");
+        }
+
+        setToken(tokenRes.data.token);
+        setRole(roleRes.data.role);
+        setCustomPermissions(permissionsRes.data.permissions || {});
+
+        // Fetch employee data after successful auth
+        await fetchEmployee(tokenRes.data.token);
+      } catch (error) {
+        console.error("Authentication error:", error);
+        setError(error.message);
+        navigate("/login");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchEmployee();
-  }, [id]);
+    const fetchEmployee = async (authToken) => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/employee/${id}`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        setEmployee(response.data);
+      } catch (err) {
+        console.error("Failed to fetch employee:", err);
+        setError(err.message);
+        if (err.response?.status === 401) {
+          navigate("/login");
+        }
+      }
+    };
+
+    fetchAuthData();
+  }, [id, navigate]);
 
   const handleDelete = async (id) => {
     try {
       if (window.confirm("Do you want to delete this employee?")) {
         await axios.delete(
-          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`
+          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         alert("Employee deleted successfully");
         navigate("/contactmgmt/contacts");
       }
     } catch (error) {
-      console.error("Error deleting employee", error);
-      alert("Failed to delete employee");
+      console.error("Error deleting employee:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      } else {
+        alert("Failed to delete employee");
+      }
     }
   };
 
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (error) return <div className="error-message">{error}</div>;
-  if (!employee) return <div className="loading-message">Loading...</div>;
+  if (!employee) return <div className="loading-message">Loading employee data...</div>;
 
   return (
     <>

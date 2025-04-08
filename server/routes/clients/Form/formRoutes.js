@@ -1,9 +1,5 @@
 const express = require("express");
-const Submission = require("../../../models/clients/form/form-model");
-const Form = require("../../../models/clients/formBuilder/formBuilder-model");
-const Trigger = require("../../../models/clients/triggers/Trigger-model");
-const PipelineStage = require("../../../models/clients/pipeline/pipeline-model");
-const verifyToken = require("../../../middlewares/auth");
+const DBMiddleware = require("../../../middlewares/dbMiddleware")
 const router = express.Router();
 const mongoose = require("mongoose");
 const { Types } = mongoose; // Import Types for ObjectId
@@ -172,7 +168,7 @@ const { Types } = mongoose; // Import Types for ObjectId
 //   }
 // });
 
-router.post("/submit/:formId", async (req, res) => {
+router.post("/submit/:formId",DBMiddleware, async (req, res) => {
   const { formId } = req.params;
   const { submissions, user_email, data, _id, clientId } = req.body;
 
@@ -189,7 +185,7 @@ router.post("/submit/:formId", async (req, res) => {
 
     const lookupId = formId || _id;
     console.log("Step 2️⃣: Looking for form with ID:", lookupId);
-    const form = await Form.findById(lookupId);
+    const form = await req.FormBuilder.findById(lookupId);
 
     if (!form) {
       console.log(`❌ Form not found with ID: ${lookupId}`);
@@ -252,14 +248,14 @@ router.post("/submit/:formId", async (req, res) => {
     console.log("Step 6️⃣: Fetching initial stage from trigger...");
     let initialStageId;
 
-    const trigger = await Trigger.findOne({
+    const trigger = await req.trigger.findOne({
       event_source: "form_submission",
       "conditions.form_id": lookupId,
     });
 
     if (trigger && trigger.action.move_to_stage) {
       console.log("✅ Trigger found:", trigger);
-      const stage = await PipelineStage.findOne({
+      const stage = await req.pipeline.findOne({
         "stages._id": trigger.action.move_to_stage,
       });
 
@@ -293,7 +289,7 @@ router.post("/submit/:formId", async (req, res) => {
 
     // ✅ Step 7️⃣: Create & Save New Submission
     console.log("✅ Saving new submission...");
-    const newSubmission = await Submission.create({
+    const newSubmission = await req.Submission.create({
       formId: form._id,
       clientId,
       form_name: form.formInfo.title,
@@ -323,12 +319,12 @@ router.post("/submit/:formId", async (req, res) => {
   }
 });
 
-router.get("/forms", async (req, res) => {
+router.get("/forms", DBMiddleware, async (req, res) => {
   try {
     console.log("🔎 Starting fetch for submissions...");
 
     // Step 1️⃣: Fetch unique formIds from Submissions
-    const submissionForms = await Submission.find({}, { formId: 1 }).lean();
+    const submissionForms = await req.Submission.find({}, { formId: 1 }).lean();
 
     console.log(`✅ Fetched ${submissionForms.length} submission entries`);
 
@@ -340,7 +336,7 @@ router.get("/forms", async (req, res) => {
     console.log("✅ Unique formIds extracted:", uniqueFormIds);
 
     // Step 3️⃣: Fetch form titles from FormBuilder for each unique formId
-    const formBuilders = await Form.find(
+    const formBuilders = await req.FormBuilder.find(
       { _id: { $in: uniqueFormIds } },
       { _id: 1, "formInfo.title": 1 }
     ).lean();
@@ -469,13 +465,13 @@ router.get("/forms", async (req, res) => {
 //   }
 // });
 
-router.get("/leads-by-stages", async (req, res) => {
+router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
   try {
     console.log("🚀 Fetching leads grouped by stages...");
 
     // Step 1: Fetch all pipelines (includes stages array)
     console.log("📥 Step 1: Fetching pipelines...");
-    const pipelines = await PipelineStage.find();
+    const pipelines = await req.pipeline.find();
     console.log(
       "✅ Pipelines fetched successfully. Total pipelines:",
       pipelines.length
@@ -492,7 +488,7 @@ router.get("/leads-by-stages", async (req, res) => {
 
     // Step 2: Fetch all submissions directly from the Submission model
     console.log("📥 Step 2: Fetching submissions...");
-    const submissions = await Submission.find().lean();
+    const submissions = await req.Submission.find().lean();
     console.log(
       `✅ Submissions fetched successfully. Total submissions: ${submissions.length}`
     );
@@ -586,7 +582,7 @@ router.get("/leads-by-stages", async (req, res) => {
   }
 });
 
-router.post("/move-to-next-stage", async (req, res) => {
+router.post("/move-to-next-stage",DBMiddleware, async (req, res) => {
   // Start transaction logging
   console.log("🚀 Starting move-to-next-stage process", {
     timestamp: new Date().toISOString(),
@@ -610,7 +606,7 @@ router.post("/move-to-next-stage", async (req, res) => {
 
     // Fetch submission
     console.log("📥 Fetching submission with ID:", submissionId);
-    const submission = await Submission.findById(submissionId);
+    const submission = await req.Submission.findById(submissionId);
 
     if (!submission) {
       console.error("❌ Submission not found with ID:", submissionId);
@@ -634,7 +630,7 @@ router.post("/move-to-next-stage", async (req, res) => {
 
     // Fetch pipeline containing the stage
     console.log("📥 Searching for pipeline containing stage:", currentStageId);
-    const pipeline = await PipelineStage.findOne({
+    const pipeline = await req.pipeline.findOne({
       "stages._id": new mongoose.Types.ObjectId(currentStageId),
     });
 

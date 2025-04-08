@@ -1,17 +1,15 @@
 const express = require("express");
-const Delegation = require("../../../models/clients/TaskDelegation/taskdelegation");
-const Employee = require("../../../models/clients/contactdata");
-const verifyToken = require("../../../middlewares/auth")
-
 const router = express.Router();
+const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
+const verifyToken = require("../../../middlewares/auth");
 
-// Add a new task delegation
-router.post("/add", async (req, res) => {
+// Add a New Task Delegation
+router.post("/add", dbDBMiddleware, async (req, res) => {
   try {
+    console.log("📩 Received Delegation Data:", req.body);
     const { name, description, dueDate, time, doer } = req.body;
-    console.log("Incoming task delegation request:", req.body);
 
-    const newDelegation = new Delegation({
+    const newDelegation = new req.delegation({
       name,
       description,
       dueDate,
@@ -19,188 +17,120 @@ router.post("/add", async (req, res) => {
       doer,
     });
 
+    console.log("📤 Saving Delegation to Database...");
     await newDelegation.save();
-    console.log("Task delegated successfully:", newDelegation);
-    res.status(201).json({ message: "Task delegated successfully!" });
+
+    console.log("✅ Delegation Successfully Added:", newDelegation);
+    res.status(201).json({ message: "Delegation added successfully!", task: newDelegation });
   } catch (error) {
-    console.error("Error delegating task:", error);
-    res.status(500).json({ message: "Error delegating task", error });
+    console.error("❌ Error Adding Delegation:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Get all delegated tasks
-router.get("/list", async (req, res) => {
+// Get All Delegated Tasks
+router.get("/list", dbDBMiddleware, async (req, res) => {
   try {
-    const tasks = await Delegation.find({}).populate("doer", "fullName");
-    console.log(`📦 Total tasks fetched (unfiltered): ${tasks.length}`);
+    console.log("📥 Fetching Delegated Tasks...");
+    const tasks = await req.delegation.find({}).populate("doer", "fullName");
+
+    console.log("✅ Fetched Delegated Tasks:", tasks.length);
     res.status(200).json(tasks);
   } catch (error) {
-    console.error("❌ Error fetching tasks:", error);
+    console.error("❌ Error Fetching Delegated Tasks:", error.message);
     res.status(500).json({ message: "Error fetching tasks", error: error.message });
   }
 });
 
-
-
-// Edit a delegated task
-router.put("/edit/:id", async (req, res) => {
-  console.log('--- EDIT TASK REQUEST STARTED ---');
-  console.log(`[${new Date().toISOString()}] Received PUT request to edit task ${req.params.id}`);
-  
+// Edit a Delegated Task
+router.put("/edit/:id", dbDBMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    console.log("📥 Edit Delegation Request:", req.params.id);
     const { name, description, dueDate, time, doer } = req.body;
 
-    console.log('Request Parameters:');
-    console.log(`Task ID: ${id}`);
-    console.log('Request Body:', {
-      name,
-      description,
-      dueDate,
-      time,
-      doer
-    });
-
-    // Validate required fields
-    if (!name || !description || !dueDate || !time || !doer) {
-      console.error('Validation Error: Missing required fields');
-      return res.status(400).json({ 
-        message: "All fields (name, description, dueDate, time, doer) are required" 
-      });
-    }
-
-    console.log('Attempting to find and update task in database...');
-    const updatedTask = await Delegation.findByIdAndUpdate(
-      id,
-      { 
-        name, 
-        description, 
-        dueDate, 
-        time, 
-        doer 
-      },
-      { 
-        new: true,
-        runValidators: true // Ensure validators run on update
-      }
-    ).populate('doer', 'fullName'); // Populate doer info for logging
+    const updatedTask = await req.delegation.findByIdAndUpdate(
+      req.params.id,
+      { name, description, dueDate, time, doer },
+      { new: true, runValidators: true }
+    ).populate("doer", "fullName");
 
     if (!updatedTask) {
-      console.error(`Task not found with ID: ${id}`);
+      console.log("❌ Task Not Found:", req.params.id);
       return res.status(404).json({ message: "Task not found" });
     }
 
-    console.log('Task successfully updated:', {
-      id: updatedTask._id,
-      name: updatedTask.name,
-      description: updatedTask.description,
-      dueDate: updatedTask.dueDate,
-      time: updatedTask.time,
-      doer: updatedTask.doer?.fullName || 'N/A',
-      updatedAt: updatedTask.updatedAt
-    });
-
-    res.status(200).json({ 
-      message: "Task updated successfully!", 
-      updatedTask 
-    });
-
+    console.log("✅ Task Updated Successfully:", updatedTask);
+    res.status(200).json({ message: "Task updated successfully!", updatedTask });
   } catch (error) {
-    console.error('Error updating task:', {
-      error: error.message,
-      stack: error.stack,
-      fullError: error
-    });
-
-    // Handle specific error types
-    if (error.name === 'CastError') {
-      console.error('Invalid ID format');
-      return res.status(400).json({ message: "Invalid task ID format" });
-    }
-    
-    if (error.name === 'ValidationError') {
-      console.error('Validation Error:', error.errors);
-      return res.status(400).json({ 
-        message: "Validation failed",
-        errors: error.errors 
-      });
-    }
-
-    res.status(500).json({ 
-      message: "Error updating task",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  } finally {
-    console.log(`[${new Date().toISOString()}] Edit task request completed`);
-    console.log('--- EDIT TASK REQUEST ENDED ---\n');
+    console.error("❌ Error Updating Delegation:", error.message);
+    res.status(500).json({ message: "Error updating task", error: error.message });
   }
 });
 
-// Delete a delegated task
-router.delete("/delete/:id", async (req, res) => {
+// Delete a Delegated Task
+router.delete("/delete/:id", dbDBMiddleware, verifyToken, async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const deletedTask = await Delegation.findByIdAndDelete(id);
+    console.log("🗑️ Delete Task Request:", req.params.id);
+    const deletedTask = await req.delegation.findByIdAndDelete(req.params.id);
 
     if (!deletedTask) {
+      console.log("❌ Task Not Found:", req.params.id);
       return res.status(404).json({ message: "Task not found" });
     }
 
+    console.log("✅ Task Deleted Successfully:", deletedTask);
     res.status(200).json({ message: "Task deleted successfully!", deletedTask });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting task", error });
+    console.error("❌ Error Deleting Task:", error.message);
+    res.status(500).json({ message: "Error deleting task", error: error.message });
   }
 });
 
-// Mark task as complete
-router.put("/complete/:id", async (req, res) => {
+// Mark Task as Completed
+router.put("/complete/:id", dbDBMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const updatedTask = await Delegation.findByIdAndUpdate(
-      id,
-      {
-        status: "Completed",
-        completedAt: new Date(),
-      },
+    console.log("✅ Marking Task as Complete:", req.params.id);
+    const updatedTask = await req.delegation.findByIdAndUpdate(
+      req.params.id,
+      { status: "Completed", completedAt: new Date() },
       { new: true }
     );
 
     if (!updatedTask) {
+      console.log("❌ Task Not Found:", req.params.id);
       return res.status(404).json({ message: "Task not found" });
     }
 
+    console.log("✅ Task Marked as Completed:", updatedTask);
     res.status(200).json({ message: "Task marked as completed!", updatedTask });
   } catch (error) {
-    res.status(500).json({ message: "Error completing task", error });
+    console.error("❌ Error Completing Task:", error.message);
+    res.status(500).json({ message: "Error completing task", error: error.message });
   }
 });
 
-// Revise task
-router.put("/revise/:id", async (req, res) => {
+// Revise Task
+router.put("/revise/:id", dbDBMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    console.log("🔄 Revising Task:", req.params.id);
     const { revisedDate, revisedTime, revisedReason } = req.body;
 
-    const updatedTask = await Delegation.findByIdAndUpdate(
-      id,
-      {
-        revisedDate,
-        revisedTime,
-        revisedReason,
-        status: "Revised",
-      },
+    const updatedTask = await req.delegation.findByIdAndUpdate(
+      req.params.id,
+      { revisedDate, revisedTime, revisedReason, status: "Revised" },
       { new: true }
     );
 
     if (!updatedTask) {
+      console.log("❌ Task Not Found:", req.params.id);
       return res.status(404).json({ message: "Task not found" });
     }
 
+    console.log("✅ Task Revised Successfully:", updatedTask);
     res.status(200).json({ message: "Task revised successfully!", updatedTask });
   } catch (error) {
-    res.status(500).json({ message: "Error revising task", error });
+    console.error("❌ Error Revising Task:", error.message);
+    res.status(500).json({ message: "Error revising task", error: error.message });
   }
 });
 

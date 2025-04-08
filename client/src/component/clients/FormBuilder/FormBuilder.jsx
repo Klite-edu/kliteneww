@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../Sidebar/Sidebar";
 import Navbar from "../../Navbar/Navbar";
 import "./formbuilder.css";
@@ -14,23 +15,82 @@ const FormBuilder = () => {
     textColor: "#ffffff",
   });
   const [formTitle, setFormTitle] = useState("");
-  const role = localStorage.getItem("role");
-  const [customPermissions, setCustomPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [token, setToken] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    const role = localStorage.getItem("role");
-
-    if (!userId || role !== "client") {
-      alert("Unauthorized: Only clients can access this section.");
-      return;
-    }
-
-    setClientId(userId);
-  }, []);
+    const fetchInitialData = async () => {
+      try {
+        // Fetch token, role, and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+        ]);
+  
+        const userToken = tokenRes.data.token;
+        let userId = tokenRes.data.userId;
+  
+        // If userId is not obtained from token response, try fetching via email endpoint
+        if (!userId) {
+          try {
+            const userIdRes = await axios.get(
+              `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
+              { withCredentials: true }
+            );
+            userId = userIdRes.data.email;
+          } catch (error) {
+            console.error("Error fetching user email:", error);
+          }
+        }
+  
+        // Check if both token and userId are present
+        if (!userToken || !userId) {
+          alert("Client ID is missing. Please login as a client.");
+          navigate("/login");
+          return;
+        }
+  
+        setToken(userToken);
+        setClientId(userId);
+  
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+  
+        if (!userRole) {
+          navigate("/login");
+          return;
+        }
+  
+        if (userRole !== "client") {
+          alert("Unauthorized: Only clients can access this section.");
+          navigate("/");
+          return;
+        }
+  
+        setRole(userRole);
+        setCustomPermissions(userPermissions);
+  
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        navigate("/login");
+      }
+    };
+  
+    fetchInitialData();
+  }, [navigate]);
+  
 
   const addField = () => {
     setFields([
@@ -114,7 +174,13 @@ const FormBuilder = () => {
     try {
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/builder/create`,
-        formData
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
       );
       alert(`Form saved successfully! Form ID: ${response.data.data._id}`);
       setFormTitle("");
@@ -184,23 +250,30 @@ const FormBuilder = () => {
         return <input type="text" className="form-control" />;
     }
   };
-
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
       <div className="main-formbuilder">
         <div className="container-fluid mt-4">
-          <div className="d-flex mb-4" style={{ borderRadius: "var(--border-radius)" }}>
-            <h2 className="text-center" style={{ color: "var(--primary-color)" }}>Form Builder</h2>
+          <div
+            className="d-flex mb-4"
+            style={{ borderRadius: "var(--border-radius)" }}
+          >
+            <h2
+              className="text-center"
+              style={{ color: "var(--primary-color)" }}
+            >
+              Form Builder
+            </h2>
             <button
               className="btn-sm me-0 ms-auto"
-              style={{ 
-                backgroundColor: "var(--primary-color)", 
+              style={{
+                backgroundColor: "var(--primary-color)",
                 color: "var(--white)",
                 borderRadius: "var(--border-radius)",
                 border: "none",
-                padding: "8px 16px"
+                padding: "8px 16px",
               }}
               onClick={saveForm}
             >
@@ -210,23 +283,35 @@ const FormBuilder = () => {
 
           <div className="row">
             <div className="col-md-6">
-              <div className="card mb-4" style={{ 
-                boxShadow: "var(--box-shadow-primary)",
-                borderRadius: "var(--border-radius)"
-              }}>
+              <div
+                className="card mb-4"
+                style={{
+                  boxShadow: "var(--box-shadow-primary)",
+                  borderRadius: "var(--border-radius)",
+                }}
+              >
                 <div
                   className="card-header"
-                  style={{ 
-                    backgroundColor: "var(--primary-color)", 
+                  style={{
+                    backgroundColor: "var(--primary-color)",
                     color: "var(--white)",
-                    borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                    borderRadius:
+                      "var(--border-radius) var(--border-radius) 0 0",
                   }}
                 >
                   <h4 className="m-0">Form Configuration</h4>
                 </div>
-                <div className="card-body" style={{ backgroundColor: "var(--gray)" }}>
+                <div
+                  className="card-body"
+                  style={{ backgroundColor: "var(--gray)" }}
+                >
                   <div className="mb-3">
-                    <label className="form-label" style={{ color: "var(--primary-dark)" }}>Form Title*</label>
+                    <label
+                      className="form-label"
+                      style={{ color: "var(--primary-dark)" }}
+                    >
+                      Form Title*
+                    </label>
                     <input
                       type="text"
                       className="form-control"
@@ -238,21 +323,36 @@ const FormBuilder = () => {
                 </div>
               </div>
 
-              <div className="card mb-4" style={{ 
-                boxShadow: "var(--box-shadow-primary)",
-                borderRadius: "var(--border-radius)"
-              }}>
-                <div className="card-header" style={{ 
-                  backgroundColor: "var(--primary-color)", 
-                  color: "var(--white)",
-                  borderRadius: "var(--border-radius) var(--border-radius) 0 0"
-                }}>
+              <div
+                className="card mb-4"
+                style={{
+                  boxShadow: "var(--box-shadow-primary)",
+                  borderRadius: "var(--border-radius)",
+                }}
+              >
+                <div
+                  className="card-header"
+                  style={{
+                    backgroundColor: "var(--primary-color)",
+                    color: "var(--white)",
+                    borderRadius:
+                      "var(--border-radius) var(--border-radius) 0 0",
+                  }}
+                >
                   <h4 className="m-0">Button Configuration</h4>
                 </div>
-                <div className="card-body" style={{ backgroundColor: "var(--gray)" }}>
+                <div
+                  className="card-body"
+                  style={{ backgroundColor: "var(--gray)" }}
+                >
                   <div className="row mb-3">
                     <div className="col-6">
-                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Button Text</label>
+                      <label
+                        className="form-label"
+                        style={{ color: "var(--primary-dark)" }}
+                      >
+                        Button Text
+                      </label>
                       <input
                         type="text"
                         className="form-control"
@@ -267,7 +367,12 @@ const FormBuilder = () => {
                       />
                     </div>
                     <div className="col-6">
-                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Redirect Link</label>
+                      <label
+                        className="form-label"
+                        style={{ color: "var(--primary-dark)" }}
+                      >
+                        Redirect Link
+                      </label>
                       <input
                         type="text"
                         className="form-control"
@@ -285,7 +390,12 @@ const FormBuilder = () => {
 
                   <div className="row mb-2">
                     <div className="col-6">
-                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Background Color</label>
+                      <label
+                        className="form-label"
+                        style={{ color: "var(--primary-dark)" }}
+                      >
+                        Background Color
+                      </label>
                       <div className="d-flex align-items-center">
                         <input
                           type="color"
@@ -297,17 +407,22 @@ const FormBuilder = () => {
                               bgColor: e.target.value,
                             })
                           }
-                          style={{ 
+                          style={{
                             width: "50px",
                             height: "38px",
-                            borderRadius: "var(--border-radius)"
+                            borderRadius: "var(--border-radius)",
                           }}
                         />
                         <span className="ms-2">{buttonConfig.bgColor}</span>
                       </div>
                     </div>
                     <div className="col-6">
-                      <label className="form-label" style={{ color: "var(--primary-dark)" }}>Text Color</label>
+                      <label
+                        className="form-label"
+                        style={{ color: "var(--primary-dark)" }}
+                      >
+                        Text Color
+                      </label>
                       <div className="d-flex align-items-center">
                         <input
                           type="color"
@@ -319,10 +434,10 @@ const FormBuilder = () => {
                               textColor: e.target.value,
                             })
                           }
-                          style={{ 
+                          style={{
                             width: "50px",
                             height: "38px",
-                            borderRadius: "var(--border-radius)"
+                            borderRadius: "var(--border-radius)",
                           }}
                         />
                         <span className="ms-2">{buttonConfig.textColor}</span>
@@ -332,65 +447,84 @@ const FormBuilder = () => {
                 </div>
               </div>
 
-              <div className="card mb-4" style={{ 
-                boxShadow: "var(--box-shadow-primary)",
-                borderRadius: "var(--border-radius)"
-              }}>
-                <div 
-                  className="card-header d-flex justify-content-between align-items-center" 
-                  style={{ 
-                    backgroundColor: "var(--primary-color)", 
+              <div
+                className="card mb-4"
+                style={{
+                  boxShadow: "var(--box-shadow-primary)",
+                  borderRadius: "var(--border-radius)",
+                }}
+              >
+                <div
+                  className="card-header d-flex justify-content-between align-items-center"
+                  style={{
+                    backgroundColor: "var(--primary-color)",
                     color: "var(--white)",
-                    borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                    borderRadius:
+                      "var(--border-radius) var(--border-radius) 0 0",
                   }}
                 >
                   <h4 className="m-0">Custom Fields</h4>
-                  <button 
-                    className="btn btn-light" 
+                  <button
+                    className="btn btn-light"
                     onClick={addField}
-                    style={{ 
+                    style={{
                       backgroundColor: "var(--white)",
                       color: "var(--primary-color)",
-                      borderRadius: "var(--border-radius)"
+                      borderRadius: "var(--border-radius)",
                     }}
                   >
                     <i className="bi bi-plus-circle"></i> Add Field
                   </button>
                 </div>
-                <div className="card-body" style={{ backgroundColor: "var(--gray)" }}>
+                <div
+                  className="card-body"
+                  style={{ backgroundColor: "var(--gray)" }}
+                >
                   {fields.map((field, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="card mb-3"
-                      style={{ 
+                      style={{
                         borderRadius: "var(--border-radius)",
-                        border: "1px solid var(--primary-light)"
+                        border: "1px solid var(--primary-light)",
                       }}
                     >
-                      <div 
+                      <div
                         className="card-header d-flex justify-content-between align-items-center"
-                        style={{ 
+                        style={{
                           backgroundColor: "var(--primary-light)",
-                          borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                          borderRadius:
+                            "var(--border-radius) var(--border-radius) 0 0",
                         }}
                       >
-                        <h5 className="m-0" style={{ color: "var(--primary-dark)" }}>{field.label || "New Field"}</h5>
+                        <h5
+                          className="m-0"
+                          style={{ color: "var(--primary-dark)" }}
+                        >
+                          {field.label || "New Field"}
+                        </h5>
                         <button
                           className="btn btn-sm"
                           onClick={() => removeField(index)}
-                          style={{ 
+                          style={{
                             backgroundColor: "var(--white)",
                             color: "var(--primary-color)",
-                            borderRadius: "var(--border-radius)"
+                            borderRadius: "var(--border-radius)",
                           }}
                         >
                           <i className="bi bi-trash"></i> Remove
                         </button>
                       </div>
-                      <div className="card-body" style={{ backgroundColor: "var(--white)" }}>
+                      <div
+                        className="card-body"
+                        style={{ backgroundColor: "var(--white)" }}
+                      >
                         <div className="row align-items-center mb-3">
                           <div className="col-5">
-                            <label className="form-label mb-0" style={{ color: "var(--primary-dark)" }}>
+                            <label
+                              className="form-label mb-0"
+                              style={{ color: "var(--primary-dark)" }}
+                            >
                               Field Label
                             </label>
                             <input
@@ -404,7 +538,10 @@ const FormBuilder = () => {
                             />
                           </div>
                           <div className="col-5">
-                            <label className="form-label mb-0" style={{ color: "var(--primary-dark)" }}>
+                            <label
+                              className="form-label mb-0"
+                              style={{ color: "var(--primary-dark)" }}
+                            >
                               Field Type
                             </label>
                             <select
@@ -420,7 +557,9 @@ const FormBuilder = () => {
                               <option value="password">Password</option>
                               <option value="number">Number</option>
                               <option value="date">Date</option>
-                              <option value="datetime-local">Date & Time</option>
+                              <option value="datetime-local">
+                                Date & Time
+                              </option>
                               <option value="checkbox">Checkbox</option>
                               <option value="radio">Radio Button</option>
                               <option value="select">Dropdown</option>
@@ -455,14 +594,19 @@ const FormBuilder = () => {
                         {["radio", "select"].includes(field.type) && (
                           <div className="mb-2">
                             <div className="d-flex justify-content-between align-items-center mb-2">
-                              <label className="form-label mb-0" style={{ color: "var(--primary-dark)" }}>Options</label>
+                              <label
+                                className="form-label mb-0"
+                                style={{ color: "var(--primary-dark)" }}
+                              >
+                                Options
+                              </label>
                               <button
                                 className="btn btn-sm"
                                 onClick={() => addOption(index)}
-                                style={{ 
+                                style={{
                                   backgroundColor: "var(--primary-color)",
                                   color: "var(--white)",
-                                  borderRadius: "var(--border-radius)"
+                                  borderRadius: "var(--border-radius)",
                                 }}
                               >
                                 <i className="bi bi-plus-circle"></i> Add Option
@@ -478,16 +622,19 @@ const FormBuilder = () => {
                                     onChange={(e) =>
                                       updateOption(index, i, e.target.value)
                                     }
-                                    style={{ borderRadius: "var(--border-radius)" }}
+                                    style={{
+                                      borderRadius: "var(--border-radius)",
+                                    }}
                                   />
                                   <button
                                     className="btn btn-outline-danger"
                                     onClick={() => removeOption(index, i)}
                                     disabled={field.options.length <= 1}
-                                    style={{ 
-                                      borderRadius: "0 var(--border-radius) var(--border-radius) 0",
+                                    style={{
+                                      borderRadius:
+                                        "0 var(--border-radius) var(--border-radius) 0",
                                       borderColor: "var(--primary-color)",
-                                      color: "var(--primary-color)"
+                                      color: "var(--primary-color)",
                                     }}
                                   >
                                     <i className="bi bi-trash"></i>
@@ -505,41 +652,56 @@ const FormBuilder = () => {
             </div>
 
             <div className="col-md-6">
-              <div 
-                className="card" 
-                style={{ 
+              <div
+                className="card"
+                style={{
                   boxShadow: "var(--box-shadow-primary)",
-                  borderRadius: "var(--border-radius)"
+                  borderRadius: "var(--border-radius)",
                 }}
               >
-                <div 
-                  className="card-header" 
-                  style={{ 
-                    backgroundColor: "var(--primary-color)", 
+                <div
+                  className="card-header"
+                  style={{
+                    backgroundColor: "var(--primary-color)",
                     color: "var(--white)",
-                    borderRadius: "var(--border-radius) var(--border-radius) 0 0"
+                    borderRadius:
+                      "var(--border-radius) var(--border-radius) 0 0",
                   }}
                 >
                   <h4 className="m-0">Live Preview</h4>
                 </div>
-                <div 
-                  className="card-body" 
-                  style={{ 
+                <div
+                  className="card-body"
+                  style={{
                     backgroundColor: "var(--gray)",
-                    minHeight: "500px"
+                    minHeight: "500px",
                   }}
                 >
                   {fields.length === 0 ? (
                     <div className="text-center text-muted py-5">
-                      <h5 style={{ color: "var(--primary-dark)" }}>Your form preview will appear here</h5>
-                      <p style={{ color: "var(--text-medium)" }}>Add fields to see how your form will look</p>
+                      <h5 style={{ color: "var(--primary-dark)" }}>
+                        Your form preview will appear here
+                      </h5>
+                      <p style={{ color: "var(--text-medium)" }}>
+                        Add fields to see how your form will look
+                      </p>
                     </div>
                   ) : (
                     <form>
-                      <h4 style={{ color: "var(--primary-dark)", marginBottom: "20px" }}>{formTitle || "Untitled Form"}</h4>
+                      <h4
+                        style={{
+                          color: "var(--primary-dark)",
+                          marginBottom: "20px",
+                        }}
+                      >
+                        {formTitle || "Untitled Form"}
+                      </h4>
                       {fields.map((field, index) => (
                         <div key={index} className="mb-3">
-                          <label className="form-label" style={{ color: "var(--primary-dark)" }}>
+                          <label
+                            className="form-label"
+                            style={{ color: "var(--primary-dark)" }}
+                          >
                             {field.label || "New Field"}
                             {field.required && (
                               <span className="text-danger ms-1">*</span>
@@ -552,11 +714,11 @@ const FormBuilder = () => {
                         <button
                           type="submit"
                           className="btn btn-lg"
-                          style={{ 
-                            backgroundColor: buttonConfig.bgColor, 
+                          style={{
+                            backgroundColor: buttonConfig.bgColor,
                             color: buttonConfig.textColor,
                             borderRadius: "var(--border-radius)",
-                            border: "none"
+                            border: "none",
                           }}
                           onClick={(e) => {
                             e.preventDefault();

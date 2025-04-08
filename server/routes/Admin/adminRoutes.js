@@ -1,25 +1,23 @@
 // const express = require("express");
 // const jwt = require("jsonwebtoken");
 // const bcrypt = require("bcryptjs");
-// const speakeasy = require("speakeasy");
-// const qrCode = require("qrcode");
-// const Admin = require("../models/admin-model");
-// const Client = require("../models/client-modal");
-// const User = require("../models/User-model");
 // const dotenv = require("dotenv");
 // dotenv.config();
 // const router = express.Router();
-// const  verifyToken  = require("../middlewares/auth");
+// const Admin = require("../../models/Admin/admin-model");
+// const Client = require("../../models/Admin/client-modal");
+// const { getAllClientDBNames, createClientDatabase } = require("../../database/db");
+// const verifyToken = require("../../middlewares/auth");
 
-// // Register Route (same as before)
+// // Register Route
 // router.post("/register", async (req, res) => {
 //   const { email, password } = req.body;
-//   try {
-//     console.log("Registering new user:", { email });
+//   console.log(`🔑 [REGISTER] Request received for email: ${email}`);
 
+//   try {
 //     const existingUser = await Admin.findOne({ email });
 //     if (existingUser) {
-//       console.log("Email already in use:", email);
+//       console.log(`⚠️ [REGISTER] Email already in use: ${email}`);
 //       return res.status(400).json({ message: "Email already in use" });
 //     }
 
@@ -32,266 +30,220 @@
 //     });
 
 //     await newAdmin.save();
-//     console.log("User registered successfully:", { email });
+//     console.log(`✅ [REGISTER] User registered successfully: ${email}`);
 //     res.status(201).json({ message: "User registered successfully!" });
 //   } catch (error) {
-//     console.error("Error during registration:", error);
+//     console.error("❌ [REGISTER] Error during registration:", error);
 //     res.status(500).json({ message: "Server error" });
 //   }
 // });
 
-// router.post("/otp-setup", verifyToken, async (req, res) => {
-//   const { email } = req.body;
-
-//   console.log("Received email:", email); // Log the incoming email
-
-//   const admin = await Admin.findOne({ email });
-
-//   if (!admin) {
-//     console.log("Admin not found for email:", email); // Log if admin is not found
-//     return res.status(404).json({ message: "Admin not found" });
-//   }
-
-//   console.log("Admin found:", admin); // Log the found admin details
-
-//   // Check if the OTP secret already exists in the database
-//   if (admin.otpSecret) {
-//     console.log("OTP secret already exists:", admin.otpSecret); // Log if the secret is already present
-//     return res.json({
-//       message: "OTP secret already set up",
-//       secret: admin.otpSecret, // Return the existing secret if already set up
-//     });
-//   }
-
-//   // If OTP secret does not exist, generate a new one
-//   const secret = speakeasy.generateSecret({ length: 20 });
-//   console.log("Generated OTP secret:", secret); // Log the generated secret
-
-//   admin.otpSecret = secret.base32; // Save the new OTP secret to the database
-
-//   const qr = await qrCode.toDataURL(secret.otpauth_url); // Generate QR code for OTP secret
-//   console.log("Generated QR code URL:", qr); // Log the generated QR code URL
-
-//   await admin.save(); // Save the admin document with the new OTP secret
-//   console.log("Admin saved with new OTP secret"); // Log after saving the admin
-
-//   res.json({ qrCode: qr, secret: secret.base32 }); // Send the QR code and the secret back to the client
-// });
-
-
-
-// router.post("/enable-otp", verifyToken, async (req, res) => {
-//   const { email, otp } = req.body;
-//   const admin = await Admin.findOne({ email });
-
-//   if (!admin) return res.status(404).json({ message: "Admin not found" });
-
-//   // Generate OTP secret temporarily
-//   const secret = speakeasy.generateSecret({ length: 20 });
-
-//   // Verify the OTP using the secret generated above
-//   const isOtpVerified = speakeasy.totp.verify({
-//     secret: secret.base32,
-//     encoding: "base32",
-//     token: otp,
-//   });
-
-//   if (!isOtpVerified) return res.status(400).json({ message: "Invalid OTP" });
-
-//   // If OTP is verified, enable OTP for the user
-//   admin.otpEnabled = true;
-//   await admin.save();
-
-//   res.json({ message: "OTP enabled successfully" });
-// });
-
-
-
+// // Login Route
 // router.post("/login", async (req, res) => {
-//   const { email, password, otp } = req.body;
+//   const { email, password } = req.body;
+//   console.log(`🔑 [LOGIN] Login attempt initiated for email: ${email}`);
 
 //   try {
-//     // Find the user (admin, client, or user)
-//     const admin = await Admin.findOne({ email }) || (await Client.findOne({ email })) || (await User.findOne({ email }));
-//     if (!admin) return res.status(401).json({ message: "Invalid email or password" });
+//     console.log("🔍 [LOGIN] Searching for admin with email:", email);
+//     const admin = await Admin.findOne({ email });
+//     if (admin) {
+//       console.log(`🔍 [LOGIN] Admin found: ${admin.email}`);
+//       const isPasswordMatch = await bcrypt.compare(password, admin.password);
+//       console.log(`🔑 [LOGIN] Password match for admin: ${isPasswordMatch}`);
 
-//     // Log the password and hashed password
-//     console.log("Password from request body:", password);
-//     console.log("Hashed password from database:", admin.password);
-
-//     // Compare the password with the hashed one
-//     const isMatch = await bcrypt.compare(password, admin.password);
-
-//     if (!isMatch) {
-//       console.log("Password does not match");
-//       return res.status(401).json({ message: "Invalid email or password" });
+//       if (isPasswordMatch) {
+//         const token = jwt.sign(
+//           { id: admin._id, role: admin.role, companyName: "admin" },
+//           process.env.JWT_SECRET,
+//           { expiresIn: "1h" }
+//         );
+//         console.log(`✅ [LOGIN] Admin login successful for email: ${email}`);
+//         console.log(`🔐 [LOGIN] Generated token: ${token}`);
+//         return res.json({ token, userId: admin._id, role: admin.role, companyName: "admin" });
+//       } else {
+//         console.log(`❌ [LOGIN] Invalid password for admin: ${email}`);
+//       }
+//     } else {
+//       console.log(`❌ [LOGIN] No admin found with email: ${email}`);
 //     }
 
-//     console.log("Password match!");
+//     console.log("🔄 [LOGIN] Attempting client login...");
+//     const clientDBNames = await getAllClientDBNames();
+//     console.log(`🔍 [LOGIN] Total client databases found: ${clientDBNames.length}`);
 
-//     // Check if OTP secret is set. If not, generate and save it manually.
-//     if (!admin.otpSecret) {
-//       const secret = speakeasy.generateSecret({ length: 20 });
-//       admin.otpSecret = secret.base32;
-//       admin.otpEnabled = true; // Enable OTP for this user
-//       await admin.save();
-//       console.log("OTP secret generated and saved for", email); // Log OTP secret creation
+//     for (const dbName of clientDBNames) {
+//       try {
+//         const companyName = dbName.replace("client_db_", "");
+//         console.log(`🔄 [LOGIN] Processing client DB: ${dbName} | Company Name: ${companyName}`);
 
-//       // Return the QR code for the user to set up their OTP app
-//       const qr = await qrCode.toDataURL(secret.otpauth_url);
-//       return res.json({
-//         message: "OTP secret has been generated and saved. Please set up your OTP app.",
-//         otpRequired: true,
-//         qrCode: qr,
-//         secret: secret.base32,
-//       });
+//         const clientDB = await createClientDatabase(companyName);
+//         console.log(`✅ [LOGIN] Connected to client database: ${dbName}`);
+
+//         const ClientModel = clientDB.model("Clients", Admin.schema);
+//         console.log(`🔍 [LOGIN] Looking for client in database: ${dbName} with email: ${email}`);
+//         const client = await ClientModel.findOne({ email });
+
+//         if (client) {
+//           console.log(`🔍 [LOGIN] Client found: ${client.email}`);
+//           const isPasswordMatch = await bcrypt.compare(password, client.password);
+//           console.log(`🔑 [LOGIN] Password match for client: ${isPasswordMatch}`);
+
+//           if (isPasswordMatch) {
+//             const token = jwt.sign(
+//               { id: client._id, role: client.role, companyName: companyName },
+//               process.env.JWT_SECRET,
+//               { expiresIn: "12h" }
+//             );
+//             console.log(`✅ [LOGIN] Client login successful for email: ${email} from database: ${dbName}`);
+//             console.log(`🔐 [LOGIN] Generated token: ${token}`);
+//             return res.json({ token, userId: client._id, role: client.role, companyName: companyName });
+//           } else {
+//             console.log(`❌ [LOGIN] Invalid password for client: ${email} in database: ${dbName}`);
+//           }
+//         } else {
+//           console.log(`❌ [LOGIN] No client found with email: ${email} in database: ${dbName}`);
+//         }
+//       } catch (err) {
+//         console.error(`❌ [LOGIN] Error accessing client DB ${dbName}:`, err.message);
+//       }
 //     }
 
-//     // If OTP is enabled, verify the OTP
-//     if (admin.otpEnabled) {
-//       if (!otp) return res.json({ otpRequired: true });
-
-//       const isOtpVerified = speakeasy.totp.verify({
-//         secret: admin.otpSecret,
-//         encoding: "base32",
-//         token: otp,
-//       });
-
-//       if (!isOtpVerified) return res.status(400).json({ message: "Invalid OTP" });
-//     }
-
-//     // Generate JWT token after successful login
-//     const token = jwt.sign(
-//       { adminId: admin._id, role: admin.role },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1h" }
-//     );
-
-//     res.json({ token });
-
+//     console.log(`❌ [LOGIN] Invalid email or password for email: ${email}`);
+//     res.status(401).json({ message: "Invalid email or password" });
 //   } catch (error) {
-//     console.error(error); // Log the error for debugging
-//     res.status(500).json({ message: "Server error" });
+//     console.error("❌ [LOGIN] Error during login:", error.message);
+//     res.status(500).json({ message: "Server error", error: error.message });
 //   }
 // });
-
-
 
 // module.exports = router;
 
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const Admin = require("../../models/Admin/admin-model");
 const dotenv = require("dotenv");
 dotenv.config();
 const router = express.Router();
-const Client = require("../../models/Admin/client-modal");
-const verifyToken = require("../../middlewares/auth");
-const Employee = require("../../models/clients/contactdata");
+const Admin = require("../../models/Admin/admin-model");
+const { getAllClientDBNames, createClientDatabase } = require("../../database/db");
+const { getEmployeeModel} = require("../../models/clients/contactdata")
+// ✅ Helper to set cookies
+const setCookie = (res, name, value, options = {}) => {
+  res.cookie(name, value, {
+    httpOnly: true,
+    maxAge: 12 * 60 * 60 * 1000, // 12 hours
+    secure: false, // set to true if using HTTPS in production
+    sameSite: 'lax',
+    ...options
+  });
+};
 
-// Register Route
+// 🔑 Register Route
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  console.log(`Register request received for email: ${email}`);
+  console.log(`[REGISTER] Request received for email: ${email}`);
 
   try {
     const existingUser = await Admin.findOne({ email });
     if (existingUser) {
-      console.log(`Email already in use: ${email}`);
       return res.status(400).json({ message: "Email already in use" });
     }
 
-    const salt = await bcrypt.genSalt(10); // Generate salt
-    const hashedPassword = await bcrypt.hash(password, salt); // Hash password with salt
-
-    const newAdmin = new Admin({
-      email,
-      password: hashedPassword,
-    });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newAdmin = new Admin({ email, password: hashedPassword });
 
     await newAdmin.save();
-    console.log(`User registered successfully: ${email}`);
-
+    console.log(`[REGISTER] User registered successfully: ${email}`);
     res.status(201).json({ message: "User registered successfully!" });
   } catch (error) {
-    console.error("Error during registration:", error);
+    console.error("[REGISTER] Error:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
+// 🔐 Login Route
 // Login Route
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log(`Login attempt for email: ${email}`);
+  console.log(`[LOGIN] Attempt for email: ${email}`);
 
   try {
-    // ✅ Find user in Admin, Client, or Employee collections
-    const admin =
-      (await Admin.findOne({ email })) || 
-      (await Client.findOne({ email })) || 
-      (await Employee.findOne({ email }));
+    // 🗝️ Admin login attempt
+    const admin = await Admin.findOne({ email });
+    if (admin && await bcrypt.compare(password, admin.password)) {
+      const token = jwt.sign(
+        { id: admin._id, role: admin.role, companyName: "admin" },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
 
-    console.log("🔍 Found user:", admin);
+      // ✅ Set cookies for admin login
+      setCookie(res, "token", token);
+      setCookie(res, "userId", admin._id.toString());
+      setCookie(res, "role", admin.role);
+      setCookie(res, "email", admin.email);
+      setCookie(res, "companyName", "admin");
 
-    if (!admin) {
-      console.log(`❌ Invalid email or password for email: ${email}`);
-      return res.status(401).json({ message: "Invalid email or password" });
+      console.log(`[LOGIN] Admin logged in successfully: ${email}`);
+      return res.json({ message: "Login successful", role: admin.role });
     }
 
-    // ✅ Compare entered password with hashed password
-    const isMatch = await bcrypt.compare(password, admin.password);
-    console.log("🔑 Password Match:", isMatch);
-    
-    if (!isMatch) {
-      console.log(`❌ Invalid password attempt for email: ${email}`);
-      return res.status(401).json({ message: "Invalid email or password" });
+    // 🔍 Client and User (Employee) login attempt
+    const clientDBNames = await getAllClientDBNames();
+
+    for (const dbName of clientDBNames) {
+      const companyName = dbName.replace("client_db_", "");
+      const clientDB = await createClientDatabase(companyName);
+
+      // 🌟 Attempting Client Login
+      const ClientModel = clientDB.model("Clients", Admin.schema);
+      const client = await ClientModel.findOne({ email });
+      if (client && await bcrypt.compare(password, client.password)) {
+        const token = jwt.sign(
+          { id: client._id, role: client.role, companyName },
+          process.env.JWT_SECRET,
+          { expiresIn: "12h" }
+        );
+
+        // ✅ Set cookies for client login
+        setCookie(res, "token", token);
+        setCookie(res, "userId", client._id.toString());
+        setCookie(res, "role", client.role);
+        setCookie(res, "email", client.email);
+        setCookie(res, "companyName", companyName);
+
+        console.log(`[LOGIN] Client logged in successfully: ${email}`);
+        return res.json({ message: "Login successful", role: client.role });
+      }
+
+      // 🌟 Attempting User (Employee) Login
+      const EmployeeModel = await getEmployeeModel(companyName);
+      const employee = await EmployeeModel.findOne({ email });
+      if (employee && await bcrypt.compare(password, employee.password)) {
+        const token = jwt.sign(
+          { id: employee._id, role: employee.role, companyName },
+          process.env.JWT_SECRET,
+          { expiresIn: "12h" }
+        );
+
+        // ✅ Set cookies for employee login
+        setCookie(res, "token", token);
+        setCookie(res, "userId", employee._id.toString());
+        setCookie(res, "role", employee.role);
+        setCookie(res, "email", employee.email);
+        setCookie(res, "companyName", companyName);
+
+        console.log(`[LOGIN] Employee (User) logged in successfully: ${email}`);
+        return res.json({ message: "Login successful", role: employee.role });
+      }
     }
 
-    // ✅ Generate JWT Token
-    const token = jwt.sign(
-      { id: admin._id, role: admin.role }, // Send `id` in token
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-    console.log("✅ Generated Token:", token);
-
-    console.log(`✅ Login successful for email: ${email}`);
-
-    // ✅ Send both `token` and `userId` in response
-    res.json({ token, userId: admin._id, role: admin.role });
-
+    res.status(401).json({ message: "Invalid email or password" });
   } catch (error) {
-    console.error("❌ Error during login:", error);
+    console.error("[LOGIN] Error:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-
-// Dashboard Route (Client access only)
-router.get("/dashboard", verifyToken, (req, res) => {
-  console.log(`Dashboard request by user ID: ${req.user.adminId}`);
-
-  if (req.user.role !== "client") {
-    console.log(
-      `Access denied for user ID: ${req.user.adminId}. Only clients can access this.`
-    );
-    return res.status(403).send("Access denied. Only clients can access this.");
-  }
-
-  // Fetch data for the client based on req.user.clientId or similar
-  Client.findById(req.user.clientId)
-    .then((client) => {
-      console.log(`Fetched client data for client ID: ${req.user.clientId}`);
-      res.json(client);
-    })
-    .catch((err) => {
-      console.error(
-        `Error fetching client data for client ID: ${req.user.clientId}`,
-        err
-      );
-      res.status(500).send("Error fetching client data");
-    });
-});
 
 module.exports = router;

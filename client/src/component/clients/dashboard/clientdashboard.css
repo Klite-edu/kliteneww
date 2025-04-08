@@ -1,26 +1,26 @@
 :root {
-  --primary-color: #0d6e6e;
-  --primary-light: #e0f2f1;
-  --primary-dark: #0b5d5d;
-  --secondary-color: #4caf50;
-  --accent-color: #ff9800;
-  --gray: #f8f8f8;
-  --gray-dark: #e0e0e0;
-  --text-color: #333;
-  --text-light: #666;
-  --white: #ffffff;
-  --error-color: #f44336;
-  --warning-color: #ffc107;
-  --success-color: #4caf50;
-  --info-color: #2196f3;
-  --border-radius: 8px;
-  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --client-primary-color: #0d6e6e;
+  --client-primary-light: #e0f2f1;
+  --client-primary-dark: #0b5d5d;
+  --client-secondary-color: #4caf50;
+  --client-accent-color: #ff9800;
+  --client-gray: #f8f8f8;
+  --client-gray-dark: #e0e0e0;
+  --client-text-color: #333;
+  --client-text-light: #666;
+  --client-white: #ffffff;
+  --client-error-color: #f44336;
+  --client-warning-color: #ffc107;
+  --client-success-color: #4caf50;
+  --client-info-color: #2196f3;
+  --client-border-radius: 8px;
+  --client-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Base styles */
-.dashboard {
+.client-dashboard {
   padding: 15px;
-  background-color: var(--gray);
+  background-color: var(--client-gray);
   min-height: 100vh;
   position: relative;
   left: 0;
@@ -30,101 +30,80 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.dashboard-header {
+.client-dashboard-header {
   display: flex;
   flex-direction: column;
   gap: 15px;
   margin-bottom: 20px;
   padding: 15px;
-  background-color: var(--white);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  background-color: var(--client-white);
+  border-radius: var(--client-border-radius);
+  box-shadow: var(--client-box-shadow);
 }
 
-.dashboard-header h2 {
-  color: var(--primary-color);
+.client-dashboard-header h2 {
+  color: var(--client-primary-color);
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
-.user-info {
+.client-user-info {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
 
-.user-info span {
+.client-user-info span {
   padding: 5px 10px;
   border-radius: 15px;
   font-size: 0.8rem;
 }
 
-.username {
-  font-weight: bold;
-  color: var(--text-color);
-}
-
-.status-badge {
-  background-color: var(--success-color);
-  color: white;
-  font-weight: bold;
-}
-
-.status-badge.inactive {
-  background-color: var(--error-color);
-}
-
-.user-role {
-  background-color: var(--primary-light);
-  color: var(--primary-color);
-}
-
-.user-email,
-.user-phone {
-  color: var(--text-light);
+.client-user-email {
+  color: var(--client-text-light);
   font-size: 0.8rem;
 }
 
-.dashboard-graphs {
+.client-dashboard-graphs {
   display: grid;
   grid-template-columns: 1fr;
   gap: 15px;
   margin-bottom: 20px;
 }
 
-.block-data {
-  background-color: var(--white);
+.client-block-data {
+  background-color: var(--client-white);
   padding: 15px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  border-radius: var(--client-border-radius);
+  box-shadow: var(--client-box-shadow);
   transition: transform 0.3s ease;
 }
 
-.block-data:hover {
+.client-block-data:hover {
   transform: translateY(-5px);
 }
 
-.block-data h3 {
-  color: var(--text-color);
+.client-block-data h3 {
+  color: var(--client-text-color);
   margin-top: 10px;
   margin-bottom: 15px;
   font-size: 1rem;
   font-weight: 500;
 }
 
-.icon-client {
+.client-icon {
   font-size: 1.5rem;
 }
 
-.bar-progress {
+.client-bar-progress {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.bar-progress h5 {
+.client-bar-progress h5 {
   font-size: 0.8rem;
   font-weight: bold;
   color: white;
@@ -133,38 +112,38 @@
   margin: 0;
 }
 
-.bar-progress p {
+.client-bar-progress p {
   font-size: 1.3rem;
   font-weight: bold;
-  color: var(--text-color);
+  color: var(--client-text-color);
   margin: 0;
 }
 
-.revenue-subCancel {
+.client-revenue-subCancel {
   display: grid;
   grid-template-columns: 1fr;
   gap: 15px;
   margin-bottom: 20px;
 }
 
-.revenue-chart,
-.subscription-chart {
-  background-color: var(--white);
+.client-revenue-chart,
+.client-subscription-chart {
+  background-color: var(--client-white);
   padding: 15px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  border-radius: var(--client-border-radius);
+  box-shadow: var(--client-box-shadow);
 }
 
-.revenue-chart h3,
-.subscription-chart h3 {
-  color: var(--primary-color);
+.client-revenue-chart h3,
+.client-subscription-chart h3 {
+  color: var(--client-primary-color);
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 1.2rem;
   font-weight: 600;
 }
 
-.revenue-container {
+.client-revenue-container {
   height: 250px;
 }
 
@@ -175,60 +154,60 @@
   margin-bottom: 20px;
 }
 
-.transaction-table {
-  background-color: var(--white);
+.client-transaction-table {
+  background-color: var(--client-white);
   padding: 15px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  border-radius: var(--client-border-radius);
+  box-shadow: var(--client-box-shadow);
 }
 
-.recent-transHead {
+.client-recent-transHead {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 15px;
 }
 
-.recent-transHead h3 {
-  color: var(--primary-color);
+.client-recent-transHead h3 {
+  color: var(--client-primary-color);
   margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
 }
 
-.recent-transHead button {
-  background-color: var(--primary-color);
+.client-recent-transHead button {
+  background-color: var(--client-primary-color);
   color: white;
   border: none;
   padding: 8px 15px;
-  border-radius: var(--border-radius);
+  border-radius: var(--client-border-radius);
   cursor: pointer;
   transition: background-color 0.3s;
   font-size: 0.9rem;
   align-self: flex-start;
 }
 
-.recent-transHead button:hover {
-  background-color: var(--primary-dark);
+.client-recent-transHead button:hover {
+  background-color: var(--client-primary-dark);
 }
 
-.transaction-list {
+.client-transaction-list {
   max-height: 400px;
   overflow-y: auto;
 }
 
-.transaction-item {
+.client-transaction-item {
   padding: 10px 0;
 }
 
-.recent-transaction {
+.client-recent-transaction {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.task-index {
-  background-color: var(--primary-color);
+.client-task-index {
+  background-color: var(--client-primary-color);
   color: white;
   width: 25px;
   height: 25px;
@@ -241,13 +220,13 @@
   flex-shrink: 0;
 }
 
-.trans-name-date {
+.client-trans-name-date {
   flex: 1;
   min-width: 0;
 }
 
-.trans-name-date h5 {
-  color: var(--text-color);
+.client-trans-name-date h5 {
+  color: var(--client-text-color);
   margin: 0 0 5px 0;
   font-size: 0.9rem;
   white-space: nowrap;
@@ -256,148 +235,148 @@
   font-weight: 500;
 }
 
-.trans-name-date p {
-  color: var(--text-light);
+.client-trans-name-date p {
+  color: var(--client-text-light);
   margin: 0;
   font-size: 0.75rem;
 }
 
-.trans-plan-price {
+.client-trans-plan-price {
   text-align: right;
   flex-shrink: 0;
 }
 
-.trans-plan-price p {
+.client-trans-plan-price p {
   margin: 0;
   font-size: 0.8rem;
 }
 
-.trans-plan-price p:first-child {
-  color: var(--text-color);
+.client-trans-plan-price p:first-child {
+  color: var(--client-text-color);
   margin-bottom: 5px;
   font-weight: 500;
 }
 
-.status-pending {
-  color: var(--warning-color);
+.client-status-pending {
+  color: var(--client-warning-color);
   font-weight: bold;
 }
 
-.status-in-progress {
-  color: var(--info-color);
+.client-status-in-progress {
+  color: var(--client-info-color);
   font-weight: bold;
 }
 
-.status-completed {
-  color: var(--success-color);
+.client-status-completed {
+  color: var(--client-success-color);
   font-weight: bold;
 }
 
-.status-revised {
-  color: var(--accent-color);
+.client-status-revised {
+  color: var(--client-accent-color);
   font-weight: bold;
 }
 
-.issue-container {
-  background-color: var(--white);
+.client-issue-container {
+  background-color: var(--client-white);
   padding: 15px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  border-radius: var(--client-border-radius);
+  box-shadow: var(--client-box-shadow);
   margin-bottom: 20px;
   overflow-x: auto;
 }
 
-.issue-button-head {
+.client-issue-button-head {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 15px;
 }
 
-.issue-button-head h3 {
-  color: var(--primary-color);
+.client-issue-button-head h3 {
+  color: var(--client-primary-color);
   margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
 }
 
-.issue-button-head button {
-  background-color: var(--primary-color);
+.client-issue-button-head button {
+  background-color: var(--client-primary-color);
   padding: 8px 15px;
   color: white;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: var(--client-border-radius);
   cursor: pointer;
   transition: background-color 0.3s;
   font-size: 0.9rem;
 }
 
-.issue-button-head button:hover {
-  background-color: var(--primary-dark);
+.client-issue-button-head button:hover {
+  background-color: var(--client-primary-dark);
 }
 
-.issue-table {
+.client-issue-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.issue-table th,
-.issue-table td {
+.client-issue-table th,
+.client-issue-table td {
   padding: 12px 15px;
   text-align: left;
   white-space: nowrap;
 }
 
-.issue-table th {
-  background-color: var(--primary-color);
+.client-issue-table th {
+  background-color: var(--client-primary-color);
   color: white;
   font-weight: 500;
   position: sticky;
   top: 0;
 }
 
-.issue-table td {
-  border-bottom: 1px solid var(--gray-dark);
+.client-issue-table td {
+  border-bottom: 1px solid var(--client-gray-dark);
   font-size: 0.9rem;
 }
 
-.issue-table tr:nth-child(even) {
-  background-color: var(--gray);
+.client-issue-table tr:nth-child(even) {
+  background-color: var(--client-gray);
 }
 
-.issue-table tr:hover {
-  background-color: var(--primary-light);
+.client-issue-table tr:hover {
+  background-color: var(--client-primary-light);
 }
 
-.priority-critical {
-  color: var(--error-color);
+.client-priority-critical {
+  color: var(--client-error-color);
   font-weight: bold;
 }
 
-.priority-high {
-  color: var(--warning-color);
+.client-priority-high {
+  color: var(--client-warning-color);
   font-weight: bold;
 }
 
-.priority-medium {
-  color: var(--accent-color);
+.client-priority-medium {
+  color: var(--client-accent-color);
   font-weight: bold;
 }
 
-.status-open {
-  color: var(--error-color);
+.client-status-open {
+  color: var(--client-error-color);
   font-weight: bold;
 }
 
-.no-tasks {
+.client-no-tasks {
   text-align: center;
   padding: 20px;
-  color: var(--text-light);
+  color: var(--client-text-light);
 }
 
-hr {
+.client-hr {
   border: none;
-  border-top: 1px solid var(--gray-dark);
+  border-top: 1px solid var(--client-gray-dark);
   margin: 10px 0;
 }
 
@@ -408,100 +387,100 @@ hr {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--gray-dark);
+  background: var(--client-gray-dark);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
+  background: var(--client-primary-color);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
+  background: var(--client-primary-dark);
 }
 
 /* 350px - 599px */
 @media (min-width: 350px) and (max-width: 599px) {
-  .dashboard {
+  .client-dashboard {
     padding: 10px;
   }
 
-  .dashboard-header {
+  .client-dashboard-header {
     padding: 12px;
   }
 
-  .dashboard-header h2 {
+  .client-dashboard-header h2 {
     font-size: 1.3rem;
   }
 
-  .user-info {
+  .client-user-info {
     gap: 8px;
   }
 
-  .user-info span {
+  .client-user-info span {
     font-size: 0.7rem;
     padding: 4px 8px;
   }
 
-  .block-data {
+  .client-block-data {
     padding: 12px;
   }
 
-  .block-data h3 {
+  .client-block-data h3 {
     font-size: 0.9rem;
   }
 
-  .bar-progress p {
+  .client-bar-progress p {
     font-size: 1.1rem;
   }
 
-  .revenue-chart h3,
-  .subscription-chart h3,
-  .recent-transHead h3,
-  .issue-button-head h3 {
+  .client-revenue-chart h3,
+  .client-subscription-chart h3,
+  .client-recent-transHead h3,
+  .client-issue-button-head h3 {
     font-size: 1.1rem;
   }
 
-  .recent-transHead button,
-  .issue-button-head button {
+  .client-recent-transHead button,
+  .client-issue-button-head button {
     padding: 6px 12px;
     font-size: 0.8rem;
   }
 
-  .transaction-item,
-  .issue-table td {
+  .client-transaction-item,
+  .client-issue-table td {
     padding: 8px 10px;
   }
 
-  .issue-table {
+  .client-issue-table {
     font-size: 0.8rem;
   }
 
-  .trans-name-date h5 {
+  .client-trans-name-date h5 {
     font-size: 0.8rem;
   }
 
-  .trans-plan-price p {
+  .client-trans-plan-price p {
     font-size: 0.7rem;
   }
 }
 
 /* 600px and up */
 @media (min-width: 600px) {
-  .dashboard {
+  .client-dashboard {
     padding: 20px;
   }
 
-  .dashboard-header {
+  .client-dashboard-header {
     padding: 15px 20px;
   }
 
-  .dashboard-graphs {
+  .client-dashboard-graphs {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .revenue-subCancel {
+  .client-revenue-subCancel {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -509,73 +488,73 @@ hr {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .recent-transHead,
-  .issue-button-head {
+  .client-recent-transHead,
+  .client-issue-button-head {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
 
-  .user-info {
+  .client-user-info {
     flex-wrap: nowrap;
   }
 }
 
 @media (min-width: 768px) {
-  .dashboard {
+  .client-dashboard {
     left: 60px;
     top: 30px;
     width: calc(100% - 60px);
   }
 
-  .dashboard-header h2 {
+  .client-dashboard-header h2 {
     font-size: 1.6rem;
   }
 
-  .block-data h3 {
+  .client-block-data h3 {
     font-size: 1.1rem;
   }
 
-  .bar-progress p {
+  .client-bar-progress p {
     font-size: 1.4rem;
   }
 
-  .revenue-chart h3,
-  .subscription-chart h3,
-  .recent-transHead h3,
-  .issue-button-head h3 {
+  .client-revenue-chart h3,
+  .client-subscription-chart h3,
+  .client-recent-transHead h3,
+  .client-issue-button-head h3 {
     font-size: 1.3rem;
   }
 }
 
 @media (min-width: 950px) and (max-width: 1050px) {
-  .dashboard {
+  .client-dashboard {
     left: 100px;
     top: 25px;
     width: calc(100% - 80px);
     padding: 20px 25px;
   }
 
-  .dashboard-header {
+  .client-dashboard-header {
     flex-direction: row;
     padding: 18px 25px;
   }
 
-  .dashboard-header h2 {
+  .client-dashboard-header h2 {
     font-size: 1.7rem;
   }
 
-  .user-info span {
+  .client-user-info span {
     font-size: 0.85rem;
     padding: 6px 12px;
   }
 
-  .dashboard-graphs {
+  .client-dashboard-graphs {
     grid-template-columns: repeat(3, 1fr);
     gap: 18px;
   }
 
-  .revenue-subCancel {
+  .client-revenue-subCancel {
     grid-template-columns: 2fr 1fr;
     gap: 18px;
   }
@@ -585,45 +564,45 @@ hr {
     gap: 18px;
   }
 
-  .block-data {
+  .client-block-data {
     padding: 18px;
   }
 
-  .block-data h3 {
+  .client-block-data h3 {
     font-size: 1.05rem;
   }
 
-  .bar-progress p {
+  .client-bar-progress p {
     font-size: 1.45rem;
   }
 
-  .revenue-chart,
-  .subscription-chart,
-  .transaction-table,
-  .analytics-container {
+  .client-revenue-chart,
+  .client-subscription-chart,
+  .client-transaction-table,
+  .client-analytics-container {
     padding: 18px;
   }
 
-  .revenue-chart h3,
-  .subscription-chart h3,
-  .recent-transHead h3,
-  .issue-button-head h3 {
+  .client-revenue-chart h3,
+  .client-subscription-chart h3,
+  .client-recent-transHead h3,
+  .client-issue-button-head h3 {
     font-size: 1.35rem;
   }
 }
 
 @media (min-width: 1051px) and (max-width: 1199px) {
-  .dashboard {
+  .client-dashboard {
     left: 9.5%;
     top: 20px;
     width: 92%;
   }
 
-  .dashboard-graphs {
+  .client-dashboard-graphs {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
-  .revenue-subCancel {
+  .client-revenue-subCancel {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 
@@ -633,33 +612,33 @@ hr {
 }
 
 @media (min-width: 1200px) and (max-width: 1299px) {
-  .dashboard {
+  .client-dashboard {
     width: 76vw;
     left: 12.5%;
     top: 30px;
   }
 
-  .dashboard-header h2 {
+  .client-dashboard-header h2 {
     font-size: 1.8rem;
   }
 
-  .user-info span {
+  .client-user-info span {
     font-size: 0.9rem;
   }
 
-  .dashboard-graphs {
+  .client-dashboard-graphs {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
 
-  .block-data h3 {
+  .client-block-data h3 {
     font-size: 1.1rem;
   }
 
-  .bar-progress p {
+  .client-bar-progress p {
     font-size: 1.5rem;
   }
 
-  .revenue-subCancel {
+  .client-revenue-subCancel {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   }
 
@@ -667,42 +646,42 @@ hr {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   }
 
-  .revenue-chart h3,
-  .subscription-chart h3,
-  .recent-transHead h3,
-  .issue-button-head h3 {
+  .client-revenue-chart h3,
+  .client-subscription-chart h3,
+  .client-recent-transHead h3,
+  .client-issue-button-head h3 {
     font-size: 1.4rem;
   }
 }
 
 @media (min-width: 1300px) {
-  .dashboard {
+  .client-dashboard {
     width: 76vw;
-    left: 10.5%;
-    top: 30px;
+    left: 19%;
+    top: 80px;
   }
 
-  .dashboard-header h2 {
+  .client-dashboard-header h2 {
     font-size: 1.8rem;
   }
 
-  .user-info span {
+  .client-user-info span {
     font-size: 0.9rem;
   }
 
-  .dashboard-graphs {
+  .client-dashboard-graphs {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
 
-  .block-data h3 {
+  .client-block-data h3 {
     font-size: 1.1rem;
   }
 
-  .bar-progress p {
+  .client-bar-progress p {
     font-size: 1.5rem;
   }
 
-  .revenue-subCancel {
+  .client-revenue-subCancel {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   }
 
@@ -710,10 +689,10 @@ hr {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   }
 
-  .revenue-chart h3,
-  .subscription-chart h3,
-  .recent-transHead h3,
-  .issue-button-head h3 {
+  .client-revenue-chart h3,
+  .client-subscription-chart h3,
+  .client-recent-transHead h3,
+  .client-issue-button-head h3 {
     font-size: 1.4rem;
   }
 }

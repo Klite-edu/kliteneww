@@ -16,6 +16,8 @@ import {
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
 import "./tasklist.css";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -27,57 +29,101 @@ const TaskList = () => {
   const [sorting, setSorting] = useState("asc");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [userRole, setUserRole] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [taskQuery, setTaskQuery] = useState("");
   const [statusQuery, setStatusQuery] = useState("");
   const [employees, setEmployees] = useState([]);
-  const role = localStorage.getItem("role");
-  const [customPermissions, setCustomPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [role, setRole] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState("");
+  const [employeeId, setEmployeeId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role");
-    const storedUserId = localStorage.getItem("userId");
+    const fetchInitialData = async () => {
+      try {
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+        ]);
 
-    setUserRole(storedRole);
-    fetchServerDate();
-    fetchEmployees();
+        const userToken = tokenRes.data.token;
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
 
-    if (storedUserId && storedRole) {
-      fetchTasks(storedUserId, storedRole);
-    }
-  }, [sorting, startDate, endDate]);
+        if (!userToken || !userRole) {
+          navigate("/login");
+          return;
+        }
+
+        const decodedToken = jwtDecode(userToken);
+        const currentUserId = decodedToken.userId;
+        const currentEmployeeId = decodedToken.id;
+
+        setToken(userToken);
+        setRole(userRole);
+        setUserId(currentUserId);
+        setEmployeeId(currentEmployeeId);
+        setCustomPermissions(userPermissions);
+
+        await Promise.all([
+          fetchServerDate(userToken),
+          fetchEmployees(userToken),
+          fetchTasks(userToken, userRole, currentUserId, currentEmployeeId),
+        ]);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchInitialData();
+  }, [navigate]);
 
   useEffect(() => {
-    const filtered = tasks.filter((task) => {
-      const employeeMatch = task.doer?.fullName
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
+    let filtered = tasks;
 
-      const taskMatch = task.taskName
-        ?.toLowerCase()
-        .includes(taskQuery.toLowerCase());
-
-      const statusMatch =
-        !statusQuery ||
-        task.statusHistory?.[task.statusHistory.length - 1]?.status
+    if (searchQuery || taskQuery || statusQuery) {
+      filtered = tasks.filter((task) => {
+        const employeeMatch = task.doer?.fullName
           ?.toLowerCase()
-          .includes(statusQuery.toLowerCase());
+          .includes(searchQuery.toLowerCase());
+        const taskMatch = task.taskName
+          ?.toLowerCase()
+          .includes(taskQuery.toLowerCase());
+        const statusMatch =
+          !statusQuery ||
+          task.statusHistory?.[task.statusHistory.length - 1]?.status
+            ?.toLowerCase()
+            .includes(statusQuery.toLowerCase());
 
-      return employeeMatch && taskMatch && statusMatch;
-    });
+        return employeeMatch && taskMatch && statusMatch;
+      });
+    }
 
     setFilteredTasks(filtered);
   }, [searchQuery, taskQuery, statusQuery, tasks]);
 
-  const fetchServerDate = async () => {
+  const fetchServerDate = async (token) => {
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/tasks/serverdate`
+        `${process.env.REACT_APP_API_URL}/api/tasks/serverdate`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
       setServerDate(new Date(res.data.currentDate));
     } catch (error) {
@@ -85,10 +131,14 @@ const TaskList = () => {
     }
   };
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = async (token) => {
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+        `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
       setEmployees(res.data);
     } catch (error) {
@@ -96,33 +146,40 @@ const TaskList = () => {
     }
   };
 
-  const fetchTasks = async (userId, role) => {
+  const fetchTasks = async (token, userRole, userId, employeeId) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Token not found. User is not authenticated.");
-      }
-
       const params = {
         sort: sorting,
         startDate: startDate ? startDate.toISOString() : null,
         endDate: endDate ? endDate.toISOString() : null,
         generateFutureTasks: true,
-        userId: role === "user" ? userId : null,
       };
+
+      if (userRole === "user" && employeeId) {
+        params.employeeId = employeeId;
+      }
 
       const res = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/tasks/list`,
         {
-          params: params,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          params,
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
         }
       );
-      setTasks(res.data);
-      setFilteredTasks(res.data);
+
+      let taskData = res.data;
+      if (userRole === "user" && employeeId) {
+        taskData = taskData.filter(
+          (task) =>
+            task.doer &&
+            (task.doer._id === employeeId || task.doer.id === employeeId)
+        );
+      }
+
+      setTasks(taskData);
+      setFilteredTasks(taskData);
     } catch (error) {
       console.error("Error Fetching Tasks:", error);
     } finally {
@@ -132,6 +189,7 @@ const TaskList = () => {
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
   const handleTaskNameSearchChange = (e) => setTaskQuery(e.target.value);
+
   const handleEditClick = (task) => {
     setEditingTask(task._id);
     setUpdatedTask({
@@ -167,7 +225,6 @@ const TaskList = () => {
   const handleUpdateTask = async () => {
     try {
       setLoading(true);
-
       const employee = employees.find(
         (emp) => emp.fullName === updatedTask.doerName
       );
@@ -188,18 +245,15 @@ const TaskList = () => {
         `${process.env.REACT_APP_API_URL}/api/tasks/update/${editingTask}`,
         taskData,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
         }
       );
+
       alert("Task updated successfully!");
       setEditingTask(null);
       setUpdatedTask({});
-
-      const storedUserId = localStorage.getItem("userId");
-      const storedRole = localStorage.getItem("role");
-      fetchTasks(storedUserId, storedRole);
+      fetchTasks(token, role, userId, employeeId);
     } catch (error) {
       console.error("Error updating task:", error);
       alert("Failed to update task.");
@@ -215,16 +269,12 @@ const TaskList = () => {
       await axios.delete(
         `${process.env.REACT_APP_API_URL}/api/tasks/delete/${taskId}`,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
         }
       );
       alert("Task deleted successfully!");
-
-      const storedUserId = localStorage.getItem("userId");
-      const storedRole = localStorage.getItem("role");
-      fetchTasks(storedUserId, storedRole);
+      fetchTasks(token, role, userId, employeeId);
     } catch (error) {
       console.error("Error deleting task:", error);
       alert("Failed to delete task.");
@@ -238,16 +288,12 @@ const TaskList = () => {
         `${process.env.REACT_APP_API_URL}/api/tasks/markCompleted/${taskId}`,
         { selectedDateTime: new Date().toISOString() },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
         }
       );
       alert("Task marked as completed!");
-
-      const storedUserId = localStorage.getItem("userId");
-      const storedRole = localStorage.getItem("role");
-      fetchTasks(storedUserId, storedRole);
+      fetchTasks(token, role, userId, employeeId);
     } catch (error) {
       console.error("Error marking task as completed:", error);
       alert("Failed to update status.");
@@ -289,13 +335,27 @@ const TaskList = () => {
   };
 
   const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return "-";
     const date = new Date(dateTimeString);
     return date.toLocaleString();
   };
 
   const formatDate = (dateTimeString) => {
+    if (!dateTimeString) return "-";
     const date = new Date(dateTimeString);
     return date.toLocaleDateString();
+  };
+
+  const getCompletedDateTime = (statusHistory) => {
+    if (!statusHistory || statusHistory.length === 0) return null;
+    
+    // Find the most recent completed status
+    const completedStatus = statusHistory
+      .slice()
+      .reverse()
+      .find(status => status.status === "Completed");
+      
+    return completedStatus ? completedStatus.completedDateTime : null;
   };
 
   return (
@@ -304,7 +364,7 @@ const TaskList = () => {
       <Navbar />
       <div className="task-list-container">
         <div className="task-list-header">
-          <h2 className="task-list-title">CHECKLIST MANAGEMENT</h2>
+          <h2 className="task-list-title">Checklist Management</h2>
           <div className="server-date">
             <FiCalendar className="date-icon" />
             <span>
@@ -314,126 +374,129 @@ const TaskList = () => {
           </div>
         </div>
 
-        <div className="task-list-controls">
-          <div className="controls-left">
-            <div className="search-control">
-              <div className="search-input-container">
-                <FiSearch className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search by employee name..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="search-input"
-                />
+        <>
+          <div className="task-list-controls">
+            <div className="controls-left">
+              <div className="search-control">
+                <div className="search-input-container">
+                  <FiSearch className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by employee name..."
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    className="search-input"
+                  />
+                </div>
+              </div>
+              <div className="sort-control">
+                <label>Sort By:</label>
+                <div className="custom-select">
+                  <select
+                    onChange={(e) => setSorting(e.target.value)}
+                    value={sorting}
+                  >
+                    <option value="asc">Oldest First</option>
+                    <option value="desc">Newest First</option>
+                  </select>
+                  <FiChevronDown className="select-arrow" />
+                </div>
+              </div>
+              <div className="search-control">
+                <div className="search-input-container">
+                  <FiSearch className="search-icon" />
+                  <select
+                    value={statusQuery}
+                    onChange={(e) => setStatusQuery(e.target.value)}
+                    className="search-input"
+                  >
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Overdue">Overdue</option>
+                  </select>
+                </div>
+              </div>
+              <div className="search-control">
+                <div className="search-input-container">
+                  <FiSearch className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by task name..."
+                    value={taskQuery}
+                    onChange={handleTaskNameSearchChange}
+                    className="search-input"
+                  />
+                </div>
               </div>
             </div>
-            <div className="sort-control">
-              <label>Sort By:</label>
-              <div className="custom-select">
-                <select
-                  onChange={(e) => setSorting(e.target.value)}
-                  value={sorting}
-                >
-                  <option value="asc">Oldest First</option>
-                  <option value="desc">Newest First</option>
-                </select>
-                <FiChevronDown className="select-arrow" />
-              </div>
-            </div>
-            <div className="search-control">
-              <div className="search-input-container">
-                <FiSearch className="search-icon" />
-                <select
-                  value={statusQuery}
-                  onChange={(e) => setStatusQuery(e.target.value)}
-                  className="search-input"
-                >
-                  <option value="">All Status</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Overdue">Overdue</option>
-                </select>
-              </div>
-            </div>
-            <div className="search-control">
-              <div className="search-input-container">
-                <FiSearch className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search by task name..."
-                  value={taskQuery}
-                  onChange={handleTaskNameSearchChange}
-                  className="search-input"
-                />
-              </div>
+
+            <div className="controls-right">
+              <button
+                className="filter-toggle"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+              >
+                <FiFilter /> Filters
+              </button>
             </div>
           </div>
 
-          <div className="controls-right">
-            <button
-              className="filter-toggle"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-            >
-              <FiFilter /> Filters
-            </button>
-          </div>
-        </div>
-
-        {isFilterOpen && (
-          <div className="date-range-filter">
-            <div className="date-picker-group">
-              <label>From:</label>
-              <DatePicker
-                selected={startDate}
-                onChange={(date) => setStartDate(date)}
-                placeholderText="Start Date"
-                className="date-picker"
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="MMMM d, yyyy h:mm aa"
-              />
+          {isFilterOpen && (
+            <div className="date-range-filter">
+              <div className="date-picker-group">
+                <label>From:</label>
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  placeholderText="Start Date"
+                  className="date-picker"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                />
+              </div>
+              <div className="date-picker-group">
+                <label>To:</label>
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  placeholderText="End Date"
+                  className="date-picker"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                />
+              </div>
+              <button
+                className="clear-filters"
+                onClick={() => {
+                  setStartDate(null);
+                  setEndDate(null);
+                }}
+              >
+                Clear Filters
+              </button>
             </div>
-            <div className="date-picker-group">
-              <label>To:</label>
-              <DatePicker
-                selected={endDate}
-                onChange={(date) => setEndDate(date)}
-                placeholderText="End Date"
-                className="date-picker"
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="MMMM d, yyyy h:mm aa"
-              />
-            </div>
-            <button
-              className="clear-filters"
-              onClick={() => {
-                setStartDate(null);
-                setEndDate(null);
-              }}
-            >
-              Clear Filters
-            </button>
-          </div>
-        )}
+          )}
+        </>
 
         <div className="task-list-table-container">
           <table className="task-list-table">
             <thead>
               <tr>
                 <th>Task Name</th>
-                <th>Assigned To</th>
+                {role !== "user" && <th>Assigned To</th>}
                 <th>Department</th>
                 <th>Frequency</th>
-                {userRole === "client" && (
+                {role === "client" && (
                   <>
                     <th>Planned Date & Time</th>
                   </>
                 )}
                 <th>Upcoming Date & Time</th>
+                <th>Status</th>
                 <th>Actions</th>
                 <th>Completed At</th>
               </tr>
@@ -450,6 +513,7 @@ const TaskList = () => {
                     task.statusHistory?.length > 0
                       ? task.statusHistory[task.statusHistory.length - 1].status
                       : "Pending";
+                  const completedDateTime = getCompletedDateTime(task.statusHistory);
 
                   return (
                     <tr key={task._id} className={isToday ? "today-task" : ""}>
@@ -466,28 +530,30 @@ const TaskList = () => {
                           task.taskName
                         )}
                       </td>
-                      <td>
-                        {isEditing ? (
-                          <select
-                            name="doerName"
-                            value={updatedTask.doerName || ""}
-                            onChange={handleUpdateChange}
-                            className="edit-select"
-                          >
-                            <option value="">Select Employee</option>
-                            {employees.map((employee) => (
-                              <option
-                                key={employee._id}
-                                value={employee.fullName}
-                              >
-                                {employee.fullName}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          task.doer?.fullName || "Unassigned"
-                        )}
-                      </td>
+                      {role !== "user" && (
+                        <td>
+                          {isEditing ? (
+                            <select
+                              name="doerName"
+                              value={updatedTask.doerName || ""}
+                              onChange={handleUpdateChange}
+                              className="edit-select"
+                            >
+                              <option value="">Select Employee</option>
+                              {employees.map((employee) => (
+                                <option
+                                  key={employee._id}
+                                  value={employee.fullName}
+                                >
+                                  {employee.fullName}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            task.doer?.fullName || "Unassigned"
+                          )}
+                        </td>
+                      )}
                       <td>
                         {isEditing ? (
                           <input
@@ -536,7 +602,7 @@ const TaskList = () => {
                           task.frequency
                         )}
                       </td>
-                      {userRole === "client" && (
+                      {role === "client" && (
                         <td>
                           {isEditing ? (
                             <DatePicker
@@ -564,6 +630,9 @@ const TaskList = () => {
                         </div>
                       </td>
                       <td>
+                        <StatusBadge status={currentStatus} />
+                      </td>
+                      <td>
                         <div className="action-buttons">
                           {isEditing ? (
                             <>
@@ -584,7 +653,7 @@ const TaskList = () => {
                             </>
                           ) : (
                             <>
-                              {userRole === "client" && (
+                              {role === "client" && (
                                 <>
                                   <button
                                     className="edit-btn"
@@ -602,7 +671,7 @@ const TaskList = () => {
                                   </button>
                                 </>
                               )}
-                              {userRole === "user" && (
+                              {role === "user" &&  (
                                 <button
                                   className="complete-btn"
                                   onClick={() => handleMarkCompleted(task._id)}
@@ -616,14 +685,8 @@ const TaskList = () => {
                         </div>
                       </td>
                       <td>
-                        {task.statusHistory?.find(
-                          (s) => s.status === "Completed"
-                        )?.completedDateTime ? (
-                          formatDateTime(
-                            task.statusHistory.find(
-                              (s) => s.status === "Completed"
-                            ).completedDateTime
-                          )
+                        {completedDateTime ? (
+                          formatDateTime(completedDateTime)
                         ) : (
                           <span className="not-completed">-</span>
                         )}
@@ -633,9 +696,11 @@ const TaskList = () => {
                 })
               ) : (
                 <tr className="no-tasks-row">
-                  <td colSpan="9">
+                  <td colSpan={role === "user" ? "8" : "9"}>
                     <div className="no-tasks-message">
-                      {searchQuery.trim() || taskQuery.trim()
+                      {role === "user"
+                        ? "No tasks assigned to you."
+                        : searchQuery.trim() || taskQuery.trim()
                         ? "No tasks found matching your search criteria."
                         : "No tasks found. Try adjusting your filters."}
                     </div>

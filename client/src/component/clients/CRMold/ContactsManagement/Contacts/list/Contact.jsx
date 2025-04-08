@@ -1,6 +1,6 @@
-// Contact.js
 import * as XLSX from "xlsx";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./contact.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -28,26 +28,71 @@ const Contact = () => {
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const role = localStorage.getItem("role");
-  const [customPermissions] = useState(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-    return storedPermissions ? JSON.parse(storedPermissions) : {};
-  });
-
+  // Fetch authentication data and contacts
   useEffect(() => {
-    const fetchContacts = async () => {
+    const fetchAuthData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch token, role and permissions in parallel
+        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { 
+            withCredentials: true 
+          }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { 
+            withCredentials: true 
+          }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { 
+            withCredentials: true 
+          })
+        ]);
+
+        if (!tokenRes.data.token || !roleRes.data.role) {
+          throw new Error("Authentication data missing");
+        }
+
+        setToken(tokenRes.data.token);
+        setRole(roleRes.data.role);
+        setCustomPermissions(permissionsRes.data.permissions || {});
+
+        // Fetch contacts after successful auth
+        await fetchContacts(tokenRes.data.token);
+      } catch (error) {
+        console.error("Authentication error:", error);
+        navigate("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchContacts = async (authToken) => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`
+          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
         );
         setContacts(response.data);
       } catch (error) {
-        console.error("Data not found", error);
+        console.error("Failed to fetch contacts:", error);
+        if (error.response?.status === 401) {
+          navigate("/login");
+        }
       }
     };
-    fetchContacts();
-  }, []);
+
+    fetchAuthData();
+  }, [navigate]);
 
   const handleExport = () => {
     const exportData = contacts.map((contact) => ({
@@ -69,18 +114,34 @@ const Contact = () => {
   const handleDelete = async (id) => {
     try {
       if (window.confirm("Do you want to delete this employee?")) {
-        await axios.delete(`${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`);
-        setContacts((prevContacts) => prevContacts.filter((contact) => contact._id !== id));
+        await axios.delete(
+          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setContacts((prevContacts) =>
+          prevContacts.filter((contact) => contact._id !== id)
+        );
         alert("Employee deleted successfully");
       }
     } catch (error) {
-      console.error("Error deleting employee", error);
-      alert("Failed to delete employee");
+      console.error("Error deleting employee:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      } else {
+        alert("Failed to delete employee");
+      }
     }
   };
 
   const filteredContacts = contacts.filter((contact) => {
-    const nameMatch = contact.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+    const nameMatch = contact.fullName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const contactDate = new Date(contact.createdAt);
     const startMatch = startDate ? contactDate >= new Date(startDate) : true;
     const endMatch = endDate ? contactDate <= new Date(endDate) : true;
@@ -103,6 +164,16 @@ const Contact = () => {
     setItemsPerPage(size);
     setCurrentPage(0);
   };
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -131,7 +202,10 @@ const Contact = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="input-icon" />
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="input-icon"
+              />
             </div>
             <Dropdown className="date-range-dropdown">
               <Dropdown.Toggle variant="secondary" id="date-range-dropdown">
@@ -185,15 +259,10 @@ const Contact = () => {
                   <td>
                     <div className="action-buttons">
                       <Link to="">
-                        <FontAwesomeIcon
-                          icon={faEnvelope}
-                        />
+                        <FontAwesomeIcon icon={faEnvelope} />
                       </Link>
                       <Link to="/chatbox">
-                        <FontAwesomeIcon
-                          icon={faComments}
-
-                        />
+                        <FontAwesomeIcon icon={faComments} />
                       </Link>
                     </div>
                   </td>
@@ -207,13 +276,21 @@ const Contact = () => {
                         <FontAwesomeIcon icon={faEllipsisV} />
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item as={Link} to={`/contactsmgmt/view/${contact._id}`}>
+                        <Dropdown.Item
+                          as={Link}
+                          to={`/contactsmgmt/view/${contact._id}`}
+                        >
                           View
                         </Dropdown.Item>
-                        <Dropdown.Item as={Link} to={`/contactmgmt/edit/${contact._id}`}>
+                        <Dropdown.Item
+                          as={Link}
+                          to={`/contactmgmt/edit/${contact._id}`}
+                        >
                           Edit
                         </Dropdown.Item>
-                        <Dropdown.Item onClick={() => handleDelete(contact._id)}>
+                        <Dropdown.Item
+                          onClick={() => handleDelete(contact._id)}
+                        >
                           Delete
                         </Dropdown.Item>
                       </Dropdown.Menu>
@@ -251,7 +328,10 @@ const Contact = () => {
               </Dropdown.Toggle>
               <Dropdown.Menu>
                 {[5, 10, 15, 20, 50].map((size) => (
-                  <Dropdown.Item key={size} onClick={() => handleItemsPerPageChange(size)}>
+                  <Dropdown.Item
+                    key={size}
+                    onClick={() => handleItemsPerPageChange(size)}
+                  >
                     {size} items
                   </Dropdown.Item>
                 ))}

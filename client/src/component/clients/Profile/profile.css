@@ -1,0 +1,255 @@
+.logo-uploader {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 5px;
+    margin-top: 20px;
+  }
+  
+  .logo-container {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    background-color: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar-logo {
+    max-width: 100%;
+    max-height: 70px;
+    object-fit: contain;
+  }
+  
+  .logo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 2rem;
+  }
+  
+  .logo-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+  
+  .logo-action-btn {
+    flex: 1;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  
+  .logo-action-btn svg {
+    margin-right: 5px;
+  }
+  
+  .logo-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .upload-btn {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .upload-btn:hover:not(:disabled) {
+    background-color: #0069d9;
+  }
+  
+  .delete-btn {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .delete-btn:hover:not(:disabled) {
+    background-color: #c82333;
+  }
+  
+  .file-input {
+    display: none;
+  }
+  
+  .upload-error {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    text-align: center;
+    width: 100%;
+  }
+  
+  /* For smaller screens */
+  @media (max-width: 768px) {
+    .logo-actions {
+      flex-direction: column;
+    }
+  }.profile-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .profile-section {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    margin-bottom: 30px;
+  }
+  
+  .profile-section h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .profile-section p {
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  /* Logo Management Styles */
+  .logo-management {
+    margin-bottom: 25px;
+  }
+  
+  .logo-preview {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    padding: 10px;
+  }
+  
+  .logo-image {
+    max-width: 100%;
+    max-height: 130px;
+    object-fit: contain;
+  }
+  
+  .logo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 3rem;
+  }
+  
+  .logo-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .logo-action-btn {
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  
+  .logo-action-btn svg {
+    margin-right: 8px;
+  }
+  
+  .logo-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .upload-btn {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .upload-btn:hover:not(:disabled) {
+    background-color: #0069d9;
+  }
+  
+  .delete-btn {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .delete-btn:hover:not(:disabled) {
+    background-color: #c82333;
+  }
+  
+  .file-input {
+    display: none;
+  }
+  
+  .upload-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #f8d7da;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+  }
+  
+  /* Logo Requirements Section */
+  .logo-requirements {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 15px;
+  }
+  
+  .logo-requirements h3 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: #495057;
+    margin-bottom: 10px;
+  }
+  
+  .logo-requirements ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  .logo-requirements li {
+    margin-bottom: 5px;
+    color: #6c757d;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 576px) {
+    .logo-actions {
+      flex-direction: column;
+    }
+    
+    .logo-action-btn {
+      width: 100%;
+    }
+  }

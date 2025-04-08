@@ -1,25 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
-const  verifyToken  = require("../middlewares/auth");
-const User = require("../models/clients/contactdata")
+const dbMiddleware = require("../middlewares/dbMiddleware"); // Adjust path as needed
 
-router.post("/register", async (req, res) => {
+// Register Route
+router.post("/register", dbMiddleware, async (req, res) => {
   try {
-    const { fullName,
-      email,
-      phone,
-      companyName,
-      companyWebsite,
-      industryType,
-      selectedPlan,
-      password, } =
-      req.body;
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
-
-    const newUser = new User({
+    console.log("📥 Processing user registration...");
+    const {
       fullName,
       email,
       phone,
@@ -27,101 +15,122 @@ router.post("/register", async (req, res) => {
       companyWebsite,
       industryType,
       selectedPlan,
-      password: hashedPassword, // Save hashed password
+      password,
+    } = req.body;
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new req.Employee({
+      fullName,
+      email,
+      phone,
+      companyName,
+      companyWebsite,
+      industryType,
+      selectedPlan,
+      password: hashedPassword,
     });
 
     await newUser.save();
-    res
-      .status(201)
-      .json({ message: "User added successfully", user: newUser });
+    console.log("✅ User registered successfully:", newUser._id);
+    res.status(201).json({ message: "User added successfully", user: newUser });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error adding user", details: error.message });
+    console.error("❌ Error registering user:", error.message);
+    res.status(500).json({ error: "Error adding user", details: error.message });
   }
 });
 
-router.get("/userData/:email", async (req, res) => {
+// Get user data by email
+router.get("/userData/:email", dbMiddleware, async (req, res) => {
   try {
-    const { email } = req.params; // Get email from request params
-    console.log("email", email);
+    const { email } = req.params;
+    console.log(`📥 Fetching user data for email: ${email}`);
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    console.log("useremail", user);
+    const user = await req.Employee.findOne({ email: email.toLowerCase() });
 
     if (!user) {
+      console.warn(`❌ User not found with email: ${email}`);
       return res.status(404).json({ message: "User not found" });
     }
 
+    console.log("✅ User data fetched successfully");
     res.json(user);
   } catch (error) {
-    console.error("Error fetching user data:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error("❌ Server error fetching user by email:", error.message);
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 });
 
-// Get all clients
-router.get("/userData", async (req, res) => {
+// Get all users
+router.get("/userData", dbMiddleware, async (req, res) => {
   try {
-    const user = await User.find();
-    console.log("users", user);
-
-    res.status(200).json(user);
+    console.log("📥 Fetching all users...");
+    const users = await req.Employee.find();
+    console.log(`✅ Users fetched: ${users.length}`);
+    res.status(200).json(users);
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error fetching users", details: error.message });
+    console.error("❌ Error fetching users:", error.message);
+    res.status(500).json({ error: "Error fetching users", details: error.message });
   }
 });
 
-// Get a single client by ID
-router.get("/:id", async (req, res) => {
+// Get a single user by ID
+router.get("/:id", dbMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    console.log(`📥 Fetching user with ID: ${req.params.id}`);
+    const user = await req.Employee.findById(req.params.id);
     if (!user) {
+      console.warn(`❌ User not found with ID: ${req.params.id}`);
       return res.status(404).json({ message: "User not found" });
     }
+    console.log("✅ User fetched successfully");
     res.status(200).json(user);
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error fetching user", details: error.message });
+    console.error("❌ Error fetching user by ID:", error.message);
+    res.status(500).json({ error: "Error fetching user", details: error.message });
   }
 });
 
-// Update a client by ID
-router.put("/update/:id", async (req, res) => {
+// Update a user by ID
+router.put("/update/:id", dbMiddleware, async (req, res) => {
   try {
-    const updateduser = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+    console.log(`🔄 Updating user with ID: ${req.params.id}`);
+    const updatedUser = await req.Employee.findByIdAndUpdate(
+      req.params.id, 
+      req.body, 
       { new: true }
     );
-    if (!updateduser) {
-      return res.status(404).json({ message: "user not found" });
+    
+    if (!updatedUser) {
+      console.warn(`❌ User not found with ID: ${req.params.id}`);
+      return res.status(404).json({ message: "User not found" });
     }
-    res
-      .status(200)
-      .json({ message: "User updated successfully", user: updateduser });
+    
+    console.log("✅ User updated successfully");
+    res.status(200).json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error updating user", details: error.message });
+    console.error("❌ Error updating user:", error.message);
+    res.status(500).json({ error: "Error updating user", details: error.message });
   }
 });
 
-// Delete a client by ID
-router.delete("/delete/:id", async (req, res) => {
+// Delete a user by ID
+router.delete("/delete/:id", dbMiddleware, async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    console.log(`🗑️ Deleting user with ID: ${req.params.id}`);
+    const deletedUser = await req.Employee.findByIdAndDelete(req.params.id);
+    
     if (!deletedUser) {
+      console.warn(`❌ User not found with ID: ${req.params.id}`);
       return res.status(404).json({ message: "User not found" });
     }
+    
+    console.log("✅ User deleted successfully");
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error deleting user", details: error.message });
+    console.error("❌ Error deleting user:", error.message);
+    res.status(500).json({ error: "Error deleting user", details: error.message });
   }
 });
 

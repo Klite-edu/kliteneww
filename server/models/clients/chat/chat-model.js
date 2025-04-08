@@ -21,7 +21,8 @@
 
 // module.exports = mongoose.model('Chat', chatbotSchema);
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const { createClientDatabase } = require("../../../database/db");
 
 const messageSchema = new mongoose.Schema({
   sender: {
@@ -40,8 +41,14 @@ const messageSchema = new mongoose.Schema({
 
 const chatbotSchema = new mongoose.Schema({
   user_id: { type: String, required: true },
-  messages: [messageSchema], // ✅ All messages in 1 array
-  model: { type: String, default: 'bot' },
-}, { collection: 'chatbot' });
+  messages: [messageSchema], // All messages in one array
+  model: { type: String, default: "bot" },
+}, { collection: "chatbot" });
 
-module.exports = mongoose.model('Chat', chatbotSchema);
+// Function to get the Chat model from the dynamic database
+const getChatModel = async (companyName) => {
+  const clientDB = await createClientDatabase(companyName);
+  return clientDB.model("Chat", chatbotSchema);
+};
+
+module.exports = { getChatModel };
