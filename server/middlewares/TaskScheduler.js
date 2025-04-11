@@ -3,9 +3,16 @@ const { getTaskModel } = require("../models/clients/checklist/task");
 const { getAllClientDBNames } = require("../database/db");
 
 // Function to calculate the next due datetime based on frequency
+// Updated calculateNextDueDateTime function
 const calculateNextDueDateTime = (plannedDateTime, frequency) => {
+  // Create a new date object to avoid modifying the original
   let nextDueDateTime = new Date(plannedDateTime);
-
+  
+  // Preserve time components
+  const hours = nextDueDateTime.getUTCHours();
+  const minutes = nextDueDateTime.getUTCMinutes();
+  const seconds = nextDueDateTime.getUTCSeconds();
+  
   switch (frequency) {
     case "Daily":
       nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 1);
@@ -50,7 +57,12 @@ const calculateNextDueDateTime = (plannedDateTime, frequency) => {
     default:
       return null;
   }
-
+  
+  // Restore the original time components after date calculations
+  nextDueDateTime.setUTCHours(hours);
+  nextDueDateTime.setUTCMinutes(minutes);
+  nextDueDateTime.setUTCSeconds(seconds);
+  
   return nextDueDateTime;
 };
 

@@ -54,6 +54,7 @@ const { getEmployeeModel } = require("../models/clients/contactdata");
 const { getFormBuilderModel } = require("../models/clients/formBuilder/formBuilder-model");
 const { getSubmissionModel } = require("../models/clients/form/form-model");
 const { getImageModel } = require("../models/clients/LogoImage/Logo-model");
+const { getChecklistManifestModel } = require("../models/clients/checklist/MISmanifest-model");
 
 // Utility function to dynamically load models
 const modelLoaders = {
@@ -65,6 +66,7 @@ const modelLoaders = {
   FormBuilder: getFormBuilderModel,
   Submission: getSubmissionModel,
   image: getImageModel,
+  ChecklistMIS: getChecklistManifestModel,
 };
 
 // Middleware to dynamically set client DB models

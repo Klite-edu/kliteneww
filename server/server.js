@@ -41,7 +41,9 @@ const ticketRoute = require("./routes/clients/chatbot/ticketRoute");
 const clientDashRoute = require("./routes/clients/Dashboard/DashboardRoute");
 const TicketRaiseRoute = require("./routes/clients/TicketRaise/TicketRaiseRoute");
 const permissionRoutes = require("./routes/clients/permission/permissionRoutes");
-const logoRoute = require("./routes/clients/LogoImage/LogoRoute");  // ✅ Logo Upload Route
+const logoRoute = require("./routes/clients/LogoImage/LogoRoute");
+const IndiamartRoutes = require("./routes/clients/appstore/indiamart/IndiamartRoutes");
+const checkmisRoutes = require("./routes/clients/checklist/checkmisRoutes");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
@@ -121,7 +123,9 @@ app.use("/api/clientDash", clientDashRoute);
 app.use("/api/ticket", ticketRoute);
 app.use("/api/ticketRaise", TicketRaiseRoute);
 app.use("/api/permission", permissionRoutes);
-app.use("/api/logo", logoRoute);  // ✅ Logo Route
+app.use("/api/logo", logoRoute); 
+app.use("/api/store", IndiamartRoutes);  
+app.use("/api/checkmis", checkmisRoutes);  
 
 // ✅ Start Scheduled Jobs
 updateTaskFrequency();
