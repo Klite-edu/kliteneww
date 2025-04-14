@@ -1,0 +1,546 @@
+/* Base Styles */
+.appStore-app-store {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.appStore-fixed-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.appStore-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.appStore-header-content h1 {
+    margin: 0;
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.appStore-subtitle {
+    margin: 0.2rem 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.appStore-search-container {
+    position: relative;
+    width: 300px;
+}
+
+.appStore-search-container input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2rem;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.appStore-search-icon {
+    position: absolute;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.appStore-scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 2rem;
+    background: #f9f9f9;
+}
+
+/* App Cards */
+.appStore-app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.appStore-app-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    position: relative;
+}
+
+.appStore-app-card:hover {
+    transform: translateY(-5px);
+}
+
+.appStore-featured-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #FF6B00;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.appStore-app-icon-container {
+    padding: 1.5rem 1.5rem 0;
+    text-align: center;
+}
+
+.appStore-app-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 16px;
+}
+
+.appStore-app-info {
+    padding: 1rem 1.5rem 1.5rem;
+}
+
+.appStore-app-info h3 {
+    margin: 0 0 0.3rem;
+    color: #333;
+}
+
+.appStore-category {
+    margin: 0 0 0.5rem;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.appStore-rating-container {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.appStore-stars {
+    margin-right: 0.5rem;
+}
+
+.appStore-star {
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.appStore-star.filled {
+    color: #FFB800;
+}
+
+.appStore-rating-count {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.appStore-description {
+    color: #444;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0.8rem 0;
+}
+
+.appStore-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.8rem;
+    margin: 0.8rem 0;
+}
+
+.appStore-price .appStore-free {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.appStore-download-btn {
+    width: 100%;
+    padding: 0.6rem;
+    background: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+}
+
+.appStore-download-btn:hover {
+    background: #0060d0;
+}
+
+.appStore-price-badge {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+/* CRM Results */
+.appStore-crm-results {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.appStore-crm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.appStore-crm-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.appStore-back-btn {
+    background: none;
+    border: none;
+    color: #0070f3;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.appStore-back-btn:hover {
+    background: #f0f7ff;
+}
+
+.appStore-crm-stats {
+    display: flex;
+    gap: 1.5rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.appStore-crm-data table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.appStore-crm-data th {
+    text-align: left;
+    padding: 0.8rem 1rem;
+    background: #f5f5f5;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.appStore-crm-data td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+    vertical-align: top;
+}
+
+.appStore-crm-data tr:hover td {
+    background: #f9f9f9;
+}
+
+.appStore-query {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Modal */
+.appStore-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.appStore-modal {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.appStore-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.appStore-modal-header h2 {
+    margin: 0;
+    color: #333;
+}
+
+.appStore-modal-subtitle {
+    margin: 0.3rem 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.appStore-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    padding: 0.2rem;
+}
+
+.appStore-modal-close:hover {
+    color: #333;
+}
+
+.appStore-form {
+    padding: 1.5rem;
+}
+
+.appStore-form-group {
+    margin-bottom: 1.2rem;
+    
+}
+
+.appStore-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #555;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.appStore-form-group input {
+    width: 95%;
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.appStore-form-group input:focus {
+    outline: none;
+    border-color: #0070f3;
+    box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+}
+
+.appStore-form-hint {
+    margin: 0.3rem 0 0;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.appStore-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.appStore-cancel-btn {
+    padding: 0.7rem 1.2rem;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.appStore-cancel-btn:hover {
+    background: #e0e0e0;
+}
+
+.appStore-submit-btn {
+    padding: 0.7rem 1.5rem;
+    background: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.appStore-submit-btn:hover {
+    background: #0060d0;
+}
+
+.appStore-submit-btn[disabled] {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.appStore-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.appStore-error {
+    color: #d32f2f;
+    background: #fce4e4;
+    padding: 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
+}
+
+/* No Results */
+.appStore-no-results {
+    text-align: center;
+    padding: 3rem 0;
+    color: #666;
+}
+
+.appStore-no-results-icon {
+    font-size: 2.5rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+}
+
+.appStore-no-results h3 {
+    margin: 0 0 0.5rem;
+    color: #444;
+}
+
+.appStore-clear-search {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.appStore-clear-search:hover {
+    background: #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .appStore-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    .appStore-search-container {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .appStore-app-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .appStore-crm-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .appStore-crm-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .appStore-crm-data {
+        overflow-x: auto;
+    }
+
+    .appStore-crm-data table {
+        min-width: 700px;
+    }
+}
+
+/* Add these styles to your AppStore.css */
+.appStore-download-btn.appStore-disabled-btn,
+.appStore-download-btn:disabled {
+  background-color: #e0e0e0;
+  color: #9e9e9e;
+  cursor: not-allowed;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.appStore-download-btn.appStore-disabled-btn:hover,
+.appStore-download-btn:disabled:hover {
+  background-color: #e0e0e0;
+  transform: none;
+  box-shadow: none;
+}
+
+.appStore-price-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin-left: 5px;
+}
+
+.appStore-disabled-btn .appStore-price-badge {
+  background-color: rgba(158, 158, 158, 0.2);
+}

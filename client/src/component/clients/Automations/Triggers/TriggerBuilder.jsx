@@ -115,15 +115,12 @@ const TriggerBuilder = () => {
               withCredentials: true,
             }
           ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/stages/list`,
-            {
-              headers: {
-                Authorization: `Bearer ${userToken}`,
-              },
-              withCredentials: true,
-            }
-          ),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/stages/list`, {
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+            withCredentials: true,
+          }),
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/triggers/event-sources`,
             {
@@ -133,15 +130,12 @@ const TriggerBuilder = () => {
               withCredentials: true,
             }
           ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/triggers/list`,
-            {
-              headers: {
-                Authorization: `Bearer ${userToken}`,
-              },
-              withCredentials: true,
-            }
-          ),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/triggers/list`, {
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+            withCredentials: true,
+          }),
         ]);
 
         // Transform forms data to only include what we need
@@ -475,53 +469,58 @@ const TriggerBuilder = () => {
                     {triggers.length === 0 ? (
                       <div className="empty-state">No triggers available</div>
                     ) : (
-                      triggers.map((trigger) => (
-                        <div
-                          key={trigger._id}
-                          className={`trigger-item ${
-                            selectedTrigger?._id === trigger._id
-                              ? "selected"
-                              : ""
-                          }`}
-                        >
-                          <div
-                            className="trigger-item-content"
-                            onClick={() => handleUseTrigger(trigger)}
-                          >
-                            <h4>{trigger.name || "Unnamed Trigger"}</h4>
-                            <p className="trigger-description">
-                              {trigger.description || "No description provided"}
-                            </p>
-                            <div className="trigger-details">
-                              <span className="event-source">
-                                {trigger.event_source.replace(/_/g, " ")}
-                              </span>
-                              <span className="action">
-                                Moves to:{" "}
-                                {stages
-                                  .find((p) =>
-                                    p.stages.some(
-                                      (s) =>
-                                        s._id === trigger.action.move_to_stage
-                                    )
-                                  )
-                                  ?.stages.find(
-                                    (s) =>
-                                      s._id === trigger.action.move_to_stage
-                                  )?.stageName || "Unknown stage"}
-                              </span>
+                      triggers.map(
+                        (trigger, index) =>
+                          index !== 0 && (
+                            <div
+                              key={trigger._id}
+                              className={`trigger-item ${
+                                selectedTrigger?._id === trigger._id
+                                  ? "selected"
+                                  : ""
+                              }`}
+                            >
+                              <div
+                                className="trigger-item-content"
+                                onClick={() => handleUseTrigger(trigger)}
+                              >
+                                <h4>{trigger.name || "Unnamed Trigger"}</h4>
+                                <p className="trigger-description">
+                                  {trigger.description ||
+                                    "No description provided"}
+                                </p>
+                                <div className="trigger-details">
+                                  <span className="event-source">
+                                    {trigger.event_source.replace(/_/g, " ")}
+                                  </span>
+                                  <span className="action">
+                                    Moves to:{" "}
+                                    {stages
+                                      .find((p) =>
+                                        p.stages.some(
+                                          (s) =>
+                                            s._id ===
+                                            trigger.action.move_to_stage
+                                        )
+                                      )
+                                      ?.stages.find(
+                                        (s) =>
+                                          s._id === trigger.action.move_to_stage
+                                      )?.stageName || "Unknown stage"}
+                                  </span>
+                                </div>
+                              </div>
+                              <button
+                                className="delete-trigger-button"
+                                onClick={() => handleDeleteTrigger(trigger._id)}
+                                disabled={isDeleting}
+                                title="Delete trigger"
+                              >
+                                <FiTrash2 />
+                              </button>
                             </div>
-                          </div>
-                          <button
-                            className="delete-trigger-button"
-                            onClick={() => handleDeleteTrigger(trigger._id)}
-                            disabled={isDeleting}
-                            title="Delete trigger"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      ))
+                          )
+                      )
                     )}
                   </>
                 )}

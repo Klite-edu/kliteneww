@@ -44,6 +44,7 @@ const permissionRoutes = require("./routes/clients/permission/permissionRoutes")
 const logoRoute = require("./routes/clients/LogoImage/LogoRoute");
 const IndiamartRoutes = require("./routes/clients/appstore/indiamart/IndiamartRoutes");
 const checkmisRoutes = require("./routes/clients/checklist/checkmisRoutes");
+const DelagationMISRoute = require("./routes/clients/taskDelegation/DelegationMIS");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
@@ -126,6 +127,7 @@ app.use("/api/permission", permissionRoutes);
 app.use("/api/logo", logoRoute); 
 app.use("/api/store", IndiamartRoutes);  
 app.use("/api/checkmis", checkmisRoutes);  
+app.use("/api/delegationmis", DelagationMISRoute);  
 
 // ✅ Start Scheduled Jobs
 updateTaskFrequency();

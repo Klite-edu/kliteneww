@@ -457,7 +457,7 @@ const Sidebar = ({ role }) => {
           <FontAwesomeIcon icon={faBars} />
         </button>
       )}
-      
+
       <div
         className={`sidebar ${sidebarOpen ? "open" : isMobile ? "closed" : ""}`}
       >
@@ -467,7 +467,7 @@ const Sidebar = ({ role }) => {
             <img src={logoUrl} alt="Company Logo" className="sidebar-logo" />
           </div>
         </div>
-        
+
         <ul className="sidebar-menu">
           {sidebarOptions.map((item, index) => (
             <SidebarItem
@@ -481,6 +481,9 @@ const Sidebar = ({ role }) => {
           ))}
         </ul>
       </div>
+      {isMobile && sidebarOpen && (
+        <div className="sidebar-overlay open" onClick={toggleSidebar} />
+      )}
     </>
   );
 };

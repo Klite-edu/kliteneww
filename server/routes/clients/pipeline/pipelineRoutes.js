@@ -16,7 +16,9 @@ router.get("/list", dbDBMiddleware, async (req, res) => {
     res.json(pipelines);
   } catch (error) {
     console.error("❌ Error fetching pipelines:", error.message);
-    res.status(500).json({ message: "Error fetching pipelines", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching pipelines", error: error.message });
   }
 });
 
@@ -29,7 +31,9 @@ router.get("/contactinfo", dbDBMiddleware, async (req, res) => {
     res.json(employees);
   } catch (error) {
     console.error("❌ Error fetching contacts:", error.message);
-    res.status(500).json({ message: "Error fetching employees", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching employees", error: error.message });
   }
 });
 
@@ -59,11 +63,46 @@ router.get("/user/:userId", dbDBMiddleware, async (req, res) => {
       };
     });
 
-    console.log("✅ Filtered Pipelines Response:", JSON.stringify(filteredPipelines, null, 2));
+    console.log(
+      "✅ Filtered Pipelines Response:",
+      JSON.stringify(filteredPipelines, null, 2)
+    );
     res.json(filteredPipelines);
   } catch (error) {
     console.error("❌ Error fetching user-specific pipelines:", error.message);
     res.status(500).json({ message: "Server Error", error: error.message });
+  }
+});
+
+router.post("/pipeline/checklist", dbDBMiddleware, async (req, res) => {
+  console.log("\n\n", req.body, "\n\n");
+  const { checklistItemId, leadId, stageId, pipelineId } = req.body;
+  try {
+    const result = await req.pipeline.findByIdAndUpdate(
+      pipelineId,
+      {
+        $push: {
+          "stages.$[stage].checklist.$[check].ticket": {
+            id: leadId,
+            completedTime: new Date(),
+          },
+        },
+      },
+      {
+        new: true,
+        arrayFilters: [
+          { "stage._id": stageId },
+          { "check._id": checklistItemId },
+        ],
+      }
+    );
+    res.json({
+      message: ":white_tick: Lead ID pushed inside checklist ticket!",
+      result,
+    });
+  } catch (err) {
+    console.error(":x: Error pushing lead:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -83,15 +122,19 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
     const newPipeline = new req.pipeline({ pipelineName, stages });
     await newPipeline.save();
     console.log("✅ Pipeline added successfully:", newPipeline);
-    res.status(201).json({ message: "Pipeline added successfully", newPipeline });
+    res
+      .status(201)
+      .json({ message: "Pipeline added successfully", newPipeline });
   } catch (error) {
     console.error("❌ Error adding pipeline:", error.message);
-    res.status(500).json({ message: "Error adding pipeline", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error adding pipeline", error: error.message });
   }
 });
 
 // Delete a pipeline
-router.delete("/:id", dbDBMiddleware,  async (req, res) => {
+router.delete("/:id", dbDBMiddleware, async (req, res) => {
   try {
     console.log(`🗑️ Deleting pipeline with ID: ${req.params.id}`);
     const deletedPipeline = await req.pipeline.findByIdAndDelete(req.params.id);
@@ -105,7 +148,9 @@ router.delete("/:id", dbDBMiddleware,  async (req, res) => {
     res.json({ message: "Pipeline deleted successfully", deletedPipeline });
   } catch (error) {
     console.error("❌ Error deleting pipeline:", error.message);
-    res.status(500).json({ message: "Error deleting pipeline", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting pipeline", error: error.message });
   }
 });
 
@@ -128,7 +173,9 @@ router.put("/:id", dbDBMiddleware, async (req, res) => {
     res.json({ message: "Pipeline updated successfully", updatedPipeline });
   } catch (error) {
     console.error("❌ Error updating pipeline:", error.message);
-    res.status(500).json({ message: "Error updating pipeline", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating pipeline", error: error.message });
   }
 });
 

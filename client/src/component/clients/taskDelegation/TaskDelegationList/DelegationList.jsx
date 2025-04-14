@@ -588,66 +588,6 @@ const DelegationList = () => {
           <p style={{ marginTop: "20px" }}>No tasks found.</p>
         )}
 
-        {/* {showTicketModal && (
-          <div className="modal">
-            <div className="modal-content">
-              <h3>Raise Ticket</h3>
-              <form onSubmit={handleTicketSubmit}>
-                <div className="form-group">
-                  <label>Title</label>
-                  <input
-                    type="text"
-                    placeholder="Ticket Title"
-                    value={ticketData.title}
-                    onChange={(e) =>
-                      setTicketData({ ...ticketData, title: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Description</label>
-                  <textarea
-                    placeholder="Describe your issue..."
-                    value={ticketData.description}
-                    onChange={(e) =>
-                      setTicketData({
-                        ...ticketData,
-                        description: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Priority</label>
-                  <select
-                    value={ticketData.priority}
-                    onChange={(e) =>
-                      setTicketData({ ...ticketData, priority: e.target.value })
-                    }
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
-                <div className="modal-buttons">
-                  <button type="submit" className="btn green">
-                    Submit
-                  </button>
-                  <button
-                    type="button"
-                    className="btn red"
-                    onClick={() => setShowTicketModal(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )} */}
       </div>
     </>
   );

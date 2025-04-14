@@ -68,6 +68,7 @@ const sidebarConfig = {
       options: [
         { name: "Task List", path: "/check-tasklist", icon: faCheckDouble },
         { name: "Add Task", path: "/check-addtask", icon: faCircleCheck },
+        { name: "Checklist MIS", path: "/check-mis", icon: faProjectDiagram },
       ],
     },
     {
@@ -81,9 +82,11 @@ const sidebarConfig = {
           path: "/delegation-tasklist",
           icon: faCheckDouble,
         },
+        { name: "Delegation MIS", path: "/delegation-mis", icon: faProjectDiagram },
       ],
     },
     { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
+    { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
     // { name: "FormBuilder", path: "/FormBuilder", icon: faClipboardList },
     // { name: "Automation", path: "/automation", icon: faRobot },
     // {

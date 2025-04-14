@@ -55,6 +55,7 @@ const { getFormBuilderModel } = require("../models/clients/formBuilder/formBuild
 const { getSubmissionModel } = require("../models/clients/form/form-model");
 const { getImageModel } = require("../models/clients/LogoImage/Logo-model");
 const { getChecklistManifestModel } = require("../models/clients/checklist/MISmanifest-model");
+const { getDelegationManifestModel } = require("../models/clients/TaskDelegation/delagationmis-model");
 
 // Utility function to dynamically load models
 const modelLoaders = {
@@ -67,6 +68,7 @@ const modelLoaders = {
   Submission: getSubmissionModel,
   image: getImageModel,
   ChecklistMIS: getChecklistManifestModel,
+  delegationManifest: getDelegationManifestModel,
 };
 
 // Middleware to dynamically set client DB models

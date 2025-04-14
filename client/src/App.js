@@ -47,6 +47,9 @@ import Sites from "./component/clients/HRM/Sites/Sites";
 import TicketRaise from "./component/clients/TicketRaise/TicketRaise";
 import PipelinesDashboard from "./component/clients/Pipelines/PipelinesDashboard";
 import Profile from "./component/clients/Profile/Profile";
+import IndiaMart from "./component/clients/AppStore/IndiaMart/IndiaMart";
+import CheckListMIS from "./component/clients/checklist/tasks/MIS/CheckListMIS";
+import DelegationMis from "./component/clients/taskDelegation/DelegationMIS/DelegationMIS";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -111,6 +114,9 @@ const App = () => {
         <Route path="/sites" element={<Sites />} />
         <Route path="/ticketraise" element={<TicketRaise />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/appstore" element={<IndiaMart />} />
+        <Route path="/check-mis" element={<CheckListMIS />} />
+        <Route path="/delegation-mis" element={<DelegationMis />} />
       </Routes>
     </div>
   );

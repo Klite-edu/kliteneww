@@ -24,7 +24,7 @@ const defaultPermissions = {
 export const getSidebarOptions = async (role) => {
   try {
     const response = await axios.get(
-      "http://localhost:5000/api/permission/get-permissions",
+      `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
       { withCredentials: true }
     );
     const customPermissions = response.data.permissions || {};

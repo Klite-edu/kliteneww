@@ -74,7 +74,7 @@ const Dashboard = () => {
     const fetchRole = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/permission/get-role",
+          `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
           { withCredentials: true }
         );
         const userRole = response.data.role;
@@ -92,7 +92,7 @@ const Dashboard = () => {
     const fetchPermissions = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/permission/get-permissions",
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
           { withCredentials: true }
         );
         setCustomPermissions(response.data.permissions || {});
@@ -109,7 +109,7 @@ const Dashboard = () => {
   const handlePermissionsSave = async (permissions) => {
     try {
       await axios.post(
-        "http://localhost:5000/api/permission/save-permissions",
+        `${process.env.REACT_APP_API_URL}/api/permission/save-permissions`,
         { permissions },
         { withCredentials: true }
       );

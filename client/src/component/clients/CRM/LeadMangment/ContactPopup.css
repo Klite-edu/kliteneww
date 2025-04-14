@@ -1,0 +1,431 @@
+/* ContactPopup.css */
+
+.contactpopup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.contactpopup-popup {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.contactpopup-header-container {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.contactpopup-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.contactpopup-header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.contactpopup-close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.contactpopup-action-buttons {
+    display: flex;
+    padding: 8px 16px;
+    overflow-x: auto;
+    gap: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.contactpopup-action-button {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.contactpopup-action-button:hover {
+    background-color: #f0f0f0;
+}
+
+.contactpopup-action-button.active {
+    background-color: #e0e0e0;
+    font-weight: 600;
+}
+
+.contactpopup-content-area {
+    padding: 16px 24px;
+    min-height: 300px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.contactpopup-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.contactpopup-form-title {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.contactpopup-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #666;
+}
+
+/* Two-column layout */
+.two-column-layout {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.column {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Form styles */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.save-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    align-self: flex-start;
+}
+
+.save-button:hover {
+    background-color: #45a049;
+}
+
+/* Progress Bar Styles */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    flex-grow: 1;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: #666;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* Task Item Styles */
+.task-item,
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background-color: #f9f9f9;
+    position: relative;
+}
+
+.task-item.completed,
+.checklist-item.completed {
+    opacity: 0.7;
+    background-color: #f0f0f0;
+}
+
+.task-item.completed label,
+.checklist-item.completed label {
+    text-decoration: line-through;
+    color: #666;
+}
+
+.task-item input[type="checkbox"],
+.checklist-item input[type="checkbox"] {
+    margin-top: 3px;
+}
+
+.task-item label,
+.checklist-item label {
+    flex-grow: 1;
+    margin-right: 8px;
+    white-space: pre-line;
+}
+
+.task-dates,
+.checklist-dates {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    color: #666;
+    margin-left: auto;
+    text-align: right;
+}
+
+.task-delete-button,
+.checklist-delete-button,
+.note-delete-button,
+.appointment-delete-button {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    margin-left: 8px;
+}
+
+.task-delete-button:hover,
+.checklist-delete-button:hover,
+.note-delete-button:hover,
+.appointment-delete-button:hover {
+    color: #cc0000;
+}
+
+/* Call Logs specific styles */
+.call-logs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.call-logs-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 12px;
+}
+
+.call-logs-content {
+    min-height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+}
+
+/* Notes specific styles */
+.notes-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.note-item {
+    background: #f9f9f9;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.note-item h5 {
+    margin: 0 0 8px 0;
+}
+
+.note-item p {
+    margin: 0 0 8px 0;
+    white-space: pre-line;
+}
+
+.note-item span {
+    font-size: 12px;
+    color: #666;
+}
+
+.note-delete-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 14px;
+}
+
+/* Appointments specific styles */
+.appointments-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.appointments-tabs button {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.appointments-tabs button.active {
+    background-color: #e0e0e0;
+    font-weight: 600;
+}
+
+.appointments-list {
+    min-height: 100px;
+    max-height: 400px;
+    overflow-y: auto;
+    color: #666;
+}
+
+.appointment-item {
+    background: #f9f9f9;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.appointment-item h5 {
+    margin: 0 0 8px 0;
+}
+
+.appointment-item p {
+    margin: 0 0 8px 0;
+}
+
+.appointment-item span {
+    font-size: 12px;
+    color: #666;
+}
+
+.appointment-delete-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 14px;
+}
+
+/* Footer styles */
+.contactpopup-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+    color: #666;
+    font-size: 14px;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .contactpopup-popup {
+        width: 95%;
+    }
+    
+    .contactpopup-action-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .two-column-layout {
+        flex-direction: column;
+    }
+    
+    .column {
+        width: 100%;
+    }
+    
+    .call-logs-header {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .task-item,
+    .checklist-item {
+        flex-direction: column;
+    }
+    
+    .task-dates,
+    .checklist-dates {
+        margin-left: 0;
+        text-align: left;
+        width: 100%;
+        margin-top: 8px;
+    }
+}

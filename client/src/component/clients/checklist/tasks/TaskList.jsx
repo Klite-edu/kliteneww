@@ -38,6 +38,9 @@ const TaskList = () => {
   const [role, setRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [token, setToken] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [tasksPerPageOptions] = useState([5, 10, 15, 20, 25, 50]);
+  const [tasksPerPage, setTasksPerPage] = useState(10);
   const [employeeId, setEmployeeId] = useState(null);
   const navigate = useNavigate();
 
@@ -115,7 +118,16 @@ const TaskList = () => {
 
     setFilteredTasks(filtered);
   }, [searchQuery, taskQuery, statusQuery, tasks]);
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
 
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const nextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const fetchServerDate = async (token) => {
     try {
       const res = await axios.get(
@@ -348,13 +360,13 @@ const TaskList = () => {
 
   const getCompletedDateTime = (statusHistory) => {
     if (!statusHistory || statusHistory.length === 0) return null;
-    
+
     // Find the most recent completed status
     const completedStatus = statusHistory
       .slice()
       .reverse()
-      .find(status => status.status === "Completed");
-      
+      .find((status) => status.status === "Completed");
+
     return completedStatus ? completedStatus.completedDateTime : null;
   };
 
@@ -398,6 +410,25 @@ const TaskList = () => {
                   >
                     <option value="asc">Oldest First</option>
                     <option value="desc">Newest First</option>
+                  </select>
+                  <FiChevronDown className="select-arrow" />
+                </div>
+              </div>
+              <div className="page-size-control">
+                <label>Tasks per page:</label>
+                <div className="custom-select">
+                  <select
+                    value={tasksPerPage}
+                    onChange={(e) => {
+                      setTasksPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {tasksPerPageOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
                   <FiChevronDown className="select-arrow" />
                 </div>
@@ -502,8 +533,8 @@ const TaskList = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => {
+              {currentTasks.length > 0 ? (
+                currentTasks.map((task) => {
                   const isToday =
                     serverDate &&
                     new Date(task.nextDueDateTime).toDateString() ===
@@ -513,7 +544,9 @@ const TaskList = () => {
                     task.statusHistory?.length > 0
                       ? task.statusHistory[task.statusHistory.length - 1].status
                       : "Pending";
-                  const completedDateTime = getCompletedDateTime(task.statusHistory);
+                  const completedDateTime = getCompletedDateTime(
+                    task.statusHistory
+                  );
 
                   return (
                     <tr key={task._id} className={isToday ? "today-task" : ""}>
@@ -671,7 +704,7 @@ const TaskList = () => {
                                   </button>
                                 </>
                               )}
-                              {role === "user" &&  (
+                              {role === "user" && (
                                 <button
                                   className="complete-btn"
                                   onClick={() => handleMarkCompleted(task._id)}
@@ -710,7 +743,43 @@ const TaskList = () => {
             </tbody>
           </table>
         </div>
+        {filteredTasks.length > tasksPerPage && (
+          <>
+            <div className="pagination-container">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                Previous
+              </button>
 
+              <div className="page-numbers">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (number) => (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      className={`page-number ${
+                        currentPage === number ? "active" : ""
+                      }`}
+                    >
+                      {number}
+                    </button>
+                  )
+                )}
+              </div>
+
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className="pagination-button"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
         {loading && (
           <div className="loading-overlay">
             <div className="loading-spinner"></div>

@@ -27,9 +27,18 @@ const AddTask = () => {
       try {
         // Fetch token, role, and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true })
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
         ]);
 
         const userToken = tokenRes.data.token;
@@ -50,11 +59,10 @@ const AddTask = () => {
           `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
           {
             headers: { Authorization: `Bearer ${userToken}` },
-            withCredentials: true
+            withCredentials: true,
           }
         );
         setEmployees(employeesRes.data);
-
       } catch (error) {
         console.error("Error fetching initial data:", error);
         navigate("/login");
@@ -70,7 +78,7 @@ const AddTask = () => {
       ...prevTask,
       [name]: value,
     }));
-    
+
     if (name === "doerName") {
       const selectedEmployee = employees.find((emp) => emp.fullName === value);
       setTask((prevTask) => ({
@@ -80,13 +88,15 @@ const AddTask = () => {
     }
   };
 
+  // In the AddTask.jsx component's handleSubmit function:
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      
-      // Combine date and time into ISO string
-      const plannedDateTime = `${task.plannedDate}T${task.plannedTime}:00.000Z`;
+
+      // Format date and time properly to preserve timezone information
+      const dateObj = new Date(`${task.plannedDate}T${task.plannedTime}`);
+      const plannedDateTime = dateObj.toISOString();
 
       await axios.post(
         `${process.env.REACT_APP_API_URL}/api/tasks/add`,
@@ -96,14 +106,13 @@ const AddTask = () => {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true
+          withCredentials: true,
         }
       );
 
       alert("Task added successfully!");
       navigate("/check-tasklist");
       resetForm();
-      
     } catch (error) {
       console.error("Error adding task:", error);
       alert(error.response?.data?.message || "Failed to add task.");
