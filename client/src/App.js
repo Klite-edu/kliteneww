@@ -50,6 +50,10 @@ import Profile from "./component/clients/Profile/Profile";
 import IndiaMart from "./component/clients/AppStore/IndiaMart/IndiaMart";
 import CheckListMIS from "./component/clients/checklist/tasks/MIS/CheckListMIS";
 import DelegationMis from "./component/clients/taskDelegation/DelegationMIS/DelegationMIS";
+import BotTrigger from "./component/clients/Automations/Triggers/ChatbotLeadTrigger/BotTrigger";
+import Variables from "./component/clients/Variables/Variables";
+import SeleniumWeb from "./component/clients/Chatbot/SeleniumWeb";
+import IssueDashboard from "./component/clients/Issue/IssueDashboard";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -117,6 +121,10 @@ const App = () => {
         <Route path="/appstore" element={<IndiaMart />} />
         <Route path="/check-mis" element={<CheckListMIS />} />
         <Route path="/delegation-mis" element={<DelegationMis />} />
+        <Route path="/bot-trigger" element={<BotTrigger />} />
+        <Route path="/variables" element={<Variables />} />
+        <Route path="/seleniumweb" element={<SeleniumWeb />} />
+        <Route path="/issue" element={<IssueDashboard />} />
       </Routes>
     </div>
   );

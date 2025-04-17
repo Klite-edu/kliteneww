@@ -53,7 +53,7 @@ const Form = () => {
 
         if (!userToken || !userId) {
           alert("Authentication required. Please login.");
-          navigate("/login");
+          navigate("/");
           return;
         }
 
@@ -85,7 +85,7 @@ const Form = () => {
       } catch (error) {
         console.error("Error fetching initial data:", error);
         setError("Failed to fetch data. Please try again.");
-        navigate("/login");
+        navigate("/");
       } finally {
         setLoading(false);
       }

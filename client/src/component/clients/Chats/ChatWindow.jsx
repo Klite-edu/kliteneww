@@ -1,311 +1,7 @@
-
-// import React, { useState, useEffect, useRef } from "react";
-// import axios from "axios";
-// import "./chatwindow.css";
-
-// const ChatWindow = ({
-//   selectedUser,
-//   agentId,
-//   onProfileClick,
-//   setSelectedUser,
-// }) => {
-//   const [messages, setMessages] = useState([]);
-//   const [input, setInput] = useState("");
-//   const [incomingTickets, setIncomingTickets] = useState([]);
-//   const [chatLocked, setChatLocked] = useState(true); // Default: locked
-
-//   const chatRef = useRef(null);
-
-//   // ✅ On Component Mount
-//   useEffect(() => {
-//     console.log("✅ ChatWindow Mounted");
-
-//     // ✅ Restore locked state from localStorage
-//     const lockedState = localStorage.getItem("chatLocked");
-//     setChatLocked(lockedState === "false" ? false : true);
-
-//     // ✅ Restore selected user if exists
-//     const storedUser = localStorage.getItem("selectedUser");
-//     if (storedUser) {
-//       const parsedUser = JSON.parse(storedUser);
-//       console.log("✅ Restored selected user:", parsedUser);
-//       setSelectedUser(parsedUser);
-//     }
-
-//     fetchIncomingTickets();
-//   }, []);
-
-//   // ✅ On selectedUser change
-//   useEffect(() => {
-//     console.log("👤 selectedUser changed:", selectedUser);
-
-//     if (!selectedUser) return;
-
-//     // ✅ Fetch messages on user select or restore
-//     fetchMessages();
-
-//     // ✅ Save selected user to localStorage
-//     localStorage.setItem("selectedUser", JSON.stringify(selectedUser));
-//   }, [selectedUser]);
-
-//   // ✅ Fetch Pending Tickets
-//   const fetchIncomingTickets = async () => {
-//     console.log("📥 Fetching pending tickets...");
-//     try {
-//       const res = await axios.get(
-//         `${process.env.REACT_APP_API_URL}/api/ticket/pending-tickets`
-//       );
-//       setIncomingTickets(res.data);
-//       console.log("✅ Pending tickets fetched:", res.data);
-//     } catch (error) {
-//       console.error("❌ Error fetching pending tickets:", error);
-//     }
-//   };
-
-//   // ✅ Accept Ticket
-//   const acceptTicket = async (ticket) => {
-//     console.log(`🟢 Accepting ticket: ${ticket._id}`);
-//     try {
-//       const res = await axios.post(
-//         `${process.env.REACT_APP_API_URL}/api/ticket/accept`,
-//         {
-//           ticket_id: ticket._id,
-//           agent_id: agentId,
-//         }
-//       );
-
-//       if (res.data.ticket) {
-//         const selected = {
-//           user_id: res.data.ticket.user_id,
-//           waba_id: res.data.ticket.waba_id,
-//           name: res.data.ticket.user_id,
-//         };
-
-//         console.log("🆕 Selected User:", selected);
-//         setSelectedUser(selected);
-
-//         // ✅ Unlock chat and store lock state
-//         setChatLocked(false);
-//         localStorage.setItem("chatLocked", "false");
-
-//         fetchMessages();
-//         fetchIncomingTickets();
-//       } else {
-//         console.warn("⚠️ Ticket already accepted or failed");
-//       }
-//     } catch (error) {
-//       console.error("❌ Error accepting ticket:", error);
-//     }
-//   };
-
-//   // ✅ Fetch Chat Messages
-//   const fetchMessages = async () => {
-//     if (!selectedUser) return;
-
-//     console.log(`📝 Fetching chat history for user: ${selectedUser.user_id}`);
-//     try {
-//       const res = await axios.get(
-//         `${process.env.REACT_APP_API_URL}/api/ticket/chatbot`
-//       );
-
-//       const userChat = res.data.find(
-//         (chat) => chat.user_id === selectedUser.user_id
-//       );
-
-//       if (!userChat) {
-//         console.warn("⚠️ No chat found for user:", selectedUser.user_id);
-//         setMessages([]);
-//         return;
-//       }
-
-//       const sortedMessages = (userChat.messages || []).sort(
-//         (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-//       );
-
-//       console.log(`✅ Messages fetched: ${sortedMessages.length}`);
-//       setMessages(sortedMessages);
-//     } catch (error) {
-//       console.error("❌ Error fetching messages:", error);
-//     }
-//   };
-
-//   // ✅ Send Message
-//   const sendMessage = async () => {
-//     if (!input.trim() || chatLocked) {
-//       console.warn("⚠️ Cannot send message (locked or empty).");
-//       return;
-//     }
-
-//     const messageText = input.trim();
-//     console.log(`➡️ Sending message: "${messageText}" to user ${selectedUser.user_id}`);
-
-//     const newMessage = {
-//       _id: `agent-${Date.now()}`,
-//       sender: "agent",
-//       message: messageText,
-//       timestamp: new Date(),
-//     };
-
-//     // ✅ Show message instantly in UI
-//     setMessages((prev) => [...prev, newMessage]);
-//     setInput("");
-
-//     try {
-//       await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/send`, {
-//         agent_id: agentId,
-//         user_id: selectedUser.user_id,
-//         message: messageText,
-//         waba_id: selectedUser.waba_id,
-//         sender_type: "agent",
-//       });
-
-//       console.log("✅ Message sent via API.");
-//       fetchMessages(); // optional refresh
-//     } catch (error) {
-//       console.error("❌ Error sending message:", error);
-//     }
-//   };
-
-//   // ✅ End Session (Triggered Only by Button Click)
-//   const endSession = async () => {
-//     if (!selectedUser) return;
-
-//     console.log(`🔚 Ending session for user: ${selectedUser.user_id}`);
-//     try {
-//       await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/end-session`, {
-//         user_id: selectedUser.user_id, // Send only user_id
-//         agent_id: agentId,
-//       });
-
-//       console.log("✅ Session ended");
-
-//       // ✅ Lock chat and clear user session
-//       setChatLocked(true);
-//       localStorage.setItem("chatLocked", "true");
-
-//       setSelectedUser(null);
-//       localStorage.removeItem("selectedUser");
-//       setMessages([]);
-//     } catch (error) {
-//       console.error("❌ Error ending session:", error);
-//     }
-//   };
-
-//   // ✅ Auto-scroll on new message
-//   useEffect(() => {
-//     if (chatRef.current) {
-//       chatRef.current.scrollTop = chatRef.current.scrollHeight;
-//     }
-//   }, [messages]);
-
-//   const formatTime = (timestamp) => {
-//     const date = timestamp ? new Date(timestamp) : new Date();
-//     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-//   };
-
-//   return (
-//     <div className="chat-container">
-//       {/* INCOMING TICKETS */}
-//       <div className="incoming-tickets-section">
-//         <h3>📥 Incoming Tickets</h3>
-//         <button onClick={fetchIncomingTickets} className="refresh-tickets-button">
-//           🔄 Refresh
-//         </button>
-
-//         {incomingTickets.length === 0 ? (
-//           <p>No pending tickets</p>
-//         ) : (
-//           incomingTickets.map((ticket) => (
-//             <div key={ticket._id} className="ticket-item">
-//               <p>User: <strong>{ticket.user_id}</strong></p>
-//               <button onClick={() => acceptTicket(ticket)}>✅ Accept</button>
-//             </div>
-//           ))
-//         )}
-//       </div>
-
-//       {/* CHAT WINDOW */}
-//       {selectedUser ? (
-//         <>
-//           <div className="chat-header">
-//             <div className="chat-user-info" onClick={onProfileClick}>
-//               <div className="avatar">
-//                 {selectedUser.avatar ? (
-//                   <img src={selectedUser.avatar} alt="avatar" className="avatar-img" />
-//                 ) : (
-//                   "👤"
-//                 )}
-//               </div>
-//               <div>
-//                 <div className="user-name">{selectedUser.name || selectedUser.user_id}</div>
-//                 <div className="user-status">{chatLocked ? "Offline" : "Online"}</div>
-//               </div>
-//             </div>
-
-//             <button onClick={endSession} disabled={chatLocked} className="end-session-button">
-//               ⛔ End Session
-//             </button>
-//           </div>
-
-//           {/* CHAT MESSAGES */}
-//           <div className="chat-body" ref={chatRef}>
-//             {messages.length === 0 ? (
-//               <div className="empty-chat">
-//                 <p>No messages yet. Start chatting!</p>
-//               </div>
-//             ) : (
-//               messages.map((msg, idx) => (
-//                 <div
-//                   key={idx}
-//                   className={`message-container ${
-//                     msg.sender === "agent" ? "agent-message" : "customer-message"
-//                   }`}
-//                 >
-//                   <div className="message-content">
-//                     <div>{msg.message}</div>
-//                     <div className="timestamp">{formatTime(msg.timestamp)}</div>
-//                   </div>
-//                 </div>
-//               ))
-//             )}
-//           </div>
-
-//           {/* MESSAGE INPUT */}
-//           <div className="chat-footer">
-//             <input
-//               type="text"
-//               className="input-box"
-//               placeholder={
-//                 chatLocked ? "🔒 Accept ticket to start chatting..." : "Type your message..."
-//               }
-//               value={input}
-//               disabled={chatLocked}
-//               onChange={(e) => setInput(e.target.value)}
-//               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-//             />
-//             <button
-//               onClick={sendMessage}
-//               className="send-button"
-//               disabled={!input.trim() || chatLocked}
-//             >
-//               ➤
-//             </button>
-//           </div>
-//         </>
-//       ) : (
-//         <div className="no-chat-selected">
-//           <h2>📞 Select or accept a ticket to start chatting!</h2>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default ChatWindow;
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import "./chatwindow.css";
+import { useNavigate } from "react-router-dom";
 
 const ChatWindow = ({
   selectedUser,
@@ -317,54 +13,126 @@ const ChatWindow = ({
   const [input, setInput] = useState("");
   const [incomingTickets, setIncomingTickets] = useState([]);
   const [chatLocked, setChatLocked] = useState(true);
-
-  // Clients and Templates
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [templates, setTemplates] = useState([]);
   const [showTemplatePopup, setShowTemplatePopup] = useState(false);
-
+  const [token, setToken] = useState("");
+  const [role, setRole] = useState(null);
+  const [customPermissions, setCustomPermissions] = useState({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const chatRef = useRef(null);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const lockedState = localStorage.getItem("chatLocked");
-    setChatLocked(lockedState === "false" ? false : true);
-
-    const storedUser = localStorage.getItem("selectedUser");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setSelectedUser(parsedUser);
-    }
-
-    fetchIncomingTickets();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedUser) return;
-
-    fetchMessages();
-    localStorage.setItem("selectedUser", JSON.stringify(selectedUser));
-  }, [selectedUser]);
-
-  // Fetch incoming tickets
-  const fetchIncomingTickets = async () => {
+  // Fetch initial data (token, role, permissions)
+  const fetchInitialData = useCallback(async () => {
     try {
+      const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, {
+          withCredentials: true,
+        }),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
+          withCredentials: true,
+        }),
+        axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          {
+            withCredentials: true,
+          }
+        ),
+      ]);
+
+      const userToken = tokenRes.data.token;
+      const userRole = roleRes.data.role;
+      const userPermissions = permissionsRes.data.permissions || {};
+
+      setToken(userToken);
+      setRole(userRole);
+      setCustomPermissions(userPermissions);
+
+      // Initialize chat state
+      const lockedState = localStorage.getItem("chatLocked");
+      setChatLocked(lockedState === "false" ? false : true);
+
+      const storedUser = localStorage.getItem("selectedUser");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setSelectedUser(parsedUser);
+      }
+
+      fetchIncomingTickets(userToken);
+    } catch (error) {
+      console.error("❌ Error fetching initial data:", error);
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
+    }
+  }, [navigate, setSelectedUser]);
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  // Auto-refresh messages every 5 seconds
+  useEffect(() => {
+    if (!selectedUser || !token) return;
+
+    const interval = setInterval(() => {
+      fetchMessages(token);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [selectedUser, token]);
+
+  useEffect(() => {
+    if (!selectedUser || !token) return;
+    fetchMessages(token);
+    localStorage.setItem("selectedUser", JSON.stringify(selectedUser));
+  }, [selectedUser, token]);
+
+  // Fetch incoming tickets with authentication
+  const fetchIncomingTickets = async (token) => {
+    try {
+      setIsRefreshing(true);
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/ticket/pending-tickets`
+        `${process.env.REACT_APP_API_URL}/api/ticket/pending-tickets`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
       );
       setIncomingTickets(res.data);
     } catch (error) {
       console.error("❌ Error fetching pending tickets:", error);
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
+  // Accept ticket with authentication
   const acceptTicket = async (ticket) => {
     try {
+      console.log("Attempting to accept ticket:", {
+        ticket_id: ticket._id,
+        agent_id: agentId,
+      });
+
       const res = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/ticket/accept`,
         {
           ticket_id: ticket._id,
           agent_id: agentId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
         }
       );
 
@@ -379,20 +147,34 @@ const ChatWindow = ({
         setChatLocked(false);
         localStorage.setItem("chatLocked", "false");
 
-        fetchMessages();
-        fetchIncomingTickets();
+        fetchMessages(token);
+        fetchIncomingTickets(token);
       }
     } catch (error) {
-      console.error("❌ Error accepting ticket:", error);
+      console.error("❌ Detailed error accepting ticket:", {
+        error: error.response?.data || error.message,
+        status: error.response?.status,
+        config: error.config,
+      });
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
-  const fetchMessages = async () => {
+  // Fetch messages with authentication
+  const fetchMessages = async (authToken) => {
     if (!selectedUser) return;
 
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/ticket/chatbot`
+        `${process.env.REACT_APP_API_URL}/api/ticket/chatbot`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            withCredentials: true,
+          },
+        }
       );
 
       const userChat = res.data.find(
@@ -411,44 +193,65 @@ const ChatWindow = ({
       setMessages(sortedMessages);
     } catch (error) {
       console.error("❌ Error fetching messages:", error);
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
-  // Fetch clients for template popup
+  // Fetch clients for template popup with authentication
   const fetchClients = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/meta/clients`);
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/meta/clients`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
+      );
       setClients(res.data);
     } catch (err) {
-      console.error('❌ Error fetching clients:', err);
+      console.error("❌ Error fetching clients:", err);
+      if (err.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
-  // Fetch templates of selected client
+  // Fetch templates with authentication
   const fetchApprovedTemplates = async (clientId) => {
     if (!clientId) return;
 
     try {
       const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/meta/templates/${clientId}`
+        `${process.env.REACT_APP_API_URL}/api/meta/templates/${clientId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
       );
 
       const approvedTemplates = res.data.data.filter(
         (tpl) => tpl.status === "APPROVED"
       );
-
       setTemplates(approvedTemplates);
     } catch (error) {
       console.error("❌ Error fetching templates:", error);
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
-  // Send message manually typed
+  // Send message with authentication
   const sendMessage = async () => {
-    if (!input.trim() || chatLocked) return;
+    if (!input.trim() || chatLocked || !token) return;
 
     const messageText = input.trim();
-
     const newMessage = {
       _id: `agent-${Date.now()}`,
       sender: "agent",
@@ -460,57 +263,104 @@ const ChatWindow = ({
     setInput("");
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/send`, {
-        agent_id: agentId,
-        user_id: selectedUser.user_id,
-        message: messageText,
-        waba_id: selectedUser.waba_id,
-        sender_type: "agent",
-      });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticket/send`,
+        {
+          agent_id: agentId,
+          user_id: selectedUser.user_id,
+          message: messageText,
+          waba_id: selectedUser.waba_id,
+          sender_type: "agent",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
+      );
 
-      fetchMessages();
+      fetchMessages(token);
     } catch (error) {
       console.error("❌ Error sending message:", error);
+      // Revert the message if sending fails
+      setMessages((prev) => prev.filter((msg) => msg._id !== newMessage._id));
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
-  // Send approved template message
+  // Send template message with authentication
   const sendTemplateMessage = async (template) => {
-    if (!template || chatLocked) return;
+    if (!template || chatLocked || !token) return;
 
-    const bodyComponent = template.components.find((comp) => comp.type === "BODY");
+    const bodyComponent = template.components.find(
+      (comp) => comp.type === "BODY"
+    );
     if (!bodyComponent) {
       alert("Template has no body text.");
       return;
     }
 
     const templateMessage = bodyComponent.text;
+    const newMessage = {
+      _id: `agent-${Date.now()}`,
+      sender: "agent",
+      message: templateMessage,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/send`, {
-        agent_id: agentId,
-        user_id: selectedUser.user_id,
-        message: templateMessage,
-        waba_id: selectedUser.waba_id,
-        sender_type: "agent",
-      });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticket/send`,
+        {
+          agent_id: agentId,
+          user_id: selectedUser.user_id,
+          message: templateMessage,
+          waba_id: selectedUser.waba_id,
+          sender_type: "agent",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
+      );
 
       setShowTemplatePopup(false);
-      fetchMessages();
+      fetchMessages(token);
     } catch (error) {
       console.error("❌ Error sending template message:", error);
+      // Revert the message if sending fails
+      setMessages((prev) => prev.filter((msg) => msg._id !== newMessage._id));
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
-  // End chat session
+  // End session with authentication
   const endSession = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !token) return;
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/ticket/end-session`, {
-        user_id: selectedUser.user_id,
-        agent_id: agentId,
-      });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticket/end-session`,
+        {
+          user_id: selectedUser.user_id,
+          agent_id: agentId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        }
+      );
 
       setChatLocked(true);
       localStorage.setItem("chatLocked", "true");
@@ -520,15 +370,18 @@ const ChatWindow = ({
       setMessages([]);
     } catch (error) {
       console.error("❌ Error ending session:", error);
+      if (error.response?.status === 401) {
+        navigate("/");
+      }
     }
   };
 
   // Auto fetch clients when template popup opens
   useEffect(() => {
-    if (showTemplatePopup) {
+    if (showTemplatePopup && token) {
       fetchClients();
     }
-  }, [showTemplatePopup]);
+  }, [showTemplatePopup, token]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -542,13 +395,29 @@ const ChatWindow = ({
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const getMessageClass = (sender) => {
+    switch (sender) {
+      case "agent":
+        return "agent-message";
+      case "bot":
+        return "bot-message";
+      case "user":
+      default:
+        return "customer-message";
+    }
+  };
+
   return (
     <div className="chat-container">
       {/* INCOMING TICKETS */}
       <div className="incoming-tickets-section">
         <h3>📥 Incoming Tickets</h3>
-        <button onClick={fetchIncomingTickets} className="refresh-tickets-button">
-          🔄 Refresh
+        <button
+          onClick={() => fetchIncomingTickets(token)}
+          className="refresh-tickets-button"
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? "⏳ Refreshing..." : "🔄 Refresh"}
         </button>
 
         {incomingTickets.length === 0 ? (
@@ -556,7 +425,10 @@ const ChatWindow = ({
         ) : (
           incomingTickets.map((ticket) => (
             <div key={ticket._id} className="ticket-item">
-              <p>User: <strong>{ticket.user_id}</strong></p>
+              <p>
+                User: <strong>{ticket.user_id}</strong>
+              </p>
+              <p>First Message: {ticket.firstMessage || "N/A"}</p>
               <button onClick={() => acceptTicket(ticket)}>✅ Accept</button>
             </div>
           ))
@@ -570,18 +442,30 @@ const ChatWindow = ({
             <div className="chat-user-info" onClick={onProfileClick}>
               <div className="avatar">
                 {selectedUser.avatar ? (
-                  <img src={selectedUser.avatar} alt="avatar" className="avatar-img" />
+                  <img
+                    src={selectedUser.avatar}
+                    alt="avatar"
+                    className="avatar-img"
+                  />
                 ) : (
                   "👤"
                 )}
               </div>
               <div>
-                <div className="user-name">{selectedUser.name || selectedUser.user_id}</div>
-                <div className="user-status">{chatLocked ? "Offline" : "Online"}</div>
+                <div className="user-name">
+                  {selectedUser.name || selectedUser.user_id}
+                </div>
+                <div className="user-status">
+                  {chatLocked ? "🔒 Session Locked" : "🟢 Active Session"}
+                </div>
               </div>
             </div>
 
-            <button onClick={endSession} disabled={chatLocked} className="end-session-button">
+            <button
+              onClick={endSession}
+              disabled={chatLocked}
+              className="end-session-button"
+            >
               ⛔ End Session
             </button>
           </div>
@@ -595,10 +479,19 @@ const ChatWindow = ({
               messages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`message-container ${msg.sender === "agent" ? "agent-message" : "customer-message"}`}
+                  className={`message-container ${getMessageClass(msg.sender)}`}
                 >
                   <div className="message-content">
-                    <div>{msg.message}</div>
+                    {msg.sender === "bot" && (
+                      <div className="message-sender">Bot</div>
+                    )}
+                    {msg.sender === "agent" && (
+                      <div className="message-sender">You</div>
+                    )}
+                    {msg.sender === "user" && (
+                      <div className="message-sender">Customer</div>
+                    )}
+                    <div className="message-text">{msg.message}</div>
                     <div className="timestamp">{formatTime(msg.timestamp)}</div>
                   </div>
                 </div>
@@ -611,7 +504,11 @@ const ChatWindow = ({
             <input
               type="text"
               className="input-box"
-              placeholder={chatLocked ? "🔒 Accept ticket to start chatting..." : "Type your message..."}
+              placeholder={
+                chatLocked
+                  ? "🔒 Accept ticket to start chatting..."
+                  : "Type your message..."
+              }
               value={input}
               disabled={chatLocked}
               onChange={(e) => setInput(e.target.value)}
@@ -631,7 +528,7 @@ const ChatWindow = ({
               disabled={chatLocked}
               style={{ marginLeft: "5px", padding: "8px" }}
             >
-              ➕
+              📋 Templates
             </button>
           </div>
         </>
@@ -685,8 +582,10 @@ const ChatWindow = ({
                     borderRadius: "5px",
                   }}
                 >
-                  <p><strong>{tpl.name}</strong></p>
-                  <p>{tpl.components.find(c => c.type === 'BODY')?.text}</p>
+                  <p>
+                    <strong>{tpl.name}</strong>
+                  </p>
+                  <p>{tpl.components.find((c) => c.type === "BODY")?.text}</p>
                   <button
                     className="send-template-btn"
                     onClick={() => sendTemplateMessage(tpl)}

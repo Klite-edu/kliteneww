@@ -1,12 +1,17 @@
 const express = require("express");
 const router = express.Router();
+
+// ✅ Apply cookie-parser middleware BEFORE any route
+const cookieParser = require("cookie-parser");
+router.use(cookieParser());
+
 const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
 const verifyToken = require("../../../middlewares/auth");
+const axios = require("axios");
+const whatsappService = require("../../clients/WhatsappWeb/Whatsappservice");
 
-// Add a New Task Delegation
 router.post("/add", dbDBMiddleware, async (req, res) => {
   try {
-    console.log("📩 Received Delegation Data:", req.body);
     const { name, description, dueDate, time, doer } = req.body;
 
     const newDelegation = new req.delegation({
@@ -17,13 +22,38 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
       doer,
     });
 
-    console.log("📤 Saving Delegation to Database...");
-    await newDelegation.save();
+    const savedTask = await newDelegation.save();
+    const populatedTask = await req.delegation
+      .findById(savedTask._id)
+      .populate("doer");
+    const companyName = req.companyName; // ✅ This is correct
 
-    console.log("✅ Delegation Successfully Added:", newDelegation);
-    res.status(201).json({ message: "Delegation added successfully!", task: newDelegation });
+    console.log("👉 Delegation Triggered for:", companyName);
+    console.log("📞 Doer Number:", populatedTask?.doer?.number);
+
+    if (populatedTask?.doer?.number && companyName) {
+      try {
+        // const completeUrl = `https://app.autopilotmybusiness.com/api/public/task/complete`;
+        // const message = `🚀 New Task Assigned!\n\n*Task:* ${name}\n*Description:* ${description}\n*Due Date:* ${dueDate}\n*Time:* ${time}\n\n✅ Click to mark as completed:\n${completeUrl}`;
+        const message = `🚀 New Task Assigned!\n\n*Task:* ${name}\n*Description:* ${description}\n*Due Date:* ${dueDate}\n*Time:* ${time}`;
+
+        const result = await whatsappService.sendMessage(
+          companyName,
+          populatedTask.doer.number.replace(/\D/g, ""),
+          message
+        );
+
+        console.log("✅ WhatsApp message result:", result);
+      } catch (whatsappError) {
+        console.error("❌ WhatsApp sendMessage error:", whatsappError.message);
+      }
+    } else {
+      console.warn("⚠️ Skipped WhatsApp send — number or companyName missing");
+    }
+    res
+      .status(201)
+      .json({ message: "Task delegated successfully!", task: savedTask });
   } catch (error) {
-    console.error("❌ Error Adding Delegation:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -38,7 +68,9 @@ router.get("/list", dbDBMiddleware, async (req, res) => {
     res.status(200).json(tasks);
   } catch (error) {
     console.error("❌ Error Fetching Delegated Tasks:", error.message);
-    res.status(500).json({ message: "Error fetching tasks", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching tasks", error: error.message });
   }
 });
 
@@ -48,11 +80,13 @@ router.put("/edit/:id", dbDBMiddleware, async (req, res) => {
     console.log("📥 Edit Delegation Request:", req.params.id);
     const { name, description, dueDate, time, doer } = req.body;
 
-    const updatedTask = await req.delegation.findByIdAndUpdate(
-      req.params.id,
-      { name, description, dueDate, time, doer },
-      { new: true, runValidators: true }
-    ).populate("doer", "fullName");
+    const updatedTask = await req.delegation
+      .findByIdAndUpdate(
+        req.params.id,
+        { name, description, dueDate, time, doer },
+        { new: true, runValidators: true }
+      )
+      .populate("doer", "fullName");
 
     if (!updatedTask) {
       console.log("❌ Task Not Found:", req.params.id);
@@ -60,10 +94,14 @@ router.put("/edit/:id", dbDBMiddleware, async (req, res) => {
     }
 
     console.log("✅ Task Updated Successfully:", updatedTask);
-    res.status(200).json({ message: "Task updated successfully!", updatedTask });
+    res
+      .status(200)
+      .json({ message: "Task updated successfully!", updatedTask });
   } catch (error) {
     console.error("❌ Error Updating Delegation:", error.message);
-    res.status(500).json({ message: "Error updating task", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating task", error: error.message });
   }
 });
 
@@ -79,10 +117,14 @@ router.delete("/delete/:id", dbDBMiddleware, verifyToken, async (req, res) => {
     }
 
     console.log("✅ Task Deleted Successfully:", deletedTask);
-    res.status(200).json({ message: "Task deleted successfully!", deletedTask });
+    res
+      .status(200)
+      .json({ message: "Task deleted successfully!", deletedTask });
   } catch (error) {
     console.error("❌ Error Deleting Task:", error.message);
-    res.status(500).json({ message: "Error deleting task", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting task", error: error.message });
   }
 });
 
@@ -105,7 +147,9 @@ router.put("/complete/:id", dbDBMiddleware, async (req, res) => {
     res.status(200).json({ message: "Task marked as completed!", updatedTask });
   } catch (error) {
     console.error("❌ Error Completing Task:", error.message);
-    res.status(500).json({ message: "Error completing task", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error completing task", error: error.message });
   }
 });
 
@@ -127,10 +171,14 @@ router.put("/revise/:id", dbDBMiddleware, async (req, res) => {
     }
 
     console.log("✅ Task Revised Successfully:", updatedTask);
-    res.status(200).json({ message: "Task revised successfully!", updatedTask });
+    res
+      .status(200)
+      .json({ message: "Task revised successfully!", updatedTask });
   } catch (error) {
     console.error("❌ Error Revising Task:", error.message);
-    res.status(500).json({ message: "Error revising task", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error revising task", error: error.message });
   }
 });
 

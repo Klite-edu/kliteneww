@@ -3,11 +3,11 @@ import "./clientdashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBolt,
-  faBuilding,
   faUsers,
   faTasks,
   faUserCheck,
 } from "@fortawesome/free-solid-svg-icons";
+
 import {
   BarChart,
   Bar,
@@ -23,6 +23,7 @@ import {
   Cell,
   CartesianGrid,
 } from "recharts";
+
 import axios from "axios";
 
 const ClientDashboard = () => {
@@ -36,64 +37,71 @@ const ClientDashboard = () => {
   const [delegation, setDelegation] = useState([]);
   const [userEmail, setUserEmail] = useState("");
   const [token, setToken] = useState("");
+  const [raiseTicket, setRaiseTicket] = useState([]);
+
+  const fetchUserData = async () => {
+    try {
+      const [emailRes, tokenRes] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-email`, { withCredentials: true }),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
+      ]);
+
+      setUserEmail(emailRes.data.email);
+      setToken(tokenRes.data.token);
+
+      if (!tokenRes.data.token) {
+        console.error("Token not found. Authorization failed.");
+        return;
+      }
+
+      const headers = {
+        headers: {
+          Authorization: `Bearer ${tokenRes.data.token}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      };
+
+      const [
+        employeeRes,
+        triggerRes,
+        pipelineStageRes,
+        revenueRes,
+        checklistRes,
+        delegationRes,
+        issueRes
+      ] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/clients/monthlyrevenue`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/list`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/delegation/list`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/ticketRaise/list`, headers)
+      ]);
+
+      setTotalEmployee(employeeRes.data.totalEmployee);
+      setActiveEmployee(employeeRes.data.activeEmployee);
+      setTriggers(triggerRes.data.totalTriggers);
+      setTotalPipelines(pipelineStageRes.data.totalPipelines);
+      setTotalStages(pipelineStageRes.data.totalStages);
+      setRevenueData(revenueRes.data.revenueData);
+      setChecklist(checklistRes.data.slice(0, 5));
+      setDelegation(delegationRes.data.slice(0, 5));
+      setRaiseTicket(issueRes.data);
+
+      console.log("✅ Dashboard data fetched successfully.");
+    } catch (error) {
+      console.error("❌ Error fetching dashboard data:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const [emailRes, tokenRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-email`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-        ]);
-
-        setUserEmail(emailRes.data.email);
-        setToken(tokenRes.data.token);
-
-        if (!tokenRes.data.token) {
-          console.error("Token not found. Authorization failed.");
-          return;
-        }
-
-        const headers = {
-          headers: {
-            Authorization: `Bearer ${tokenRes.data.token}`,
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        };
-
-        const [
-          employeeRes,
-          triggerRes,
-          pipelineStageRes,
-          revenueRes,
-          checklistRes,
-          delegationRes,
-        ] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`, headers),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`, headers),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`, headers),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/clients/monthlyrevenue`, headers),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/list`, headers),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/delegation/list`, headers),
-        ]);
-
-        setTotalEmployee(employeeRes.data.totalEmployee);
-        setActiveEmployee(employeeRes.data.activeEmployee);
-        setTriggers(triggerRes.data.totalTriggers);
-        setTotalPipelines(pipelineStageRes.data.totalPipelines);
-        setTotalStages(pipelineStageRes.data.totalStages);
-        setRevenueData(revenueRes.data.revenueData);
-        setChecklist(checklistRes.data.slice(0, 5));
-        setDelegation(delegationRes.data.slice(0, 5));
-
-        console.log("✅ Dashboard data fetched successfully.");
-      } catch (error) {
-        console.error("❌ Error fetching dashboard data:", error);
-      }
-    };
-
     fetchUserData();
   }, []);
+
+  console.log(`raiseTicket - `, raiseTicket);
+
 
   const data = [
     { label: "Total Employee", value: totalEmployee, icon: faUsers, color: "#0D6E6E" },
@@ -141,6 +149,27 @@ const ClientDashboard = () => {
       expectedResolution: "2025-02-16",
     },
   ];
+
+
+  const handleMarkIssueComplete = async (issueId) => {
+    try {
+      await axios.put(
+        `${process.env.REACT_APP_API_URL}/api/ticketRaise/resolve/${issueId}`,{},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Issue marked as complete!");
+      fetchUserData(); // or fetchRaiseTickets(token) if separate
+    } catch (error) {
+      console.error("Error marking issue as complete:", error);
+      alert("Failed to update issue. Please try again.");
+    }
+  };
+
 
   return (
     <div className="client-dashboard">
@@ -291,14 +320,14 @@ const ClientDashboard = () => {
                     <p>
                       {task.plannedDateTime
                         ? new Date(task.plannedDateTime).toLocaleString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )
                         : "No date set"}
                     </p>
                   </div>
@@ -307,14 +336,14 @@ const ClientDashboard = () => {
                     <p>
                       {task.nextDueDateTime
                         ? new Date(task.nextDueDateTime).toLocaleString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )
                         : "No due date"}
                     </p>
                   </div>
@@ -329,39 +358,46 @@ const ClientDashboard = () => {
       <div className="client-issue-container">
         <div className="client-issue-button-head">
           <h3>Employee Issue Tracker</h3>
-          <button>View All</button>
+          <button onClick={() => (window.location.href = "/issue")}>View All</button>
         </div>
         <div className="client-issuetable-container">
           <table className="client-issue-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Client</th>
-                <th>Issue Type</th>
+                <th>Task</th>
+                <th>Doer Name</th>
+                <th>Issue Description</th>
                 <th>Priority</th>
                 <th>Status</th>
-                <th>Assigned To</th>
-                <th>Reported Date</th>
+                <th>Raise Time</th>
+                <th>Resolve time</th>
               </tr>
             </thead>
             <tbody>
-              {issues.map((issue) => (
-                <tr key={issue.id}>
-                  <td>{issue.id}</td>
-                  <td>{issue.client}</td>
-                  <td>{issue.type}</td>
-                  <td className={`client-priority-${issue.priority.toLowerCase()}`}>
+              {raiseTicket.map((issue) => (
+                <tr key={issue?._id}>
+                  <td>{issue?.title}</td>
+                  <td>{issue?.employeeName}</td>
+                  <td>{issue?.description}</td>
+                  <td className={`client-priority-${issue?.priority.toLowerCase()}`}>
                     {issue.priority}
                   </td>
                   <td
-                    className={`client-status-${issue.status
+                    className={`client-status-${issue?.status
                       .toLowerCase()
                       .replace(" ", "-")}`}
                   >
                     {issue.status}
                   </td>
-                  <td>{issue.assignedTo}</td>
-                  <td>{issue.reportedDate}</td>
+                  <td>{new Date(issue?.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>
+                    {issue?.date ? (
+                      issue.date
+                    ) : (
+                      <button className="complete-btn" onClick={() => handleMarkIssueComplete(issue._id)}>Complete</button>
+                    )}
+                  </td>
+
                 </tr>
               ))}
             </tbody>
@@ -373,156 +409,3 @@ const ClientDashboard = () => {
 };
 
 export default ClientDashboard;
-// import React, { useEffect, useState } from "react";
-// import "./clientdashboard.css";
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { faBolt, faUsers, faTasks, faUserCheck } from "@fortawesome/free-solid-svg-icons";
-// import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-// import axios from "axios";
-
-// const ClientDashboard = () => {
-//   const [totalEmployee, setTotalEmployee] = useState(0);
-//   const [activeEmployee, setActiveEmployee] = useState(0);
-//   const [triggers, setTriggers] = useState(0);
-//   const [totalPipelines, setTotalPipelines] = useState(0);
-//   const [totalStages, setTotalStages] = useState(0);
-//   const [revenueData, setRevenueData] = useState([]);
-//   const [transactions, setTransactions] = useState([]);
-//   const [checklist, setChecklist] = useState([]);
-//   const [delegation, setDelegation] = useState([]);
-//   const [userEmail, setUserEmail] = useState("");
-
-//   useEffect(() => {
-//     const fetchUserEmail = async () => {
-//       try {
-//         const response = await axios.get(
-//           `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
-//           { withCredentials: true }
-//         );
-//         setUserEmail(response.data.email);
-//       } catch (error) {
-//         console.error("Error fetching user email:", error);
-//       }
-//     };
-
-//     const fetchDashboardData = async () => {
-//       try {
-//         const headers = { withCredentials: true };
-
-//         const [
-//           employeeRes,
-//           triggerRes,
-//           pipelineStageRes,
-//           revenueRes,
-//           transactionRes,
-//           checklistRes,
-//           delegationRes,
-//         ] = await Promise.all([
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`, headers),
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`, headers),
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`, headers),
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/clients/monthlyrevenue`, headers),
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/clients/transactionData`, headers),
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/list`, headers),
-//           axios.get(`${process.env.REACT_APP_API_URL}/api/delegation/list`, headers),
-//         ]);
-
-//         setTotalEmployee(employeeRes.data.totalEmployee);
-//         setActiveEmployee(employeeRes.data.activeEmployee);
-//         setTriggers(triggerRes.data.totalTriggers);
-//         setTotalPipelines(pipelineStageRes.data.totalPipelines);
-//         setTotalStages(pipelineStageRes.data.totalStages);
-//         setRevenueData(revenueRes.data.revenueData || []);
-//         setTransactions(transactionRes.data || []);
-//         setChecklist(checklistRes.data.slice(0, 5));
-//         setDelegation(delegationRes.data.slice(0, 5));
-//       } catch (error) {
-//         console.error("Error fetching dashboard data:", error);
-//       }
-//     };
-
-//     fetchUserEmail();
-//     fetchDashboardData();
-//   }, []);
-
-//   const dashboardSummary = [
-//     { label: "Total Employee", value: totalEmployee, icon: faUsers, color: "#0D6E6E" },
-//     { label: "Active Employee", value: activeEmployee, icon: faUserCheck, color: "#4CAF50" },
-//     { label: "Triggers", value: triggers, icon: faBolt, color: "#FF9800" },
-//     { label: "FMS/Pipeline", value: `${totalPipelines} / ${totalStages}`, icon: faTasks, color: "#9C27B0" },
-//   ];
-
-//   return (
-//     <div className="client-dashboard">
-//       <h2>Welcome, {userEmail}</h2>
-
-//       <div className="dashboard-summary">
-//         {dashboardSummary.map((item, index) => (
-//           <div key={index} className="dashboard-card" style={{ backgroundColor: item.color }}>
-//             <FontAwesomeIcon icon={item.icon} />
-//             <div className="card-info">
-//               <span>{item.label}</span>
-//               <span>{item.value}</span>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-
-//       <div className="chart-container">
-//         <ResponsiveContainer width="100%" height={300}>
-//           <BarChart data={revenueData}>
-//             <XAxis dataKey="month" />
-//             <YAxis />
-//             <Tooltip />
-//             <Legend />
-//             <Bar dataKey="revenue" fill="#8884d8" />
-//           </BarChart>
-//         </ResponsiveContainer>
-//       </div>
-
-//       <div className="transactions-container">
-//         <h3>Recent Transactions</h3>
-//         <table className="transactions-table">
-//           <thead>
-//             <tr>
-//               <th>Name</th>
-//               <th>Date</th>
-//               <th>Plan</th>
-//               <th>Price</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {transactions.map((txn) => (
-//               <tr key={txn.id}>
-//                 <td>{txn.name}</td>
-//                 <td>{txn.date}</td>
-//                 <td>{txn.plan}</td>
-//                 <td>{txn.price}</td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       <div className="tasks-container">
-//         <h3>Checklist Tasks</h3>
-//         <ul>
-//           {checklist.map((task) => (
-//             <li key={task._id}>{task.taskName}</li>
-//           ))}
-//         </ul>
-//       </div>
-
-//       <div className="delegation-container">
-//         <h3>Delegation Tasks</h3>
-//         <ul>
-//           {delegation.map((task) => (
-//             <li key={task._id}>{task.taskName}</li>
-//           ))}
-//         </ul>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ClientDashboard;

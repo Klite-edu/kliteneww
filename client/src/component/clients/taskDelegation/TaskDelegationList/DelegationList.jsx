@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import Navbar from "../../../Navbar/Navbar";
 import Sidebar from "../../../Sidebar/Sidebar";
 import "./delegationlist.css";
 import { FaCheck } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { CiEdit } from "react-icons/ci";
+import { MdDelete } from "react-icons/md";
+import { IoTicketOutline } from "react-icons/io5";
+import { BiRevision, BiTask } from "react-icons/bi";
+import { GrCompliance } from "react-icons/gr";
+import RaiseTicketModal from "./RaiseTicketModal";
 
 const DelegationList = () => {
   const [tasks, setTasks] = useState([]);
@@ -30,14 +35,17 @@ const DelegationList = () => {
   const [ticketData, setTicketData] = useState({
     title: "",
     description: "",
-    category: "Delegation",
+    category: "Task Delegation",
     type: "Help",
     priority: "Medium",
+    relatedTask: "",
+    employeeName: ""
   });
   const [employees, setEmployees] = useState([]);
   const [completedTasks, setCompletedTasks] = useState({});
   const [customPermissions, setCustomPermissions] = useState({});
   const [role, setRole] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
 
@@ -52,12 +60,19 @@ const DelegationList = () => {
           },
         }
       );
-      setTasks(response.data);
-      setFilteredTasks(response.data);
+
+      let taskList = response.data;
+
+      if (role === "user" && userId) {
+        taskList = taskList.filter((task) => task.doer?._id === userId);
+      }
+
+      setTasks(taskList);
+      setFilteredTasks(taskList);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
-  }, []);
+  }, [role, userId]);
 
   const fetchEmployees = useCallback(async (token) => {
     try {
@@ -79,7 +94,6 @@ const DelegationList = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Fetch token, role, and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
@@ -106,9 +120,9 @@ const DelegationList = () => {
 
         setToken(userToken);
         setRole(userRole);
+        setUserId(roleRes.data.userId);
         setCustomPermissions(userPermissions);
 
-        // Fetch other data
         await fetchEmployees(userToken);
         await fetchTasks(userToken);
       } catch (error) {
@@ -149,10 +163,6 @@ const DelegationList = () => {
   useEffect(() => {
     handleSearch();
   }, [handleSearch]);
-
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, statusFilter, dateRange, tasks]);
 
   const handleEditClick = (task) => {
     setEditingTask(task);
@@ -270,51 +280,49 @@ const DelegationList = () => {
     }
   };
 
-  // const handleTicketSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const payload = {
-  //     ...ticketData,
-  //     employeeName: userName,
-  //     date: new Date().toISOString().split("T")[0],
-  //     status: "Pending",
-  //   };
+  const handleTicketClick = (task) => {
+    setTicketData({
+      title: `${task.name}`,
+      description: "",
+      category: "Task Delegation",
+      type: "Help",
+      priority: "Medium",
+      relatedTask: task._id,
+      employeeName: task.doer.fullName
+    });
+    setShowTicketModal(true);
+  };
 
-  //   try {
-  //     await axios.post(
-  //       `${process.env.REACT_APP_API_URL}/api/ticketRaise/add`,
-  //       payload
-  //     );
-  //     alert("Ticket raised successfully!");
-  //     setShowTicketModal(false);
-  //     setTicketData({
-  //       title: "",
-  //       description: "",
-  //       category: "Delegation",
-  //       type: "Help",
-  //       priority: "Medium",
-  //     });
-  //   } catch (error) {
-  //     console.error("Error submitting ticket:", error);
-  //   }
-  // };
+  const handleTicketInputChange = (e) => {
+    const { name, value } = e.target;
+    setTicketData({ ...ticketData, [name]: value });
+  };
+
+  const handleTicketSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticketRaise/add`,
+        ticketData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert("Ticket created successfully!");
+      setShowTicketModal(false);
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      alert("Failed to create ticket. Please try again.");
+    }
+  };
 
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
-      <Navbar onRaiseTicket={() => setShowTicketModal(true)} />
       <div className="delegation-wrapper">
         <h2 className="title">TASK DELEGATION DASHBOARD</h2>
-
-        {/* {role === "user" && (
-          <div style={{ textAlign: "right", marginBottom: "15px" }}>
-            <button
-              className="btn blue"
-              onClick={() => setShowTicketModal(true)}
-            >
-              Raise Ticket
-            </button>
-          </div>
-        )} */}
 
         <div className="filters">
           <input
@@ -375,211 +383,159 @@ const DelegationList = () => {
               </thead>
               <tbody>
                 {filteredTasks.map((task) => {
-                  if (editingTask && editingTask._id === task._id) {
-                    return (
-                      <tr key={task._id}>
-                        <td>
-                          <input
-                            type="text"
-                            name="name"
-                            value={editFormData.name}
-                            onChange={handleEditFormChange}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            name="description"
-                            value={editFormData.description}
-                            onChange={handleEditFormChange}
-                          />
-                        </td>
-                        <td>
-                          <select
-                            name="doer"
-                            value={editFormData.doer}
-                            onChange={handleEditFormChange}
-                          >
-                            <option value="">Select Doer</option>
-                            {employees.map((emp) => (
-                              <option key={emp._id} value={emp._id}>
-                                {emp.fullName}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <input
-                            type="date"
-                            name="dueDate"
-                            value={editFormData.dueDate}
-                            onChange={handleEditFormChange}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="time"
-                            name="time"
-                            value={editFormData.time}
-                            onChange={handleEditFormChange}
-                          />
-                        </td>
-                        <td>{task.status || "Pending"}</td>
-                        <td>
-                          {task.completedAt
-                            ? new Date(task.completedAt).toLocaleString()
-                            : "N/A"}
-                        </td>
-                        <td>
-                          {task.revisedDate
-                            ? new Date(task.revisedDate).toLocaleDateString()
-                            : "N/A"}
-                        </td>
-                        <td>{task.revisedTime || "N/A"}</td>
-                        <td>{task.revisedReason || "N/A"}</td>
-                        <td>
-                          <button
-                            className="btn green"
-                            onClick={handleUpdateTask}
-                          >
-                            Save
-                          </button>
-                          <button
-                            className="btn red"
-                            onClick={() => setEditingTask(null)}
-                            style={{ marginLeft: "8px" }}
-                          >
-                            Cancel
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  } else if (revisingTask && revisingTask._id === task._id) {
-                    return (
-                      <tr key={task._id}>
-                        <td>{task.name}</td>
-                        <td>{task.description}</td>
-                        <td>{task.doer?.fullName || "N/A"}</td>
-                        <td>{new Date(task.dueDate).toLocaleDateString()}</td>
-                        <td>{task.time}</td>
-                        <td>{task.status || "Pending"}</td>
-                        <td>
-                          {task.completedAt
-                            ? new Date(task.completedAt).toLocaleString()
-                            : "N/A"}
-                        </td>
-                        <td>
-                          <input
-                            type="date"
-                            name="revisedDate"
-                            value={reviseFormData.revisedDate}
-                            onChange={handleReviseFormChange}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="time"
-                            name="revisedTime"
-                            value={reviseFormData.revisedTime}
-                            onChange={handleReviseFormChange}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            name="revisedReason"
-                            value={reviseFormData.revisedReason}
-                            onChange={handleReviseFormChange}
-                            placeholder="Enter revision reason"
-                          />
-                        </td>
-                        <td>
-                          <button
-                            className="btn green"
-                            onClick={handleReviseSubmit}
-                          >
-                            Save
-                          </button>
-                          <button
-                            className="btn red"
-                            onClick={() => setRevisingTask(null)}
-                            style={{ marginLeft: "8px" }}
-                          >
-                            Cancel
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  } else {
-                    return (
-                      <tr key={task._id}>
-                        <td>{task.name}</td>
-                        <td>{task.description}</td>
-                        <td>{task.doer?.fullName || "N/A"}</td>
-                        <td>{new Date(task.dueDate).toLocaleDateString()}</td>
-                        <td>{task.time}</td>
-                        <td>{task.status || "Pending"}</td>
-                        <td>
-                          {task.completedAt
-                            ? new Date(task.completedAt).toLocaleString()
-                            : "N/A"}
-                        </td>
-                        <td>
-                          {task.revisedDate
-                            ? new Date(task.revisedDate).toLocaleDateString()
-                            : "N/A"}
-                        </td>
-                        <td>{task.revisedTime || "N/A"}</td>
-                        <td>{task.revisedReason || "N/A"}</td>
-                        <td>
-                          {role === "user" ? (
-                            <>
-                              {task.status === "Completed" ||
-                              completedTasks[task._id] ? (
-                                <span className="completed-icon">
-                                  <FaCheck
-                                    style={{ color: "green", fontSize: "20px" }}
-                                  />
-                                </span>
-                              ) : (
-                                <button
-                                  className="btn green"
-                                  onClick={() => handleCompleteTask(task._id)}
-                                  disabled={completedTasks[task._id]}
-                                >
-                                  Complete
-                                </button>
-                              )}
-                              {task.status !== "Completed" &&
-                                !completedTasks[task._id] && (
-                                  <button
-                                    className="btn blue"
-                                    onClick={() => handleReviseClick(task)}
-                                  >
-                                    Revise
-                                  </button>
+                  const isEditing = editingTask && editingTask._id === task._id;
+                  const isRevising = revisingTask && revisingTask._id === task._id;
+                  const isCompleted = task.status === "Completed" || completedTasks[task._id];
+
+                  return (
+                    <tr key={task._id}>
+                      {isEditing ? (
+                        <>
+                          <td>
+                            <input
+                              type="text"
+                              name="name"
+                              value={editFormData.name}
+                              onChange={handleEditFormChange}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              name="description"
+                              value={editFormData.description}
+                              onChange={handleEditFormChange}
+                            />
+                          </td>
+                          <td>
+                            <select
+                              name="doer"
+                              value={editFormData.doer}
+                              onChange={handleEditFormChange}
+                            >
+                              <option value="">Select Doer</option>
+                              {employees.map((emp) => (
+                                <option key={emp._id} value={emp._id}>
+                                  {emp.fullName}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              name="dueDate"
+                              value={editFormData.dueDate}
+                              onChange={handleEditFormChange}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="time"
+                              name="time"
+                              value={editFormData.time}
+                              onChange={handleEditFormChange}
+                            />
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{task.name}</td>
+                          <td>{task.description}</td>
+                          <td>{task.doer?.fullName || "N/A"}</td>
+                          <td>{new Date(task.dueDate).toLocaleDateString()}</td>
+                          <td>{task.time}</td>
+                        </>
+                      )}
+
+                      <td>{task.status || "Pending"}</td>
+                      <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+
+                      {isRevising ? (
+                        <>
+                          <td>
+                            <input
+                              type="date"
+                              name="revisedDate"
+                              value={reviseFormData.revisedDate}
+                              onChange={handleReviseFormChange}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="time"
+                              name="revisedTime"
+                              value={reviseFormData.revisedTime}
+                              onChange={handleReviseFormChange}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              name="revisedReason"
+                              value={reviseFormData.revisedReason}
+                              onChange={handleReviseFormChange}
+                              placeholder="Enter revision reason"
+                            />
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                          <td>{task.revisedTime || "N/A"}</td>
+                          <td>{task.revisedReason || "N/A"}</td>
+                        </>
+                      )}
+
+                      <td>
+                        {isEditing ? (
+                          <>
+                            <button className="btn green" onClick={handleUpdateTask}>Save</button>
+                            <button className="btn red" onClick={() => setEditingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                          </>
+                        ) : isRevising ? (
+                          <>
+                            <button className="btn green" onClick={handleReviseSubmit}>Save</button>
+                            <button className="btn red" onClick={() => setRevisingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            {role === "user" && (
+                              <>
+                                {isCompleted ? (
+                                  <span className="completed-icon">
+                                    <FaCheck style={{ color: "green", fontSize: "20px" }} />
+                                  </span>
+                                ) : (
+                                  <div className="d-flex">
+                                    <button className="btn green" onClick={() => handleCompleteTask(task._id)}>
+                                      <GrCompliance className="fw-bold fs-3" />
+                                    </button>
+                                    <button className="btn blue" onClick={() => handleReviseClick(task)}>
+                                      <BiRevision className="fw-bold fs-3" />
+                                    </button>
+                                    <button className="btn btn-warning" onClick={() => handleTicketClick(task)} aria-label="Create ticket" title="Create Ticket">
+                                      <IoTicketOutline className="fw-bold fs-3" />
+                                    </button>
+                                  </div>
                                 )}
-                            </>
-                          ) : role === "client" ? (
-                            <>
-                              <button
-                                className="btn green"
-                                onClick={() => handleEditClick(task)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="btn red"
-                                onClick={() => handleDeleteTask(task._id)}
-                              >
-                                Delete
-                              </button>
-                            </>
-                          ) : null}
-                        </td>
-                      </tr>
-                    );
-                  }
+                              </>
+                            )}
+                            {role === "client" && task.status !== "Completed" && (
+                              <div className="d-flex">
+                                <button className="btn green me-2" onClick={() => handleEditClick(task)} aria-label="Edit task" title="Edit">
+                                  <CiEdit className="fw-bold fs-3" />
+                                </button>
+                                <button className="btn red" onClick={() => handleDeleteTask(task._id)} aria-label="Delete task" title="Delete">
+                                  <MdDelete className="fw-bold fs-3" />
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
                 })}
               </tbody>
             </table>
@@ -588,6 +544,13 @@ const DelegationList = () => {
           <p style={{ marginTop: "20px" }}>No tasks found.</p>
         )}
 
+        <RaiseTicketModal
+          showModal={showTicketModal}
+          onClose={() => setShowTicketModal(false)}
+          onSubmit={handleTicketSubmit}
+          ticketData={ticketData}
+          onInputChange={handleTicketInputChange}
+        />
       </div>
     </>
   );

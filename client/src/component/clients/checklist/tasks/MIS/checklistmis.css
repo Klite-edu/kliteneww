@@ -447,15 +447,15 @@
 @media (min-width: 1101px) and (max-width: 1300px) {
 
   .mis-report-container {
-    width: 83%;
-    left: 15%;
+    width: 76%;
+    left: 23%;
   }
 }
 /* 992px to 1100px - Medium Desktop/Laptop */
 @media (min-width: 992px) and (max-width: 1100px) {
   .mis-report-container {
-    width: 45%;
-    left: 20%;
+    width: 70%;
+    left: 27%;
     padding: 18px;
   }
 
@@ -617,55 +617,6 @@
   .btn {
     padding: 8px 15px;
     font-size: 0.9rem;
-  }
-
-  /* Make tables more mobile-friendly */
-  .report-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .report-table thead,
-  .report-table tbody,
-  .report-table th,
-  .report-table td,
-  .report-table tr {
-    display: block;
-  }
-
-  .report-table thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-  }
-
-  .report-table tr {
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-
-  .report-table td {
-    border: none;
-    border-bottom: 1px solid #eee;
-    position: relative;
-    padding-left: 50%;
-    white-space: normal;
-    text-align: left;
-  }
-
-  .report-table td:before {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    width: 45%;
-    padding-right: 10px;
-    white-space: nowrap;
-    content: attr(data-title);
-    font-weight: bold;
-    color: #0d6e6e;
   }
 
   /* Hide time difference on very small screens */

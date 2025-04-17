@@ -56,6 +56,12 @@ const { getSubmissionModel } = require("../models/clients/form/form-model");
 const { getImageModel } = require("../models/clients/LogoImage/Logo-model");
 const { getChecklistManifestModel } = require("../models/clients/checklist/MISmanifest-model");
 const { getDelegationManifestModel } = require("../models/clients/TaskDelegation/delagationmis-model");
+const { getMetaClientModel } = require("../models/clients/MetaBusiness/MetaClient-model");
+const { getChatModel } = require("../models/clients/chat/chat-model");
+const { getUserChatModel } = require("../models/clients/chat/userchat-model");
+const { getTicketModel } = require("../models/clients/chat/ticket-model");
+const { getContactVariableModel } = require("../models/clients/Variables/variable-model");
+const { getTicketRaiseModel } = require("../models/clients/TicketRaise/TicketRaise-model");
 
 // Utility function to dynamically load models
 const modelLoaders = {
@@ -69,16 +75,19 @@ const modelLoaders = {
   image: getImageModel,
   ChecklistMIS: getChecklistManifestModel,
   delegationManifest: getDelegationManifestModel,
+  MetaClient: getMetaClientModel,
+  Chat: getChatModel,
+  UserChat: getUserChatModel,
+  Ticket: getTicketModel,
+  CustomVariables: getContactVariableModel,
+  raiseTicket: getTicketRaiseModel,
 };
 
 // Middleware to dynamically set client DB models
 const dbMiddleware = async (req, res, next) => {
   try {
-    console.log("🔄 Starting middleware execution for dynamic DB loading.");
-
     // Get token from headers
     const authHeader = req.header("Authorization");
-    console.log("🔍 Authorization header:", authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       console.error("🚫 Access Denied: No token provided.");
@@ -86,7 +95,6 @@ const dbMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    console.log("🔑 Extracted token:", token);
 
     if (!token) {
       console.error("🚫 Access Denied: Token is empty or not found.");
@@ -96,7 +104,6 @@ const dbMiddleware = async (req, res, next) => {
     // Verify and decode token
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("✅ Token successfully verified:", decoded);
 
       if (!decoded || !decoded.companyName) {
         console.error("🚫 Invalid token: Company name not found in token.");
@@ -105,7 +112,6 @@ const dbMiddleware = async (req, res, next) => {
 
       // Store company name in request object
       req.companyName = decoded.companyName;
-      console.log("🏢 Company name from token:", req.companyName);
     } catch (verifyError) {
       console.error("❌ Token verification failed:", verifyError.message);
       return res.status(401).json({ message: "Token verification failed", error: verifyError.message });
@@ -114,16 +120,12 @@ const dbMiddleware = async (req, res, next) => {
     // Dynamically load all required models and attach to the request object
     for (const [key, modelLoader] of Object.entries(modelLoaders)) {
       try {
-        console.log(`🔧 Loading model: ${key} for company: ${req.companyName}`);
         req[key] = await modelLoader(req.companyName);
-        console.log(`✅ Successfully loaded model: ${key}`);
       } catch (modelError) {
         console.error(`❌ Error loading model ${key} for company ${req.companyName}:`, modelError.message);
         return res.status(500).json({ message: `Error loading model ${key}`, error: modelError.message });
       }
     }
-
-    console.log("✅ Middleware execution completed successfully.");
     next();
   } catch (error) {
     console.error("❌ Middleware Error:", error.message);

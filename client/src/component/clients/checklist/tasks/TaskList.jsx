@@ -12,12 +12,14 @@ import {
   FiSearch,
   FiSave,
   FiX,
+  FiAlertCircle,
 } from "react-icons/fi";
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
 import "./tasklist.css";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import RaiseTicketModal from "../../../clients/taskDelegation/TaskDelegationList/RaiseTicketModal";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -38,10 +40,16 @@ const TaskList = () => {
   const [role, setRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [token, setToken] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [tasksPerPageOptions] = useState([5, 10, 15, 20, 25, 50]);
-  const [tasksPerPage, setTasksPerPage] = useState(10);
   const [employeeId, setEmployeeId] = useState(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [selectedTaskForTicket, setSelectedTaskForTicket] = useState(null);
+  const [ticketData, setTicketData] = useState({
+    title: "",
+    category: "Task Delegation",
+    type: "Help",
+    priority: "Medium",
+    description: "",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -118,16 +126,7 @@ const TaskList = () => {
 
     setFilteredTasks(filtered);
   }, [searchQuery, taskQuery, statusQuery, tasks]);
-  const indexOfLastTask = currentPage * tasksPerPage;
-  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
-  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
-  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
 
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const fetchServerDate = async (token) => {
     try {
       const res = await axios.get(
@@ -314,6 +313,59 @@ const TaskList = () => {
     }
   };
 
+  // Ticket related functions
+  const handleRaiseTicketClick = (task) => {
+    console.log(`check list task - `, task.doer.fullName);
+
+    setSelectedTaskForTicket(task);
+    setTicketData({
+      title: task.taskName,
+      category: "Task Delegation",
+      type: "Help",
+      priority: "Medium",
+      employeeName: task.doer.fullName,
+      description: `Regarding task: ${task.taskName}\nAssigned to: ${task.doer?.fullName || "Unassigned"}\nDue: ${formatDateTime(task.nextDueDateTime)}\n\nIssue description: `,
+    });
+    setShowTicketModal(true);
+  };
+
+  const handleTicketInputChange = (e) => {
+    const { name, value } = e.target;
+    setTicketData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleTicketSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const ticketToSubmit = {
+        ...ticketData,
+        relatedTask: selectedTaskForTicket._id,
+        raisedBy: employeeId || userId,
+      };
+
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/ticketRaise/add`,
+        ticketToSubmit,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+
+      alert("Ticket raised successfully!");
+      setShowTicketModal(false);
+    } catch (error) {
+      console.error("Error raising ticket:", error);
+      alert("Failed to raise ticket.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const StatusBadge = ({ status }) => {
     let bgColor = "var(--gray)";
     let textColor = "var(--text-dark)";
@@ -365,7 +417,7 @@ const TaskList = () => {
     const completedStatus = statusHistory
       .slice()
       .reverse()
-      .find((status) => status.status === "Completed");
+      .find(status => status.status === "Completed");
 
     return completedStatus ? completedStatus.completedDateTime : null;
   };
@@ -410,25 +462,6 @@ const TaskList = () => {
                   >
                     <option value="asc">Oldest First</option>
                     <option value="desc">Newest First</option>
-                  </select>
-                  <FiChevronDown className="select-arrow" />
-                </div>
-              </div>
-              <div className="page-size-control">
-                <label>Tasks per page:</label>
-                <div className="custom-select">
-                  <select
-                    value={tasksPerPage}
-                    onChange={(e) => {
-                      setTasksPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                  >
-                    {tasksPerPageOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
                   </select>
                   <FiChevronDown className="select-arrow" />
                 </div>
@@ -533,20 +566,18 @@ const TaskList = () => {
               </tr>
             </thead>
             <tbody>
-              {currentTasks.length > 0 ? (
-                currentTasks.map((task) => {
+              {filteredTasks.length > 0 ? (
+                filteredTasks.map((task) => {
                   const isToday =
                     serverDate &&
                     new Date(task.nextDueDateTime).toDateString() ===
-                      serverDate.toDateString();
+                    serverDate.toDateString();
                   const isEditing = editingTask === task._id;
                   const currentStatus =
                     task.statusHistory?.length > 0
                       ? task.statusHistory[task.statusHistory.length - 1].status
                       : "Pending";
-                  const completedDateTime = getCompletedDateTime(
-                    task.statusHistory
-                  );
+                  const completedDateTime = getCompletedDateTime(task.statusHistory);
 
                   return (
                     <tr key={task._id} className={isToday ? "today-task" : ""}>
@@ -705,13 +736,24 @@ const TaskList = () => {
                                 </>
                               )}
                               {role === "user" && (
-                                <button
-                                  className="complete-btn"
-                                  onClick={() => handleMarkCompleted(task._id)}
-                                  disabled={loading}
-                                >
-                                  <FiCheckCircle /> Complete
-                                </button>
+                                <>
+                                  <button
+                                    className="complete-btn"
+                                    onClick={() => handleMarkCompleted(task._id)}
+                                    disabled={loading}
+                                  >
+                                    <FiCheckCircle /> Complete
+                                  </button>
+
+                                  <button
+                                    className="edit-btn"
+                                    onClick={() => handleRaiseTicketClick(task)}
+                                    disabled={loading}
+                                    title="Raise Ticket"
+                                  >
+                                    <FiAlertCircle />
+                                  </button>
+                                </>
                               )}
                             </>
                           )}
@@ -734,8 +776,8 @@ const TaskList = () => {
                       {role === "user"
                         ? "No tasks assigned to you."
                         : searchQuery.trim() || taskQuery.trim()
-                        ? "No tasks found matching your search criteria."
-                        : "No tasks found. Try adjusting your filters."}
+                          ? "No tasks found matching your search criteria."
+                          : "No tasks found. Try adjusting your filters."}
                     </div>
                   </td>
                 </tr>
@@ -743,48 +785,21 @@ const TaskList = () => {
             </tbody>
           </table>
         </div>
-        {filteredTasks.length > tasksPerPage && (
-          <>
-            <div className="pagination-container">
-              <button
-                onClick={prevPage}
-                disabled={currentPage === 1}
-                className="pagination-button"
-              >
-                Previous
-              </button>
 
-              <div className="page-numbers">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (number) => (
-                    <button
-                      key={number}
-                      onClick={() => paginate(number)}
-                      className={`page-number ${
-                        currentPage === number ? "active" : ""
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  )
-                )}
-              </div>
-
-              <button
-                onClick={nextPage}
-                disabled={currentPage === totalPages}
-                className="pagination-button"
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
         {loading && (
           <div className="loading-overlay">
             <div className="loading-spinner"></div>
           </div>
         )}
+
+        {/* Raise Ticket Modal */}
+        <RaiseTicketModal
+          showModal={showTicketModal}
+          onClose={() => setShowTicketModal(false)}
+          onSubmit={handleTicketSubmit}
+          ticketData={ticketData}
+          onInputChange={handleTicketInputChange}
+        />
       </div>
     </>
   );

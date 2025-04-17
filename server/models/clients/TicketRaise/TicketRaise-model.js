@@ -12,12 +12,11 @@ const ticketSchema = new mongoose.Schema({
   },
   priority: {
     type: String,
-    enum: ["Low", "Medium", "High"],
+    enum: ["Low", "Medium", "High", "Urgent"],
     default: "Medium",
   },
   date: {
-    type: String,
-    required: true,
+    type: String
   },
   employeeName: {
     type: String,
@@ -27,10 +26,7 @@ const ticketSchema = new mongoose.Schema({
     type: String,
     enum: ["Pending", "Resolved"],
     default: "Pending",
-  },
-  resolvedAt: {
-    type: Date,
-  },
+  }
 }, {
   timestamps: true,
 });

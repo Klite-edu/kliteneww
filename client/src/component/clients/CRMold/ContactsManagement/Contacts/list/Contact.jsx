@@ -181,14 +181,14 @@ const Contact = () => {
       <Navbar />
       <div className="client-list-table">
         <div className="list-head-btn">
-          <h4>Contacts</h4>
+          <h4>Employee</h4>
           <div className="list-btns">
             <button className="export-btn-list" onClick={handleExport}>
               <FontAwesomeIcon icon={faCloudArrowDown} /> Export
             </button>
             <Link to="/contactmgmt/create" style={{ textDecoration: "none" }}>
               <button className="Add-btn-list">
-                <FontAwesomeIcon icon={faPlus} /> Add Contacts
+                <FontAwesomeIcon icon={faPlus} /> Add Employee
               </button>
             </Link>
           </div>

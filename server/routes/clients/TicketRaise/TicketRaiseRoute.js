@@ -1,12 +1,13 @@
 const express = require("express");
-const Ticket = require("../../../models/clients/TicketRaise/TicketRaise-model");
+// const Ticket = require("../../../models/clients/TicketRaise/TicketRaise-model");
 const router = express.Router();
+const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
 
 // Add Ticket
-router.post("/add", async (req, res) => {
+router.post("/add", dbDBMiddleware, async (req, res) => {
   try {
-    const ticket = new Ticket(req.body);
-    await ticket.save();
+    console.log("Ticket created successfully", req.body);
+    const ticket = await req.raiseTicket.create(req.body);
     res.status(201).json({ message: "Ticket created successfully", ticket });
   } catch (error) {
     console.error("Error saving ticket:", error);
@@ -15,24 +16,40 @@ router.post("/add", async (req, res) => {
 });
 
 // Get All Tickets
-router.get("/list", async (req, res) => {
+router.get("/list", dbDBMiddleware, async (req, res) => {
   try {
-    const tickets = await Ticket.find().sort({ createdAt: -1 });
+    const tickets = await req.raiseTicket
+      .find({ $or: [{ date: { $exists: false } }, { date: "" }] })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
     res.status(200).json(tickets);
   } catch (error) {
     res.status(500).json({ message: "Error fetching tickets", error });
   }
 });
 
-// Resolve Ticket
-router.put("/resolve/:id", async (req, res) => {
+router.get("/viewAll", dbDBMiddleware, async (req, res) => {
   try {
-    const updated = await Ticket.findByIdAndUpdate(
+    console.log(`issueData- issueData-issueData`);
+    
+    const tickets = await req.raiseTicket.find().sort({ createdAt: -1 });
+    res.status(200).json(tickets);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching tickets", error });
+  }
+});
+
+
+// Resolve Ticket
+router.put("/resolve/:id", dbDBMiddleware, async (req, res) => {
+  try {
+    const updated = await req.raiseTicket.findByIdAndUpdate(
       req.params.id,
-      { 
-        resolution: req.body.resolution, 
+      {
+        resolution: req.body.resolution,
         status: "Resolved",
-        resolvedAt: new Date() 
+        date: new Date()
       },
       { new: true }
     );

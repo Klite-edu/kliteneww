@@ -175,14 +175,14 @@ function CRMDashboard() {
         const userPermissions = permissionsRes.data.permissions || {};
 
         if (!userRole) {
-          navigate("/login");
+          navigate("/");
           return;
         }
         setRole(userRole);
         setCustomPermissions(userPermissions);
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/login");
+        navigate("/");
       }
     };
 

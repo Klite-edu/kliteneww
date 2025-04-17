@@ -82,18 +82,17 @@ const sidebarConfig = {
           path: "/delegation-tasklist",
           icon: faCheckDouble,
         },
-        { name: "Delegation MIS", path: "/delegation-mis", icon: faProjectDiagram },
+        {
+          name: "Delegation MIS",
+          path: "/delegation-mis",
+          icon: faProjectDiagram,
+        },
       ],
     },
     { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
+    { name: "Whatsapp Web", path: "/seleniumweb", icon: faComments },
+    { name: "Raised Ticket", path: "/issue", icon: faProjectDiagram },
     { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
-    // { name: "FormBuilder", path: "/FormBuilder", icon: faClipboardList },
-    // { name: "Automation", path: "/automation", icon: faRobot },
-    // {
-    //   name: "Opportunities",
-    //   path: "/opportunities",
-    //   icon: faMagnifyingGlassDollar,
-    // },
     {
       name: "Settings",
       path: "/dashboard",
@@ -119,12 +118,18 @@ const sidebarConfig = {
     },
     // { name: "Form", path: "/form", icon: faClipboardList },
     // {
+    //   name: "Create Variables",
+    //   path: "/variables",
+    //   icon: faMagnifyingGlassDollar,
+    // },
+    // {
     //   name: "NBD-Sales WA-Bot(UD)",
     //   path: "/chatbotform",
     //   icon: faRobot,
     //   options: [
     //     { name: "ChatbotForm", path: "/chatbotform", icon: faMessage },
     //     { name: "Chats", path: "/chatbox", icon: faComments },
+    //     { name: "Whatsapp Web", path: "/seleniumweb", icon: faComments },
     //   ],
     // },
     // {
@@ -133,6 +138,16 @@ const sidebarConfig = {
     //   icon: faShieldHalved,
     //   options: [
     //     { name: "Client", path: "/metasignup", icon: faUserTie },
+    //     { name: "Template", path: "/metatemplate", icon: faClipboardList },
+    //     { name: "Message", path: "/metamessage", icon: faMessage },
+    //   ],
+    // },
+    // {
+    //   name: "Automation",
+    //   path: "/",
+    //   icon: faShieldHalved,
+    //   options: [
+    //     { name: "BotTrigger", path: "/bot-trigger", icon: faUserTie },
     //     { name: "Template", path: "/metatemplate", icon: faClipboardList },
     //     { name: "Message", path: "/metamessage", icon: faMessage },
     //   ],
@@ -174,6 +189,25 @@ const sidebarConfig = {
       name: "Opportunities",
       path: "/opportunities",
       icon: faMagnifyingGlassDollar,
+    },
+    {
+      name: "NBD-Sales WA-Bot(UD)",
+      path: "/chatbotform",
+      icon: faRobot,
+      options: [
+        { name: "ChatbotForm", path: "/chatbotform", icon: faMessage },
+        { name: "Chats", path: "/chatbox", icon: faComments },
+      ],
+    },
+    {
+      name: "Meta Verification",
+      path: "/metasignup",
+      icon: faShieldHalved,
+      options: [
+        { name: "Client", path: "/metasignup", icon: faUserTie },
+        { name: "Template", path: "/metatemplate", icon: faClipboardList },
+        { name: "Message", path: "/metamessage", icon: faMessage },
+      ],
     },
     { name: "Attendance", path: "/attendance", icon: faCalendar },
     { name: "Support", path: "/support", icon: faHeadset },

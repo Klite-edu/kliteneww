@@ -1,18 +1,21 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
+const mongoose = require("mongoose");
+const { createClientDatabase } = require("../database/db");
 
-// ✅ Models
-const Client = require("../models/clients/MetaBusiness/MetaClient-model");
-const User = require("../models/clients/chat/userchat-model");
-const Ticket = require("../models/clients/chat/ticket-model");
-const Chat = require("../models/clients/chat/chat-model");
-const Employee = require("../models/Admin/client-modal");
-
-// ✅ Constants
+// Constants
 const CHATBOT_API_URL = "https://chatbot.autopilotmybusiness.com/chat";
 
-// ✅ Webhook Verification
+// Model Paths (directly require the model functions)
+const {
+  getMetaClientModel,
+} = require("../models/clients/MetaBusiness/MetaClient-model");
+const { getUserChatModel } = require("../models/clients/chat/userchat-model");
+const { getTicketModel } = require("../models/clients/chat/ticket-model");
+const { getChatModel } = require("../models/clients/chat/chat-model");
+
+// Webhook Verification
 router.get("/webhook", (req, res) => {
   const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
   const mode = req.query["hub.mode"];
@@ -28,7 +31,6 @@ router.get("/webhook", (req, res) => {
   }
 });
 
-// ✅ Webhook POST Handler
 router.post("/webhook", async (req, res) => {
   console.log("➡️ POST /webhook called");
 
@@ -38,16 +40,47 @@ router.post("/webhook", async (req, res) => {
   }
 
   try {
+    // First, process all entries to find the waba_id
     for (const entry of req.body.entry) {
       const waba_id = entry.id;
       console.log(`🔍 Processing WABA ID: ${waba_id}`);
 
-      const client = await Client.findOne({ waba_id });
-      if (!client) {
-        console.warn(`❌ Client not found for waba_id: ${waba_id}`);
+      const { getAllClientDBNames } = require("../database/db");
+
+      let companyName = null;
+      let mainDbClient = null;
+
+      const allClientDBs = await getAllClientDBNames();
+
+      for (const db of allClientDBs) {
+        try {
+          const dbCompanyName = db.replace("client_db_", ""); // extract actual name
+          const MetaClient = await getMetaClientModel(dbCompanyName);
+          const match = await MetaClient.findOne({ waba_id });
+
+          if (match) {
+            mainDbClient = match;
+            companyName = dbCompanyName;
+            console.log(`✅ Found WABA ID in: ${companyName}`);
+            break;
+          }
+        } catch (err) {
+          console.error(`❌ Error checking db ${db}:`, err.message);
+          continue;
+        }
+      }
+
+      if (!mainDbClient || !companyName) {
+        console.warn(`❌ WABA ID ${waba_id} not found in any client DB`);
         continue;
       }
 
+      // Load all required models for this client
+      const UserChat = await getUserChatModel(companyName);
+      const Ticket = await getTicketModel(companyName);
+      const Chat = await getChatModel(companyName);
+
+      // Now process messages with the client-specific models
       for (const change of entry.changes) {
         const value = change.value;
         if (!value?.messages) {
@@ -60,19 +93,21 @@ router.post("/webhook", async (req, res) => {
           const messageText = message.text?.body || "[No Text]";
           const timestamp = new Date();
 
-          console.log(`📩 Incoming message from user ${user_id}: ${messageText}`);
+          console.log(
+            `📩 Incoming message from user ${user_id}: ${messageText}`
+          );
 
-          // ✅ Find or create User session
-          let userSession = await User.findOne({ user_id, waba_id });
+          // Find or create User session using client-specific model
+          let userSession = await UserChat.findOne({ user_id, waba_id });
           if (!userSession) {
-            userSession = new User({ user_id, waba_id });
+            userSession = new UserChat({ user_id, waba_id });
             await userSession.save();
             console.log(`✅ Created new user session for ${user_id}`);
           }
 
-          // ✅ Check if human support is requested
+          // Check if human support is requested
           const humanTriggers = ["human", "agent", "support", "help"];
-          const requestHuman = humanTriggers.some(trigger =>
+          const requestHuman = humanTriggers.some((trigger) =>
             messageText.toLowerCase().includes(trigger)
           );
 
@@ -83,14 +118,19 @@ router.post("/webhook", async (req, res) => {
 
             let ticket = await Ticket.findOne({ user_id, status: "pending" });
             if (!ticket) {
-              ticket = await Ticket.create({ user_id, waba_id, status: "pending" });
+              ticket = await Ticket.create({
+                user_id,
+                waba_id,
+                status: "pending",
+              });
               console.log(`✅ New ticket created for user ${user_id}`);
             }
 
-            const humanReply = "✅ You are now connected to a human agent. Please wait...";
-            await sendWhatsAppMessage(client, user_id, humanReply);
+            const humanReply =
+              "✅ You are now connected to a human agent. Please wait...";
+            await sendWhatsAppMessage(mainDbClient, user_id, humanReply);
 
-            // ✅ Append message to chat collection (user message only)
+            // Append message to chat collection (user message only)
             await Chat.findOneAndUpdate(
               { user_id },
               {
@@ -98,13 +138,13 @@ router.post("/webhook", async (req, res) => {
                   messages: {
                     sender: "user",
                     message: messageText,
-                    timestamp
-                  }
+                    timestamp,
+                  },
                 },
                 $setOnInsert: {
                   user_id,
-                  model: "human"
-                }
+                  model: "human",
+                },
               },
               { upsert: true, new: true }
             );
@@ -122,13 +162,13 @@ router.post("/webhook", async (req, res) => {
                   messages: {
                     sender: "user",
                     message: messageText,
-                    timestamp
-                  }
+                    timestamp,
+                  },
                 },
                 $setOnInsert: {
                   user_id,
-                  model: "human"
-                }
+                  model: "human",
+                },
               },
               { upsert: true, new: true }
             );
@@ -136,18 +176,20 @@ router.post("/webhook", async (req, res) => {
             continue; // Skip bot processing, wait for human agent to respond
           }
 
-          // ✅ Send message to chatbot API
+          // Send message to chatbot API
           console.log(`🤖 Sending message to chatbot API for user ${user_id}`);
           const chatbotResponse = await axios.post(CHATBOT_API_URL, {
             user_id,
             waba_id,
-            message: messageText
+            message: messageText,
+            instructionFile: mainDbClient.instructionFile,
           });
 
-          const chatbotReply = chatbotResponse.data.response || "🤖 No response from chatbot.";
+          const chatbotReply =
+            chatbotResponse.data.response || "🤖 No response from chatbot.";
           console.log(`🤖 Chatbot replied: ${chatbotReply}`);
 
-          // ✅ Save both user message and bot reply to chat history
+          // Save both user message and bot reply to chat history
           await Chat.findOneAndUpdate(
             { user_id },
             {
@@ -156,25 +198,25 @@ router.post("/webhook", async (req, res) => {
                   {
                     sender: "user",
                     message: messageText,
-                    timestamp
+                    timestamp,
                   },
                   {
                     sender: "bot",
                     message: chatbotReply,
-                    timestamp: new Date()
-                  }
-                ]
+                    timestamp: new Date(),
+                  },
+                ],
               },
               $setOnInsert: {
                 user_id,
-                model: "bot"
-              }
+                model: "bot",
+              },
             },
             { upsert: true, new: true }
           );
 
-          // ✅ Send chatbot reply to user on WhatsApp
-          await sendWhatsAppMessage(client, user_id, chatbotReply);
+          // Send chatbot reply to user on WhatsApp
+          await sendWhatsAppMessage(mainDbClient, user_id, chatbotReply);
         }
       }
     }
@@ -186,7 +228,7 @@ router.post("/webhook", async (req, res) => {
   }
 });
 
-// ✅ WhatsApp Message Sender
+// WhatsApp Message Sender
 async function sendWhatsAppMessage(client, to, message) {
   if (!client.access_token || !client.phone_number_id) {
     console.warn("❌ Missing client access_token or phone_number_id");
@@ -200,19 +242,22 @@ async function sendWhatsAppMessage(client, to, message) {
         messaging_product: "whatsapp",
         to,
         type: "text",
-        text: { body: message }
+        text: { body: message },
       },
       {
         headers: {
           Authorization: `Bearer ${client.access_token}`,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
 
     console.log(`✅ WhatsApp message sent to user ${to}`);
   } catch (error) {
-    console.error("❌ WhatsApp send error:", error?.response?.data || error.message);
+    console.error(
+      "❌ WhatsApp send error:",
+      error?.response?.data || error.message
+    );
   }
 }
 

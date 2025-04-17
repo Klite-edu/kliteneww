@@ -9,7 +9,8 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const { updateTaskFrequency } = require("./middlewares/TaskScheduler");
 const { connectMainDB } = require("./database/db");
-
+const socketIo = require("socket.io");
+const whatsappService = require("./routes/clients/WhatsappWeb/Whatsappservice");
 // ✅ Import Multer Configuration
 const upload = require("./config/multerConfig");
 
@@ -45,16 +46,27 @@ const logoRoute = require("./routes/clients/LogoImage/LogoRoute");
 const IndiamartRoutes = require("./routes/clients/appstore/indiamart/IndiamartRoutes");
 const checkmisRoutes = require("./routes/clients/checklist/checkmisRoutes");
 const DelagationMISRoute = require("./routes/clients/taskDelegation/DelegationMIS");
+const variablesRoutes = require("./routes/clients/Variables/variablesRoutes");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
 
+// ✅ CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:3000"];
+
+// Initialize Socket.IO after defining allowedOrigins
+const io = socketIo(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
+});
+
 // ✅ Connect to Main Database
 connectMainDB();
-
-// ✅ CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : ["http://localhost:3000"];
 app.use(
   cors({
     origin: allowedOrigins,
@@ -124,17 +136,40 @@ app.use("/api/clientDash", clientDashRoute);
 app.use("/api/ticket", ticketRoute);
 app.use("/api/ticketRaise", TicketRaiseRoute);
 app.use("/api/permission", permissionRoutes);
-app.use("/api/logo", logoRoute); 
-app.use("/api/store", IndiamartRoutes);  
-app.use("/api/checkmis", checkmisRoutes);  
-app.use("/api/delegationmis", DelagationMISRoute);  
+app.use("/api/logo", logoRoute);
+app.use("/api/store", IndiamartRoutes);
+app.use("/api/checkmis", checkmisRoutes);
+app.use("/api/delegationmis", DelagationMISRoute);
+app.use("/api/variables", variablesRoutes);
+app.use(
+  "/api/whatsapp",
+  require("./routes/clients/WhatsappWeb/WhatsappwebRoutes")
+);
+whatsappService.on("qr", ({ companyName, qr }) => {
+  console.log("📲 Emitting QR via socket for", companyName);
+  io.emit("whatsapp-qr", qr); // ✅ Ensure this is not empty or undefined
+});
+
+whatsappService.on("ready", () => {
+  console.log("📢 Emitting whatsapp-ready to socket clients");
+  io.emit("whatsapp-ready");
+});
+whatsappService.on("disconnected", (data) => {
+  io.emit("whatsapp-disconnected", data);
+});
+whatsappService.on("authenticated", () => io.emit("whatsapp-authenticated"));
+whatsappService.on("auth_failure", (msg) =>
+  io.emit("whatsapp-auth_failure", msg)
+);
 
 // ✅ Start Scheduled Jobs
 updateTaskFrequency();
 
 // ✅ Base Route for Server Status
 app.get("/", (req, res) => {
-  res.send("Server is up and running with enhanced security!");
+  res.send(
+    "Server is up and running with enhanced security and WhatsApp integration!"
+  );
 });
 
 // ✅ Error Handling Middleware
@@ -147,4 +182,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ WhatsApp Web integration is active`);
 });

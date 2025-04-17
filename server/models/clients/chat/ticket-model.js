@@ -20,3 +20,9 @@ ticketSchema.pre("save", function (next) {
 });
 
 //
+const getTicketModel = async (companyName) => {
+  const clientDB = await createClientDatabase(companyName);
+  return clientDB.model("Ticket", ticketSchema);
+};
+
+module.exports = { getTicketModel };

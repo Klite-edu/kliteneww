@@ -35,14 +35,14 @@ const ContactPopup = ({ contact, onClose, stageDetails, pipelineId, leadId, stag
 
                 const userToken = tokenRes.data.token;
                 if (!userToken) {
-                    navigate("/login");
+                    navigate("/");
                     return;
                 }
 
                 setToken(userToken);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
-                navigate("/login");
+                navigate("/");
             }
         };
 

@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 async function sendWhatsAppMessage(client, to, message) {
   if (!client.access_token || !client.phone_number_id) return;
 
@@ -23,5 +21,3 @@ async function sendWhatsAppMessage(client, to, message) {
     console.error("❌ WhatsApp send error:", error?.response?.data || error.message);
   }
 }
-
-module.exports = sendWhatsAppMessage;
