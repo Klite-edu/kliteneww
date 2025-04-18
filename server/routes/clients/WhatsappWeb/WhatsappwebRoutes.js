@@ -501,7 +501,7 @@ router.post("/disconnect", async (req, res) => {
 router.post("/connect", async (req, res) => {
   try {
     console.log(`⚙️ Init requested for ${req.companyName}`);
-    const client = await whatsappService.initializeClient(req.companyName);
+    const client = whatsappService.initializeClient(req.companyName);
     console.log(`✅ Init triggered for ${req.companyName}`);
     res.json({
       message: "Client initialization started",

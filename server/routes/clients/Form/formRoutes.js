@@ -4,320 +4,166 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const { Types } = mongoose; // Import Types for ObjectId
 
-// router.post("/submit/:formId", async (req, res) => {
-//   const { formId } = req.params;
-//   const { submissions, user_email, data, _id, clientId } = req.body;
-
-//   console.log("\n========== New Form Submission Request ==========");
-//   console.log("Request Params:", req.params);
-//   console.log("Request Body:", req.body);
-
-//   try {
-//     // ✅ Step 1️⃣: Validate formId
-//     console.log("Step 1️⃣: Validating formId:", formId);
-//     if (!mongoose.Types.ObjectId.isValid(formId)) {
-//       console.log("❌ Invalid form ID:", formId);
-//       return res.status(400).json({ error: "Invalid form ID", formId });
-//     }
-
-//     // ✅ Step 2️⃣: Find the form (using param or fallback _id from body)
-//     const lookupId = formId || _id;
-//     console.log("Step 2️⃣: Looking for form with ID:", lookupId);
-//     const form = await Form.findById(lookupId);
-
-//     if (!form) {
-//       console.log(`❌ Form not found with ID: ${lookupId}`);
-//       return res
-//         .status(404)
-//         .json({ message: "Form not found", formId: lookupId });
-//     }
-
-//     console.log("✅ Form found:", {
-//       id: form._id,
-//       title: form.formInfo?.title,
-//       client: form.client,
-//       fields: form.fields.length,
-//     });
-
-//     // ✅ Step 3️⃣: Validate Client Access
-//     console.log("Step 3️⃣: Validating client access for clientId:", clientId);
-
-//     if (!form.client.includes(clientId)) {
-//       console.log(
-//         `❌ Unauthorized! ClientId ${clientId} is not in form.client`
-//       );
-//       return res
-//         .status(403)
-//         .json({ error: "Unauthorized access to this form" });
-//     }
-
-//     console.log("✅ Client access validated");
-
-//     // ✅ Step 4️⃣: Validate Submissions Array
-//     console.log("Step 4️⃣: Validating submissions...");
-//     if (!Array.isArray(submissions) || submissions.length === 0) {
-//       console.log("❌ Invalid or empty submissions array");
-//       return res.status(400).json({ error: "Invalid submissions data" });
-//     }
-
-//     console.log(`✅ Submissions received: ${submissions.length} entries`);
-
-//     // ✅ Step 5️⃣: Match Submissions with Form Fields
-//     console.log("Step 5️⃣: Matching submission data with form fields...");
-//     const submissionData = submissions.map((submission) => {
-//       console.log("➡️ Validating submission field:", submission.fieldLabel);
-//       const field = form.fields.find((f) => f.label === submission.fieldLabel);
-
-//       if (!field) {
-//         const errorMessage = `❌ Field "${submission.fieldLabel}" not found in form`;
-//         console.error(errorMessage);
-//         throw new Error(errorMessage);
-//       }
-
-//       console.log("✅ Field matched:", {
-//         label: submission.fieldLabel,
-//         type: field.type,
-//         submittedValue: submission.value,
-//       });
-
-//       return {
-//         fieldLabel: submission.fieldLabel,
-//         fieldType: field.type,
-//         value: submission.value,
-//       };
-//     });
-
-//     console.log("✅ Submission data mapped successfully:", submissionData);
-
-//     // ✅ Step 6️⃣: Create & Save New Submission (includes form_name)
-//     console.log("Step 6️⃣: Saving submission...");
-
-//     const newSubmission = await Submission.create({
-//       formId: form._id,
-//       clientId, // ✅ passed from frontend
-//       form_name: form.formInfo.title,
-//       submissions: submissionData,
-//     });
-
-//     console.log("✅ Submission saved successfully:", {
-//       submissionId: newSubmission._id,
-//       formId: newSubmission.formId,
-//       clientId: newSubmission.clientId,
-//       totalFieldsSubmitted: newSubmission.submissions.length,
-//       form_name: newSubmission.form_name,
-//     });
-
-//     // ✅ Step 7️⃣: Fetch Triggers and Process (Optional)
-//     console.log("Step 7️⃣: Fetching triggers for event_source: form_submission");
-
-//     const triggers = await Trigger.find({ event_source: "form_submission" });
-//     console.log(`✅ Triggers fetched: ${triggers.length} triggers found`);
-
-//     for (const trigger of triggers) {
-//       console.log("➡️ Evaluating trigger:", trigger);
-
-//       if (trigger.conditions.form_id === lookupId.toString()) {
-//         console.log(`✅ Trigger matched for form_id: ${lookupId}`);
-
-//         console.log(
-//           "➡️ Looking for pipeline stage:",
-//           trigger.action.move_to_stage
-//         );
-//         const stage = await PipelineStage.findOne({
-//           stage_name: trigger.action.move_to_stage,
-//         });
-
-//         if (stage) {
-//           console.log("✅ Pipeline stage found:", {
-//             stageId: stage._id,
-//             stageName: stage.stage_name,
-//           });
-
-//           newSubmission.current_stage_id = stage._id;
-//           await newSubmission.save();
-
-//           console.log("✅ Submission moved to new stage:", stage.stage_name);
-//         } else {
-//           console.log(`❌ No stage found for: ${trigger.action.move_to_stage}`);
-//         }
-//       } else {
-//         console.log(
-//           `⚠️ Trigger condition not matched for form_id: ${lookupId}`
-//         );
-//       }
-//     }
-
-//     console.log("✅ All triggers evaluated successfully");
-
-//     // ✅ Final Response
-//     console.log("✅ Form submitted successfully. Sending response...");
-
-//     return res.status(201).json({
-//       message: "Form submitted successfully",
-//       submission: newSubmission,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error submitting form:", error);
-
-//     return res.status(500).json({
-//       message: "Error submitting form",
-//       error: error.message,
-//     });
-//   } finally {
-//     console.log("========== End of Form Submission ==========\n");
-//   }
-// });
-
-router.post("/submit/:formId",DBMiddleware, async (req, res) => {
+router.post("/submit/:formId", DBMiddleware, async (req, res) => {
   const { formId } = req.params;
-  const { submissions, user_email, data, _id, clientId } = req.body;
+  const { submissions, user_email, data, clientId } = req.body;
 
-  console.log("\n========== New Form Submission Request ==========");
-  console.log("Request Params:", req.params);
-  console.log("Request Body:", req.body);
+  console.log("\n========== New Form Submission ==========");
+  console.log({ formId, clientId, user_email, submissionCount: submissions?.length });
 
   try {
-    console.log("Step 1️⃣: Validating formId:", formId);
+    // 🔹 Step 1: Validate Form ID
     if (!mongoose.Types.ObjectId.isValid(formId)) {
-      console.log("❌ Invalid form ID:", formId);
-      return res.status(400).json({ error: "Invalid form ID", formId });
+      return res.status(400).json({ error: "Invalid form ID format", details: { formId } });
     }
 
-    const lookupId = formId || _id;
-    console.log("Step 2️⃣: Looking for form with ID:", lookupId);
-    const form = await req.FormBuilder.findById(lookupId);
-
+    // 🔹 Step 2: Get Form
+    const form = await req.FormBuilder.findById(formId);
     if (!form) {
-      console.log(`❌ Form not found with ID: ${lookupId}`);
-      return res
-        .status(404)
-        .json({ message: "Form not found", formId: lookupId });
+      return res.status(404).json({
+        message: "Form not found",
+        formId,
+        suggestion: "Verify if the form exists and is accessible",
+      });
     }
 
     console.log("✅ Form found:", {
       id: form._id,
-      title: form.formInfo?.title,
-      client: form.client,
+      title: form.formInfo?.title || "Untitled Form",
       fields: form.fields.length,
+      access: form.client.length ? "Restricted" : "Public",
     });
 
-    console.log("Step 3️⃣: Validating client access for clientId:", clientId);
-    if (!form.client.includes(clientId)) {
-      console.log(
-        `❌ Unauthorized! ClientId ${clientId} is not in form.client`
-      );
-      return res
-        .status(403)
-        .json({ error: "Unauthorized access to this form" });
+    // 🔹 Step 3: Client Access Check
+    if (form.client.length && !form.client.includes(clientId)) {
+      return res.status(403).json({
+        error: "Unauthorized access",
+        details: { clientId, allowed: form.client },
+      });
     }
-    console.log("✅ Client access validated");
 
-    console.log("Step 4️⃣: Validating submissions...");
-    if (!Array.isArray(submissions) || submissions.length === 0) {
-      console.log("❌ Invalid or empty submissions array");
-      return res.status(400).json({ error: "Invalid submissions data" });
+    // 🔹 Step 4: Validate Submissions
+    if (!Array.isArray(submissions)) {
+      return res.status(400).json({ error: "Submissions must be an array" });
     }
-    console.log(`✅ Submissions received: ${submissions.length} entries`);
+    if (!submissions.length) {
+      return res.status(400).json({ error: "At least one submission is required" });
+    }
 
-    console.log("Step 5️⃣: Matching submission data with form fields...");
-    const submissionData = submissions.map((submission) => {
-      console.log("➡️ Validating submission field:", submission.fieldLabel);
-      const field = form.fields.find((f) => f.label === submission.fieldLabel);
+    // 🔹 Step 5: Process Submissions
+    const processed = [];
+    const missingFields = [];
+    const invalidFields = [];
 
+    for (const { fieldLabel, value, fieldCategory } of submissions) {
+      const field = form.fields.find(f => f.label === fieldLabel);
       if (!field) {
-        const errorMessage = `❌ Field "${submission.fieldLabel}" not found in form`;
-        console.error(errorMessage);
-        throw new Error(errorMessage);
+        missingFields.push(fieldLabel);
+        continue;
       }
 
-      console.log("✅ Field matched:", {
-        label: submission.fieldLabel,
-        type: field.type,
-        submittedValue: submission.value,
-      });
+      if (field.required && !value) {
+        invalidFields.push({ field: fieldLabel, reason: "Required field is empty" });
+        continue;
+      }
 
-      return {
-        fieldLabel: submission.fieldLabel,
+      if (field.type === "number" && isNaN(value)) {
+        invalidFields.push({ field: fieldLabel, reason: "Expected a number" });
+        continue;
+      }
+
+      if (field.type === "select" && field.options?.length && !field.options.includes(value)) {
+        invalidFields.push({ field: fieldLabel, reason: "Invalid select option", validOptions: field.options });
+        continue;
+      }
+
+      processed.push({
+        fieldLabel,
         fieldType: field.type,
-        value: submission.value,
-      };
-    });
-    console.log("✅ Submission data mapped successfully:", submissionData);
-
-    // Step 6️⃣: Get the initial stage from the trigger model based on the form
-    console.log("Step 6️⃣: Fetching initial stage from trigger...");
-    let initialStageId;
-
-    const trigger = await req.trigger.findOne({
-      event_source: "form_submission",
-      "conditions.form_id": lookupId,
-    });
-
-    if (trigger && trigger.action.move_to_stage) {
-      console.log("✅ Trigger found:", trigger);
-      const stage = await req.pipeline.findOne({
-        "stages._id": trigger.action.move_to_stage,
+        value,
+        fieldCategory: fieldCategory || field.fieldCategory || "other",
       });
-
-      if (stage) {
-        const initialStage = stage.stages.find(
-          (s) => s._id.toString() === trigger.action.move_to_stage.toString()
-        );
-
-        if (initialStage) {
-          initialStageId = initialStage._id;
-          console.log(
-            "✅ Initial stage set from trigger:",
-            initialStage.stageName
-          );
-        } else {
-          console.log("❌ No matching stage found in pipeline.");
-          return res
-            .status(400)
-            .json({ message: "Invalid initial stage from trigger." });
-        }
-      } else {
-        console.log("❌ No pipeline stage found for trigger.");
-        return res.status(400).json({ message: "Pipeline stage not found." });
-      }
-    } else {
-      console.log("❌ No trigger configured for initial stage.");
-      return res
-        .status(400)
-        .json({ message: "No trigger found for form submission." });
     }
 
-    // ✅ Step 7️⃣: Create & Save New Submission
-    console.log("✅ Saving new submission...");
-    const newSubmission = await req.Submission.create({
+    if (missingFields.length || invalidFields.length) {
+      return res.status(400).json({
+        error: "Submission validation failed",
+        details: { missingFields, invalidFields },
+      });
+    }
+
+    console.log("✅ Validated Submissions:", {
+      total: processed.length,
+      categories: [...new Set(processed.map(s => s.fieldCategory))],
+    });
+
+    // 🔹 Step 6: Determine Initial Stage via Trigger
+    let initialStageId = null;
+    let initialStageName = "Default Stage";
+
+    try {
+      const trigger = await req.trigger.findOne({
+        event_source: "form_submission",
+        "conditions.form_id": formId,
+      });
+
+      if (trigger?.action?.move_to_stage) {
+        const pipeline = await req.pipeline.findOne({ "stages._id": trigger.action.move_to_stage });
+        const stage = pipeline?.stages.find(s => s._id.toString() === trigger.action.move_to_stage.toString());
+        if (stage) {
+          initialStageId = stage._id;
+          initialStageName = stage.stageName;
+        }
+      }
+    } catch (e) {
+      console.warn("⚠️ Trigger evaluation failed:", e.message);
+    }
+
+    // 🔹 Step 7: Save Submission
+    const submissionPayload = {
       formId: form._id,
       clientId,
-      form_name: form.formInfo.title,
-      submissions: submissionData,
+      userEmail: user_email,
+      form_name: form.formInfo?.title || "Untitled Form",
+      submissions: processed,
       current_stage_id: initialStageId,
+      metadata: {
+        fieldCategories: Object.fromEntries(processed.map(f => [f.fieldLabel, f.fieldCategory])),
+      },
+    };
+
+    const created = await req.Submission.create(submissionPayload);
+
+    console.log("✅ Submission Saved:", {
+      id: created._id,
+      form: created.form_name,
+      stage: initialStageName,
     });
 
-    console.log("✅ Submission saved successfully:", {
-      submissionId: newSubmission._id,
-      formId: newSubmission.formId,
-      clientId: newSubmission.clientId,
-      totalFieldsSubmitted: newSubmission.submissions.length,
-      form_name: newSubmission.form_name,
-    });
-
+    // 🔹 Step 8: Final Response
     return res.status(201).json({
+      success: true,
       message: "Form submitted successfully",
-      submission: newSubmission,
+      submissionId: created._id,
+      formId: created.formId,
+      currentStage: initialStageName,
+      fieldCategories: submissionPayload.metadata.fieldCategories,
     });
-  } catch (error) {
-    console.error("❌ Error submitting form:", error);
-    return res
-      .status(500)
-      .json({ message: "Error submitting form", error: error.message });
+
+  } catch (err) {
+    console.error("❌ Submission Error:", err);
+    return res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+      requestId: req.id,
+      timestamp: new Date().toISOString(),
+    });
   } finally {
-    console.log("========== End of Form Submission ==========\n");
+    console.log("========== End of Submission ==========\n");
   }
 });
+
+
 
 router.get("/forms", DBMiddleware, async (req, res) => {
   try {
@@ -362,99 +208,117 @@ router.get("/forms", DBMiddleware, async (req, res) => {
   }
 });
 
-// router.get("/leads-by-stages", async (req, res) => {
+
+
+
+
+// router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
 //   try {
-//     console.log("Fetching triggers with event_source: form_submission...");
+//     console.log("🚀 Fetching leads grouped by stages...");
 
-//     // 1. Fetch triggers with event_source = "form_submission"
-//     const triggers = await Trigger.find({ event_source: "form_submission" });
-//     console.log("Triggers fetched successfully:", triggers);
+//     // Step 1: Fetch all pipelines (includes stages array)
+//     console.log("📥 Step 1: Fetching pipelines...");
+//     const pipelines = await req.pipeline.find();
+//     console.log(
+//       "✅ Pipelines fetched successfully. Total pipelines:",
+//       pipelines.length
+//     );
 
-//     // 2. Fetch pipelines (includes stages array)
-//     const pipelines = await PipelineStage.find();
-//     console.log("Pipelines fetched successfully:", pipelines);
+//     pipelines.forEach((pipeline, index) => {
+//       console.log(`Pipeline ${index + 1}: ${pipeline.pipelineName}`);
+//       pipeline.stages.forEach((stage, idx) => {
+//         console.log(
+//           `  Stage ${idx + 1}: ${stage.stageName} (ID: ${stage._id})`
+//         );
+//       });
+//     });
 
-//     // 3. Fetch all forms
-//     const forms = await Form.find(); // ✅ Your FormBuilder model
-//     console.log("Forms fetched successfully:", forms);
+//     // Step 2: Fetch all submissions directly from the Submission model
+//     console.log("📥 Step 2: Fetching submissions...");
+//     const submissions = await req.Submission.find().lean();
+//     console.log(
+//       `✅ Submissions fetched successfully. Total submissions: ${submissions.length}`
+//     );
 
-//     // 4. Group submissions under stages using triggers
-//     const leadsByStages = await Promise.all(
-//       triggers.map(async (trigger) => {
-//         const { form_id } = trigger.conditions;
-//         const { move_to_stage } = trigger.action;
+//     // Log each submission with details
+//     submissions.forEach((submission, idx) => {
+//       console.log(`  Submission ${idx + 1}:`);
+//       console.log(`    ID: ${submission._id}`);
+//       console.log(`    Current Stage ID: ${submission.current_stage_id}`);
+//       console.log(`    Submitted At: ${submission.submittedAt}`);
+//       console.log("    Submission Data:");
+//       submission.submissions.forEach((fieldData, dataIdx) => {
+//         console.log(
+//           `      ${dataIdx + 1}. ${fieldData.fieldLabel}: ${fieldData.value}`
+//         );
+//       });
+//     });
+
+//     // Step 3: Group submissions under stages based on current_stage_id
+//     console.log("📂 Step 3: Grouping submissions under stages...");
+//     const leadsByStages = pipelines.flatMap((pipeline) =>
+//       pipeline.stages.map((stage) => {
+//         console.log(`🔍 Checking stage: ${stage.stageName} (ID: ${stage._id})`);
+
+//         // Filter submissions correctly using ObjectId comparison
+//         const stageLeads = submissions
+//           .filter((submission) => {
+//             // Comparing ObjectId as strings
+//             const match =
+//               String(submission.current_stage_id) === String(stage._id);
+//             console.log(
+//               `    Submission ID ${submission._id} - Matches: ${match}`
+//             );
+//             return match;
+//           })
+//           .map((submission) => {
+//             const data = {};
+//             submission.submissions.forEach((fieldData) => {
+//               data[fieldData.fieldLabel] = fieldData.value;
+//               console.log(
+//                 `      Field: ${fieldData.fieldLabel}, Value: ${fieldData.value}`
+//               );
+//             });
+//             return {
+//               submission_id: submission._id,
+//               submittedAt: submission.submittedAt,
+//               data: data,
+//             };
+//           });
 
 //         console.log(
-//           `Fetching for form_id: ${form_id} and stage: ${move_to_stage}`
+//           `✅ Found ${stageLeads.length} leads for stage: ${stage.stageName}`
 //         );
 
-//         // Find the form from the forms list
-//         const form = forms.find((f) => f._id.equals(form_id));
-//         console.log("Form found:", form);
-
-//         if (!form) {
-//           console.log(`❌ Form not found: ${form_id}`);
-//           return null;
-//         }
-
-//         // Find the stage inside pipelines
-//         let foundStage = null;
-
-//         pipelines.forEach((pipeline) => {
-//           pipeline.stages.forEach((stage) => {
-//             if (stage._id.equals(move_to_stage)) {
-//               foundStage = stage;
-//             }
-//           });
-//         });
-
-//         console.log("Stage found:", foundStage);
-
-//         if (!foundStage) {
-//           console.log(`❌ Stage not found: ${move_to_stage}`);
-//           return null;
-//         }
-
-//         // ✅ Fetch submissions for this form
-//         const submissions = await Submission.find({ formId: form_id });
-
-//         console.log(
-//           `Submissions found for form ${form_id}:`,
-//           submissions.length
-//         );
-
-//         // ✅ Map each submission to { submission_id, submittedAt, data: {fieldLabel: value} }
-//         const leads = submissions.map((submission) => {
-//           const data = {};
-
-//           submission.submissions.forEach((fieldData) => {
-//             data[fieldData.fieldLabel] = fieldData.value;
-//           });
-
-//           return {
-//             submission_id: submission._id,
-//             submittedAt: submission.submittedAt,
-//             data: data,
-//           };
-//         });
-//         console.log("leads", leads);
-
-//         // ✅ Return leads directly under the stage
 //         return {
-//           stage: foundStage.stageName,
-//           leads: leads,
+//           stage: stage.stageName,
+//           stage_id: stage._id,
+//           leads: stageLeads,
 //         };
 //       })
 //     );
 
+//     // Step 4: Filter out empty stages to return only populated ones
 //     const filteredLeadsByStages = leadsByStages.filter(
-//       (group) => group !== null
+//       (group) => group.leads && group.leads.length > 0
 //     );
 
-//     console.log(
-//       "✅ Leads by stages fetched successfully:",
-//       filteredLeadsByStages
-//     );
+//     console.log("✅ Leads grouped successfully. Final result:");
+//     filteredLeadsByStages.forEach((group, groupIdx) => {
+//       console.log(`Group ${groupIdx + 1}:`);
+//       console.log(`  Stage: ${group.stage}`);
+//       console.log(`  Number of Leads: ${group.leads.length}`);
+//       group.leads.forEach((lead, leadIdx) => {
+//         console.log(`    Lead ${leadIdx + 1}:`);
+//         console.log(`      ID: ${lead.submission_id}`);
+//         console.log(`      Submitted At: ${lead.submittedAt}`);
+//         console.log("      Data:");
+//         Object.keys(lead.data).forEach((key) => {
+//           console.log(`        ${key}: ${lead.data[key]}`);
+//         });
+//       });
+//     });
+
 //     res.status(200).json(filteredLeadsByStages);
 //   } catch (error) {
 //     console.error("❌ Error fetching leads by stages:", error);
@@ -469,120 +333,96 @@ router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
   try {
     console.log("🚀 Fetching leads grouped by stages...");
 
-    // Step 1: Fetch all pipelines (includes stages array)
-    console.log("📥 Step 1: Fetching pipelines...");
+    // Step 1: Fetch pipelines
     const pipelines = await req.pipeline.find();
-    console.log(
-      "✅ Pipelines fetched successfully. Total pipelines:",
-      pipelines.length
-    );
+    console.log("✅ Pipelines fetched:", pipelines.length);
 
-    pipelines.forEach((pipeline, index) => {
-      console.log(`Pipeline ${index + 1}: ${pipeline.pipelineName}`);
-      pipeline.stages.forEach((stage, idx) => {
-        console.log(
-          `  Stage ${idx + 1}: ${stage.stageName} (ID: ${stage._id})`
-        );
+    // Optional: Log pipeline & stage names
+    pipelines.forEach((pipeline, i) => {
+      console.log(`Pipeline ${i + 1}: ${pipeline.pipelineName}`);
+      pipeline.stages.forEach((stage, j) => {
+        console.log(`  Stage ${j + 1}: ${stage.stageName} (ID: ${stage._id})`);
       });
     });
 
-    // Step 2: Fetch all submissions directly from the Submission model
-    console.log("📥 Step 2: Fetching submissions...");
+    // Step 2: Fetch all submissions
     const submissions = await req.Submission.find().lean();
-    console.log(
-      `✅ Submissions fetched successfully. Total submissions: ${submissions.length}`
-    );
+    console.log(`✅ Submissions fetched: ${submissions.length}`);
 
-    // Log each submission with details
-    submissions.forEach((submission, idx) => {
-      console.log(`  Submission ${idx + 1}:`);
-      console.log(`    ID: ${submission._id}`);
-      console.log(`    Current Stage ID: ${submission.current_stage_id}`);
-      console.log(`    Submitted At: ${submission.submittedAt}`);
-      console.log("    Submission Data:");
-      submission.submissions.forEach((fieldData, dataIdx) => {
-        console.log(
-          `      ${dataIdx + 1}. ${fieldData.fieldLabel}: ${fieldData.value}`
-        );
-      });
-    });
-
-    // Step 3: Group submissions under stages based on current_stage_id
-    console.log("📂 Step 3: Grouping submissions under stages...");
+    // Step 3: Group submissions by stage
     const leadsByStages = pipelines.flatMap((pipeline) =>
       pipeline.stages.map((stage) => {
-        console.log(`🔍 Checking stage: ${stage.stageName} (ID: ${stage._id})`);
-
-        // Filter submissions correctly using ObjectId comparison
         const stageLeads = submissions
-          .filter((submission) => {
-            // Comparing ObjectId as strings
-            const match =
-              String(submission.current_stage_id) === String(stage._id);
-            console.log(
-              `    Submission ID ${submission._id} - Matches: ${match}`
-            );
-            return match;
-          })
-          .map((submission) => {
-            const data = {};
-            submission.submissions.forEach((fieldData) => {
-              data[fieldData.fieldLabel] = fieldData.value;
+          .filter((submission) => String(submission.current_stage_id) === String(stage._id))
+          .map((submission, index) => {
+            // Log each submission
+            console.log(`📥 Submission ${index + 1}: ${submission._id}`);
+            console.log(`    Stage ID: ${submission.current_stage_id}`);
+            console.log(`    Submitted At: ${submission.submittedAt}`);
+            console.log("    Fields:");
+
+            // Build full field list with label, value, and category
+            const data = submission.submissions.map((field, i) => {
               console.log(
-                `      Field: ${fieldData.fieldLabel}, Value: ${fieldData.value}`
+                `      ${i + 1}. ${field.fieldLabel} | ${field.value} | ${field.fieldCategory || "N/A"}`
               );
+              return {
+                fieldLabel: field.fieldLabel,
+                value: field.value,
+                category: field.fieldCategory || "N/A"
+              };
             });
+
             return {
               submission_id: submission._id,
               submittedAt: submission.submittedAt,
-              data: data,
+              data,
+              category: "N/A" // optional category label
             };
           });
 
-        console.log(
-          `✅ Found ${stageLeads.length} leads for stage: ${stage.stageName}`
-        );
+        console.log(`✅ Stage: ${stage.stageName} → ${stageLeads.length} leads`);
 
         return {
           stage: stage.stageName,
           stage_id: stage._id,
-          leads: stageLeads,
+          leads: stageLeads
         };
       })
     );
 
-    // Step 4: Filter out empty stages to return only populated ones
-    const filteredLeadsByStages = leadsByStages.filter(
-      (group) => group.leads && group.leads.length > 0
-    );
+    // Step 4: Filter out empty stages
+    const result = leadsByStages.filter((stage) => stage.leads.length > 0);
 
-    console.log("✅ Leads grouped successfully. Final result:");
-    filteredLeadsByStages.forEach((group, groupIdx) => {
-      console.log(`Group ${groupIdx + 1}:`);
-      console.log(`  Stage: ${group.stage}`);
-      console.log(`  Number of Leads: ${group.leads.length}`);
-      group.leads.forEach((lead, leadIdx) => {
-        console.log(`    Lead ${leadIdx + 1}:`);
-        console.log(`      ID: ${lead.submission_id}`);
-        console.log(`      Submitted At: ${lead.submittedAt}`);
-        console.log("      Data:");
-        Object.keys(lead.data).forEach((key) => {
-          console.log(`        ${key}: ${lead.data[key]}`);
+    // Final logging
+    console.log("✅ Final grouped leads:");
+    result.forEach((group, gIndex) => {
+      console.log(`Stage ${gIndex + 1}: ${group.stage}`);
+      group.leads.forEach((lead, lIndex) => {
+        console.log(`  Lead ${lIndex + 1}: ${lead.submission_id}`);
+        lead.data.forEach((f) => {
+          console.log(`    ${f.fieldLabel} = ${f.value} [${f.category}]`);
         });
       });
     });
 
-    res.status(200).json(filteredLeadsByStages);
+    // Send response
+    return res.status(200).json(result);
+
   } catch (error) {
-    console.error("❌ Error fetching leads by stages:", error);
-    res.status(500).json({
+    console.error("❌ Error in /leads-by-stages:", error);
+    return res.status(500).json({
       message: "Error fetching leads by stages",
       error: error.message,
     });
   }
 });
 
-router.post("/move-to-next-stage",DBMiddleware, async (req, res) => {
+
+
+
+
+router.post("/move-to-next-stage", DBMiddleware, async (req, res) => {
   // Start transaction logging
   console.log("🚀 Starting move-to-next-stage process", {
     timestamp: new Date().toISOString(),
@@ -770,9 +610,9 @@ router.post("/move-to-next-stage",DBMiddleware, async (req, res) => {
       error:
         process.env.NODE_ENV === "development"
           ? {
-              message: error.message,
-              stack: error.stack,
-            }
+            message: error.message,
+            stack: error.stack,
+          }
           : undefined,
     });
   } finally {

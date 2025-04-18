@@ -61,10 +61,21 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 const io = socketIo(server, {
   cors: {
     origin: allowedOrigins,
+    methods: ["GET", "POST"],
     credentials: true,
   },
 });
+io.on("connection", (socket) => {
+  console.log("🟢 Socket connected:", socket.id);
+  socket.on("join-room", (room) => {
+    console.log(`🚪 ${socket.id} joining room: ${room}`);
+    socket.join(room);
+  });
 
+  socket.on("disconnect", () => {
+    console.log("🔌 Socket disconnected:", socket.id);
+  });
+});
 // ✅ Connect to Main Database
 connectMainDB();
 app.use(
@@ -147,7 +158,9 @@ app.use(
 );
 whatsappService.on("qr", ({ companyName, qr }) => {
   console.log("📲 Emitting QR via socket for", companyName);
-  io.emit("whatsapp-qr", qr); // ✅ Ensure this is not empty or undefined
+
+  // emit to a specific room
+  io.to(companyName).emit("whatsapp-qr", qr);
 });
 
 whatsappService.on("ready", () => {

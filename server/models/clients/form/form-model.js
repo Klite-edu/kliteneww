@@ -16,6 +16,7 @@ const formSubmissionSchema = new mongoose.Schema({
     {
       fieldLabel: { type: String, required: true },
       fieldType: { type: String, required: true },
+      fieldCategory: { type: String, required: true },
       value: { type: mongoose.Schema.Types.Mixed, required: true },
     },
   ],
