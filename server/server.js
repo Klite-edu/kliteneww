@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const { updateTaskFrequency } = require("./middlewares/TaskScheduler");
 const { connectMainDB } = require("./database/db");
+// const { createClientDatabase } = require("./database/db");
 const socketIo = require("socket.io");
 const whatsappService = require("./routes/clients/WhatsappWeb/Whatsappservice");
 // ✅ Import Multer Configuration
@@ -47,6 +48,7 @@ const IndiamartRoutes = require("./routes/clients/appstore/indiamart/IndiamartRo
 const checkmisRoutes = require("./routes/clients/checklist/checkmisRoutes");
 const DelagationMISRoute = require("./routes/clients/taskDelegation/DelegationMIS");
 const variablesRoutes = require("./routes/clients/Variables/variablesRoutes");
+const MicrosoftRoutes = require("./routes/clients/Microsoft/MicrosoftRouter");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
@@ -60,7 +62,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 // Initialize Socket.IO after defining allowedOrigins
 const io = socketIo(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      callback(null, true); // allow all for dev
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -78,6 +82,7 @@ io.on("connection", (socket) => {
 });
 // ✅ Connect to Main Database
 connectMainDB();
+// createClientDatabase();
 app.use(
   cors({
     origin: allowedOrigins,
@@ -152,15 +157,20 @@ app.use("/api/store", IndiamartRoutes);
 app.use("/api/checkmis", checkmisRoutes);
 app.use("/api/delegationmis", DelagationMISRoute);
 app.use("/api/variables", variablesRoutes);
+app.use("/api/microsoft", MicrosoftRoutes);
 app.use(
   "/api/whatsapp",
   require("./routes/clients/WhatsappWeb/WhatsappwebRoutes")
 );
+// In your Whatsappservice.js
 whatsappService.on("qr", ({ companyName, qr }) => {
-  console.log("📲 Emitting QR via socket for", companyName);
-
-  // emit to a specific room
-  io.to(companyName).emit("whatsapp-qr", qr);
+  console.log(`📡 Broadcasting QR to room: ${companyName}`);
+  console.log("Full QR data:", qr); // Add this for debugging
+  io.to(companyName).emit("whatsapp-qr", {
+    qr: qr,
+    companyName: companyName,
+    timestamp: Date.now(),
+  });
 });
 
 whatsappService.on("ready", () => {

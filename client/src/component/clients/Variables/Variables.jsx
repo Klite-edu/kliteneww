@@ -11,6 +11,7 @@ const Variables = () => {
     fieldType: "Text",
     defaultValue: "",
     folder: "",
+    module: "contact",
   });
 
   const [variables, setVariables] = useState([]);
@@ -114,6 +115,7 @@ const Variables = () => {
         fieldType: "Text",
         defaultValue: "",
         folder: "",
+        module: "contact", // reset bhi same hona chahiye
       });
       await getVariables(token);
       setTimeout(() => setSuccess(""), 3000);
@@ -181,19 +183,17 @@ const Variables = () => {
               </div>
 
               <div className="vars-form-group">
-                <label className="vars-form-label">Field Type</label>
+                <label className="vars-form-label">Module</label>
                 <select
-                  name="fieldType"
+                  name="module"
                   className="vars-form-select"
-                  value={form.fieldType}
+                  value={form.module}
                   onChange={handleInputChange}
-                  required
                 >
-                  <option value="Text">Text</option>
-                  <option value="Number">Number</option>
-                  <option value="Dropdown">Dropdown</option>
-                  <option value="Date">Date</option>
-                  <option value="Checkbox">Checkbox</option>
+                  <option value="contact">Contact</option>
+                  <option value="lead">Lead</option>
+                  <option value="client">Client</option>
+                  <option value="employee">Employee</option>
                 </select>
               </div>
 

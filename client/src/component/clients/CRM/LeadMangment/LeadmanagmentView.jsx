@@ -2,8 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './LeadManagment.css'
-import ContactPopup from "./ConatactPopup";
-
+import ContactPopup from "./ConatactPopup"
 const LeadManagementView = ({ filters }) => {
   const navigate = useNavigate();
   // Main component state
@@ -211,16 +210,41 @@ const LeadManagementView = ({ filters }) => {
         );
         const stageLeads = matchingStage?.leads || [];
 
-        const contacts = stageLeads.map((lead, i) => ({
-          id: lead.submission_id,
-          name: lead.data?.Name || lead.data?.name || "No Name",
-          phone: lead.data?.phone || "N/A",
-          email: lead.data?.email || "N/A",
-          amount: lead.data?.amount || "0",
-          currentStage: stage._id,
-          stageName: stage.stageName,
-          when: lead.submittedAt || "N/A",
-        }));
+        const contacts = stageLeads.map((lead) => {
+          // Create an object to hold all field data with categories
+          const fieldData = {};
+          if (lead.data) {
+            Object.entries(lead.data).forEach(([fieldName, fieldValue]) => {
+              fieldData[fieldName] = {
+                value: fieldValue,
+                category: 'primary' // Assuming these are primary fields
+              };
+            });
+          }
+
+          // Add submission data if available
+          if (lead.submissions) {
+            lead.submissions.forEach(sub => {
+              fieldData[sub.fieldLabel] = {
+                value: sub.value,
+                category: sub.fieldCategory || 'other'
+              };
+            });
+          }
+
+          return {
+            id: lead.submission_id,
+            name: lead.data?.Name || lead.data?.name || "No Name",
+            phone: lead.data?.phone || "N/A",
+            email: lead.data?.email || "N/A",
+            amount: lead.data?.amount || "0",
+            currentStage: stage._id,
+            stageName: stage.stageName,
+            when: lead.submittedAt || "N/A",
+            fieldData: fieldData,
+            submissions: lead.submissions || []
+          };
+        });
 
         return {
           id: stage._id,
@@ -238,6 +262,7 @@ const LeadManagementView = ({ filters }) => {
       });
 
       setColumns(formattedColumns);
+
     } catch (error) {
       console.error("Error fetching leads:", error);
       setError(error.response?.data?.message || "Failed to fetch leads");
@@ -367,6 +392,12 @@ const LeadManagementView = ({ filters }) => {
                     </div>
                   </div>
 
+
+
+
+
+
+
                   <div className="contacts-list">
                     {column.contacts.length > 0 ? (
                       column.contacts.map((contact) => (
@@ -376,23 +407,25 @@ const LeadManagementView = ({ filters }) => {
                           onClick={() => handleContactClick(contact, column)}
                         >
                           <div className="contact-info">
-                            <h4>{contact.name}</h4>
-                            <p>
-                              <i className="bi bi-envelope"></i> {contact.email}
-                            </p>
-                            <p>
-                              <i className="bi bi-telephone"></i> {contact.phone}
-                            </p>
-                            {contact.amount && (
-                              <p>
-                                <i className="bi bi-currency-dollar"></i> {contact.amount}
-                              </p>
-                            )}
+                            {/* ✅ Updated block: Primary category fields as "Name: sdf" format */}
+                            <div className="field-data-container mb-2">
+                              {Object.entries(contact.fieldData || {})
+                                .filter(([_, fieldInfo]) => fieldInfo?.value?.category === 'primary')
+                                .map(([fieldName, fieldInfo], i) => (
+                                  <div key={i} className="field-data-item">
+                                    <span className=" fw-bold">{fieldInfo.value.fieldLabel} :</span> 
+                                    <span> {fieldInfo.value.value}</span>
+                                  </div>
+                                ))}
+                            </div>
+
+
                             <p className="submission-date">
                               <i className="bi bi-clock"></i>{" "}
                               {new Date(contact.when).toLocaleDateString()}
                             </p>
                           </div>
+
                           <button
                             className="btn-next-stage"
                             onClick={(e) => {
@@ -405,11 +438,18 @@ const LeadManagementView = ({ filters }) => {
                         </div>
                       ))
                     ) : (
-                      <div className="empty-state">
-                        No contacts in this stage
-                      </div>
+                      <div className="empty-state">No contacts in this stage</div>
                     )}
                   </div>
+
+
+
+
+
+
+
+
+
                 </div>
               </div>
             );
@@ -423,7 +463,7 @@ const LeadManagementView = ({ filters }) => {
           contact={selectedContact}
           stageDetails={selectedStageDetails}
           pipelineId={selectedPipeline._id}
-          leadId={selectedContact.id}  
+          leadId={selectedContact.id}
           stageId={selectedContact.currentStage}
           onClose={() => {
             setSelectedContact(null);
@@ -431,7 +471,6 @@ const LeadManagementView = ({ filters }) => {
           }}
         />
       )}
-      
     </div>
   );
 };

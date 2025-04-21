@@ -21,9 +21,18 @@ const DelegateTask = () => {
       try {
         // Fetch token, role, and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true })
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
         ]);
 
         const userToken = tokenRes.data.token;
@@ -44,11 +53,10 @@ const DelegateTask = () => {
           `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
           {
             headers: { Authorization: `Bearer ${userToken}` },
-            withCredentials: true
+            withCredentials: true,
           }
         );
         setDoers(employeesRes.data);
-
       } catch (error) {
         console.error("Error fetching initial data:", error);
         navigate("/login");
@@ -75,12 +83,12 @@ const DelegateTask = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            withCredentials: true
+            withCredentials: true,
           },
         }
       );
       if (response.status === 201) {
-        alert("Task delegated successfully!");
+        window.alert("✅ Task delegated successfully!");
         navigate("/delegation-tasklist");
         setSelectedDoer("");
         setTaskName("");

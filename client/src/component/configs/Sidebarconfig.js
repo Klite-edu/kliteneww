@@ -90,6 +90,7 @@ const sidebarConfig = {
       ],
     },
     { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
+    { name: "Microsoft Connect", path: "/microsoft", icon: faProjectDiagram },
     { name: "Whatsapp Web", path: "/seleniumweb", icon: faComments },
     { name: "Raised Ticket", path: "/issue", icon: faProjectDiagram },
     { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
@@ -117,11 +118,11 @@ const sidebarConfig = {
       ],
     },
     // { name: "Form", path: "/form", icon: faClipboardList },
-    // {
-    //   name: "Create Variables",
-    //   path: "/variables",
-    //   icon: faMagnifyingGlassDollar,
-    // },
+    {
+      name: "Create Variables",
+      path: "/variables",
+      icon: faMagnifyingGlassDollar,
+    },
     // {
     //   name: "NBD-Sales WA-Bot(UD)",
     //   path: "/chatbotform",

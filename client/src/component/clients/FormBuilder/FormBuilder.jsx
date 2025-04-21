@@ -23,7 +23,6 @@ const FormBuilder = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Fetch token, role, and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
@@ -38,11 +37,10 @@ const FormBuilder = () => {
             { withCredentials: true }
           ),
         ]);
-  
+
         const userToken = tokenRes.data.token;
         let userId = tokenRes.data.userId;
-  
-        // If userId is not obtained from token response, try fetching via email endpoint
+
         if (!userId) {
           try {
             const userIdRes = await axios.get(
@@ -54,43 +52,41 @@ const FormBuilder = () => {
             console.error("Error fetching user email:", error);
           }
         }
-  
-        // Check if both token and userId are present
+
         if (!userToken || !userId) {
           alert("Client ID is missing. Please login as a client.");
           navigate("/login");
           return;
         }
-  
+
         setToken(userToken);
         setClientId(userId);
-  
+
         const userRole = roleRes.data.role;
         const userPermissions = permissionsRes.data.permissions || {};
-  
+
         if (!userRole) {
           navigate("/login");
           return;
         }
-  
+
         if (userRole !== "client") {
           alert("Unauthorized: Only clients can access this section.");
           navigate("/");
           return;
         }
-  
+
         setRole(userRole);
         setCustomPermissions(userPermissions);
-  
+
       } catch (error) {
         console.error("Error fetching initial data:", error);
         navigate("/login");
       }
     };
-  
+
     fetchInitialData();
   }, [navigate]);
-  
 
   const addField = () => {
     setFields([
@@ -98,6 +94,7 @@ const FormBuilder = () => {
       {
         label: "New Field",
         type: "text",
+        fieldCategory: "primary", // New field added
         required: false,
         options: ["Option 1"],
       },
@@ -147,7 +144,10 @@ const FormBuilder = () => {
 
     const formData = {
       clientId,
-      fields,
+      fields: fields.map(field => ({
+        ...field,
+        fieldCategory: field.fieldCategory || "primary" // Include field category in saved data
+      })),
       buttons: {
         BackgroundColor: buttonConfig.bgColor,
         color: buttonConfig.textColor,
@@ -172,6 +172,9 @@ const FormBuilder = () => {
     };
 
     try {
+
+      console.log(`formData - `,formData);
+
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/builder/create`,
         formData,
@@ -183,6 +186,7 @@ const FormBuilder = () => {
         }
       );
       alert(`Form saved successfully! Form ID: ${response.data.data._id}`);
+      
       setFormTitle("");
       setFields([]);
     } catch (error) {
@@ -250,11 +254,12 @@ const FormBuilder = () => {
         return <input type="text" className="form-control" />;
     }
   };
+
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
-      <div className="main-formbuilder">
+      <div className="main-formbuilder ">
         <div className="container-fluid mt-4">
           <div
             className="d-flex mb-4"
@@ -520,7 +525,7 @@ const FormBuilder = () => {
                         style={{ backgroundColor: "var(--white)" }}
                       >
                         <div className="row align-items-center mb-3">
-                          <div className="col-5">
+                          <div className="col-4 m-0">
                             <label
                               className="form-label mb-0"
                               style={{ color: "var(--primary-dark)" }}
@@ -537,7 +542,7 @@ const FormBuilder = () => {
                               style={{ borderRadius: "var(--border-radius)" }}
                             />
                           </div>
-                          <div className="col-5">
+                          <div className="col-3 m-0">
                             <label
                               className="form-label mb-0"
                               style={{ color: "var(--primary-dark)" }}
@@ -556,7 +561,6 @@ const FormBuilder = () => {
                               <option value="email">Email</option>
                               <option value="password">Password</option>
                               <option value="number">Number</option>
-                              <option value="date">Date</option>
                               <option value="datetime-local">
                                 Date & Time
                               </option>
@@ -565,7 +569,26 @@ const FormBuilder = () => {
                               <option value="select">Dropdown</option>
                             </select>
                           </div>
-                          <div className="col-2">
+                          <div className="col-3 m-0">
+                            <label
+                              className="form-label mb-0"
+                              style={{ color: "var(--primary-dark)" }}
+                            >
+                              Category
+                            </label>
+                            <select
+                              className="form-select"
+                              value={field.fieldCategory || "primary"}
+                              onChange={(e) =>
+                                updateField(index, "fieldCategory", e.target.value)
+                              }
+                              style={{ borderRadius: "var(--border-radius)" }}
+                            >
+                              <option value="primary">Primary</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                          <div className="col-2 m-0">
                             <div className="form-check mt-4">
                               <input
                                 type="checkbox"
@@ -699,12 +722,15 @@ const FormBuilder = () => {
                       {fields.map((field, index) => (
                         <div key={index} className="mb-3">
                           <label
-                            className="form-label"
+                            className="form-label fs-5"
                             style={{ color: "var(--primary-dark)" }}
                           >
                             {field.label || "New Field"}
                             {field.required && (
                               <span className="text-danger ms-1">*</span>
+                            )}
+                            {field.fieldCategory === "primary" && (
+                              <span className="badge bg-primary ms-2">Primary</span>
                             )}
                           </label>
                           {renderFieldPreview(field)}

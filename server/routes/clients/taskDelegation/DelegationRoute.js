@@ -33,15 +33,26 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
 
     if (populatedTask?.doer?.number && companyName) {
       try {
-        // const completeUrl = `https://app.autopilotmybusiness.com/api/public/task/complete`;
-        // const message = `🚀 New Task Assigned!\n\n*Task:* ${name}\n*Description:* ${description}\n*Due Date:* ${dueDate}\n*Time:* ${time}\n\n✅ Click to mark as completed:\n${completeUrl}`;
         const message = `🚀 New Task Assigned!\n\n*Task:* ${name}\n*Description:* ${description}\n*Due Date:* ${dueDate}\n*Time:* ${time}`;
+        try {
+          const status = await whatsappService.getStatus(companyName);
 
-        const result = await whatsappService.sendMessage(
-          companyName,
-          populatedTask.doer.number.replace(/\D/g, ""),
-          message
-        );
+          if (status.connected) {
+            const result = await whatsappService.sendMessage(
+              companyName,
+              populatedTask.doer.number.replace(/\D/g, ""),
+              message
+            );
+            console.log("✅ WhatsApp message result:", result);
+          } else {
+            console.log("ℹ️ WhatsApp not connected. Skipping message send.");
+          }
+        } catch (whatsappError) {
+          console.warn(
+            "⚠️ Skipping WhatsApp message due to connection error:",
+            whatsappError.message
+          );
+        }
 
         console.log("✅ WhatsApp message result:", result);
       } catch (whatsappError) {

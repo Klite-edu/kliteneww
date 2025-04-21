@@ -11,75 +11,124 @@ const mongooseConnections = new Map();
 class WhatsAppService extends EventEmitter {
   constructor() {
     super();
+    console.log("[WhatsAppService] Initializing WhatsAppService...");
     this.clients = new Map(); // companyName => Client instance
+    this.connectManuallyTriggered = new Map();
     this.JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
     this.mongoURI = process.env.MONGO_URI;
 
-    // Initialize session health checker
+    console.log("[WhatsAppService] Setting up session health checker...");
     this.sessionCheckInterval = setInterval(() => {
+      console.log("[WhatsAppService] Running scheduled session health check");
       this.checkSessions();
     }, 3600000); // Check every hour
 
     // Cleanup on process exit
-    process.on("SIGTERM", () => this.cleanup());
-    process.on("SIGINT", () => this.cleanup());
+    process.on("SIGTERM", () => {
+      console.log("[WhatsAppService] SIGTERM received, initiating cleanup...");
+      this.cleanup();
+    });
+    process.on("SIGINT", () => {
+      console.log("[WhatsAppService] SIGINT received, initiating cleanup...");
+      this.cleanup();
+    });
+
+    console.log("[WhatsAppService] Initialization complete");
   }
 
   async checkSessions() {
-    console.log("🔍 Running session health check...");
+    console.log("[SessionCheck] 🔍 Running session health check...");
+    console.log(`[SessionCheck] Current clients: ${this.clients.size}`);
+
     for (const [companyName, client] of this.clients) {
+      console.log(`[SessionCheck] Checking ${companyName}...`);
       try {
         if (!client.info?.wid) {
           console.log(
-            `⚠️ Session check: ${companyName} not connected, reinitializing`
+            `[SessionCheck] ⚠️ Session check: ${companyName} not connected, reinitializing`
           );
           await this.initializeClient(companyName);
+        } else {
+          console.log(
+            `[SessionCheck] ✅ ${companyName} is connected and healthy`
+          );
         }
       } catch (err) {
-        console.error(`❌ Session check failed for ${companyName}:`, err);
+        console.error(
+          `[SessionCheck] ❌ Check failed for ${companyName}:`,
+          err
+        );
       }
     }
+    console.log("[SessionCheck] Health check completed");
   }
 
   async cleanup() {
-    console.log("🧹 Cleaning up WhatsAppService...");
+    console.log("[Cleanup] 🧹 Cleaning up WhatsAppService...");
     clearInterval(this.sessionCheckInterval);
+    console.log("[Cleanup] Stopped session health checker");
+
+    // Log current state before cleanup
+    console.log(`[Cleanup] Current clients: ${this.clients.size}`);
+    console.log(
+      `[Cleanup] Current DB connections: ${mongooseConnections.size}`
+    );
 
     // Disconnect all clients
     for (const [companyName] of this.clients) {
+      console.log(`[Cleanup] Disconnecting client for ${companyName}...`);
       await this.disconnect(companyName);
     }
 
     // Close all mongoose connections
     for (const [companyName, connection] of mongooseConnections) {
       try {
+        console.log(
+          `[Cleanup] Closing MongoDB connection for ${companyName}...`
+        );
         await connection.disconnect();
-        console.log(`✅ Closed MongoDB connection for ${companyName}`);
+        console.log(
+          `[Cleanup] ✅ Closed MongoDB connection for ${companyName}`
+        );
       } catch (err) {
         console.error(
-          `❌ Error closing MongoDB connection for ${companyName}:`,
+          `[Cleanup] ❌ Error closing MongoDB connection for ${companyName}:`,
           err
         );
       }
     }
 
     mongooseConnections.clear();
+    console.log("[Cleanup] 🎉 Cleanup completed successfully");
   }
 
   async getMongoStore(companyName) {
+    console.log(`[MongoStore] Requested store for ${companyName}`);
+
     if (mongooseConnections.has(companyName)) {
+      console.log(`[MongoStore] Existing connection found for ${companyName}`);
       const existingConnection = mongooseConnections.get(companyName);
+
       if (existingConnection.readyState === 1) {
-        // Connected
+        console.log(
+          `[MongoStore] ✅ Reusing active connection for ${companyName}`
+        );
         return new MongoStore({ mongoose: existingConnection });
       }
-      // If connection exists but isn't connected, clean it up
-      await existingConnection.close().catch(() => {});
+
+      console.log(
+        `[MongoStore] Existing connection not ready (state: ${existingConnection.readyState}), cleaning up...`
+      );
+      console.log(
+        `[MongoStore] Existing connection not ready (state: ${existingConnection.readyState}), cleaning up...`
+      );
+      await existingConnection.disconnect().catch(() => {});
       mongooseConnections.delete(companyName);
     }
-
+    console.log(`[MongoStore] Creating new connection for ${companyName}...`);
     const customMongoose = new Mongoose.Mongoose();
     try {
+      console.log(`[MongoStore] Connecting to MongoDB for ${companyName}...`);
       await customMongoose.connect(this.mongoURI, {
         dbName: `whatsapp_${companyName}`,
         useNewUrlParser: true,
@@ -90,43 +139,79 @@ class WhatsAppService extends EventEmitter {
         socketTimeoutMS: 30000,
       });
 
+      if (customMongoose.connection.readyState !== 1) {
+        throw new Error("MongoDB not connected yet");
+      }
+
       mongooseConnections.set(companyName, customMongoose);
+      console.log(
+        `[MongoStore] ✅ Successfully connected MongoDB for ${companyName}`
+      );
       return new MongoStore({ mongoose: customMongoose });
     } catch (err) {
-      console.error(`❌ MongoDB connection failed for ${companyName}:`, err);
+      console.error(
+        `[MongoStore] ❌ Connection failed for ${companyName}:`,
+        err
+      );
       throw err;
     }
   }
 
   getCompanyNameFromRequest(req) {
+    console.log("[Auth] Extracting company name from request");
     try {
       const token =
         req.cookies?.token || req.headers?.authorization?.split(" ")[1];
-      if (!token) return null;
 
+      if (!token) {
+        console.log("[Auth] No token found in request");
+        return null;
+      }
+
+      console.log("[Auth] Token found, verifying...");
       const decoded = jwt.verify(token, this.JWT_SECRET);
-      return decoded.companyName || null;
+      const companyName = decoded.companyName || null;
+
+      console.log(`[Auth] Token verified, companyName: ${companyName}`);
+      return companyName;
     } catch (err) {
-      console.error("❌ Invalid token:", err.message);
+      console.error("[Auth] ❌ Token verification failed:", err.message);
       return null;
     }
   }
 
   async initializeClient(companyName) {
-    // Check for existing valid client
+    console.log(`[ClientInit] Initializing client for ${companyName}...`);
     if (this.clients.has(companyName)) {
       const existingClient = this.clients.get(companyName);
-      if (existingClient.info?.wid) {
-        console.log(`✅ Reusing connected client for ${companyName}`);
+      if (!existingClient.info?.wid) {
+        console.log(
+          `[ClientInit] ⚠️ Old client exists but not connected. Cleaning it...`
+        );
+        try {
+          if (existingClient?.destroy) await existingClient.destroy();
+        } catch (destroyErr) {
+          console.warn(`[ClientInit] ⚠️ Destroy error:`, destroyErr.message);
+        }
+        this.clients.delete(companyName);
+      } else {
+        console.log(
+          `[ClientInit] ✅ Already connected. Skipping initialization.`
+        );
         return existingClient;
       }
-      // Clean up invalid client
-      this.clients.delete(companyName);
     }
 
+    console.log(`[ClientInit] Setting up store for ${companyName}...`);
     const store = await this.getMongoStore(companyName);
     const isProduction = process.env.NODE_ENV === "production";
+    console.log(
+      `[ClientInit] Environment: ${isProduction ? "Production" : "Development"}`
+    );
 
+    console.log(
+      `[ClientInit] Creating new client instance for ${companyName}...`
+    );
     const client = new Client({
       authStrategy: new RemoteAuth({
         store: store,
@@ -158,67 +243,122 @@ class WhatsAppService extends EventEmitter {
       takeoverTimeoutMs: 5000,
     });
 
-    // Event handlers
+    // Enhanced event handlers with logging
     client.on("qr", (qr) => {
-      console.log(`📲 QR generated for ${companyName}`);
-      this.emit("qr", { companyName, qr });
+      console.log(`[ClientEvent] 📲 QR generated for ${companyName}`);
+      console.log("[ClientEvent] QR VALUE:", qr);
+
+      const isManuallyTriggered =
+        this.connectManuallyTriggered.get(companyName);
+
+      if (isManuallyTriggered) {
+        setTimeout(() => {
+          this.emit("qr", { companyName, qr });
+          console.log(`[ClientEvent] ✅ Emitted QR event for ${companyName}`);
+
+          // 🧹 Clear the manual flag to avoid repeated emission
+          this.connectManuallyTriggered.set(companyName, false);
+        }, 1000);
+      } else {
+        console.log(
+          `[ClientEvent] ⚠️ QR NOT emitted — user did not click Connect yet for ${companyName}`
+        );
+      }
     });
 
     client.on("ready", () => {
       const phoneNumber = client.info?.wid?.user;
-      console.log(`✅ Client ready for ${companyName}: ${phoneNumber}`);
+      console.log(
+        `[ClientEvent] ✅ Client ready for ${companyName}: ${phoneNumber}`
+      );
       this.emit("ready", { companyName, phoneNumber });
     });
 
     client.on("authenticated", () => {
-      console.log(`🔐 Authenticated for ${companyName}`);
+      console.log(`[ClientEvent] 🔐 Authenticated for ${companyName}`);
       this.emit("authenticated", { companyName });
     });
 
     client.on("auth_failure", (msg) => {
-      console.warn(`❌ Auth failed for ${companyName}:`, msg);
+      console.warn(`[ClientEvent] ❌ Auth failed for ${companyName}:`, msg);
       this.emit("auth_failure", { companyName, message: msg });
     });
 
     client.on("disconnected", async (reason) => {
-      console.warn(`🔌 Disconnected ${companyName}: ${reason}`);
+      console.warn(`[ClientEvent] 🔌 Disconnected ${companyName}: ${reason}`);
       this.emit("disconnected", { companyName, reason });
 
-      // Attempt automatic reconnection
       try {
-        console.log(`♻️ Attempting to reconnect ${companyName}`);
+        console.log(`[ClientEvent] ♻️ Attempting to reconnect ${companyName}`);
         await this.initializeClient(companyName);
       } catch (err) {
-        console.error(`❌ Reconnection failed for ${companyName}:`, err);
+        console.error(
+          `[ClientEvent] ❌ Reconnection failed for ${companyName}:`,
+          err
+        );
       }
     });
 
     client.on("loading_screen", (percent, message) => {
-      console.log(`📶 [${companyName}] Loading: ${percent}% - ${message}`);
+      console.log(
+        `[ClientEvent] 📶 [${companyName}] Loading: ${percent}% - ${message}`
+      );
     });
 
     client.on("change_state", (state) => {
-      console.log(`🔄 [${companyName}] State changed: ${state}`);
+      console.log(`[ClientEvent] 🔄 [${companyName}] State changed: ${state}`);
+    });
+
+    client.on("message", (msg) => {
+      console.log(
+        `[ClientEvent] 📩 New message for ${companyName} from ${msg.from}: ${msg.body}`
+      );
     });
 
     try {
+      console.log(`[ClientInit] Initializing client for ${companyName}...`);
       await client.initialize();
       this.clients.set(companyName, client);
+      console.log(
+        `[ClientInit] ✅ Successfully initialized client for ${companyName}`
+      );
       return client;
     } catch (err) {
-      console.error(`❌ Failed to initialize client for ${companyName}:`, err);
-      // Clean up if initialization fails
+      console.error(
+        `[ClientInit] ❌ Initialization failed for ${companyName}:`,
+        err
+      );
+
       try {
-        await client.destroy();
+        console.log(
+          `[ClientInit] Attempting to destroy failed client for ${companyName}`
+        );
+        if (client?.destroy) {
+          try {
+            await client.destroy();
+          } catch (destroyErr) {
+            console.error(
+              `[ClientInit] ❌ Destroy failed:`,
+              destroyErr.message
+            );
+          }
+        }
       } catch (cleanupErr) {
-        console.error(`❌ Cleanup failed for ${companyName}:`, cleanupErr);
+        console.error(
+          `[ClientInit] ❌ Cleanup failed for ${companyName}:`,
+          cleanupErr
+        );
       }
+
       throw err;
     }
   }
 
   async getStatus(companyName) {
+    console.log(`[Status] Requested status for ${companyName}`);
+
     if (!this.clients.has(companyName)) {
+      console.log(`[Status] No client found for ${companyName}`);
       return {
         connected: false,
         phoneNumber: null,
@@ -228,78 +368,126 @@ class WhatsAppService extends EventEmitter {
     }
 
     const client = this.clients.get(companyName);
-    return {
+    const status = {
       connected: !!client.info?.wid,
       phoneNumber: client.info?.wid?.user || null,
       state: client.state,
       companyName,
       lastSeen: client.info?.wid?.server?.lastSeen,
     };
+
+    console.log(`[Status] Returning status for ${companyName}:`, status);
+    return status;
   }
 
   async sendMessage(companyName, phone, message) {
+    console.log(
+      `[SendMessage] Request to send message for ${companyName} to ${phone}`
+    );
+
     const client = await this.initializeClient(companyName);
+    console.log(`[SendMessage] Client initialized for ${companyName}`);
 
     if (!client?.info?.wid) {
+      console.log(`[SendMessage] ❌ Client not connected for ${companyName}`);
       throw new Error("Client not connected or authenticated yet");
     }
 
     // Validate phone number format
     if (!phone || !/^\d+$/.test(phone)) {
+      console.log(`[SendMessage] ❌ Invalid phone number format: ${phone}`);
       throw new Error("Invalid phone number format - only digits allowed");
     }
 
     const chatId = `${phone}@c.us`;
-    const result = await client.sendMessage(chatId, message);
-    return result;
+    console.log(`[SendMessage] Sending message to ${chatId}`);
+
+    try {
+      const result = await client.sendMessage(chatId, message);
+      console.log(`[SendMessage] ✅ Message sent to ${chatId}`);
+      return result;
+    } catch (err) {
+      console.error(
+        `[SendMessage] ❌ Failed to send message to ${chatId}:`,
+        err
+      );
+      throw err;
+    }
   }
 
   async disconnect(companyName) {
+    console.log(`[Disconnect] Requested disconnect for ${companyName}`);
+
     if (!this.clients.has(companyName)) {
-      console.warn(`⚠️ No client found in map for ${companyName}`);
-      return false;
+      console.warn(`[Disconnect] ⚠️ No client found for ${companyName}`);
+      // 🟢 Return true here so frontend sees success on reload
+      return true;
     }
+
     const client = this.clients.get(companyName);
-    console.log(`📞 Disconnecting client with info:`, client?.info);
+    console.log(`[Disconnect] Client found, info:`, client?.info);
     let success = true;
 
     try {
+      console.log(`[Disconnect] Attempting logout for ${companyName}...`);
       if (client?.logout) await client.logout();
+      console.log(`[Disconnect] ✅ Logout successful for ${companyName}`);
     } catch (err) {
-      console.warn(`⚠️ Logout error for ${companyName}:`, err.message);
-      success = false;
-    }
-
-    try {
-      if (client?.destroy) await client.destroy();
-    } catch (err) {
-      console.warn(`⚠️ Destroy error for ${companyName}:`, err.message);
-      success = false;
-    }
-    console.log("✅ Logout and destroy executed for", companyName);
-    this.clients.delete(companyName);
-    console.log("🗑 Client deleted from map for", companyName);
-    // Clean up session data
-    try {
-      const store = await this.getMongoStore(companyName);
-      await store.remove({ session: companyName });
-      console.log(`🧹 Session removed from DB for ${companyName}`);
-    } catch (err) {
-      console.error(
-        `❌ Failed to remove session from DB for ${companyName}:`,
+      console.warn(
+        `[Disconnect] ⚠️ Logout error for ${companyName}:`,
         err.message
       );
       success = false;
     }
 
-    // Clean up mongoose connection if no other clients are using it
+    try {
+      console.log(`[Disconnect] Attempting destroy for ${companyName}...`);
+      if (client?.destroy) await client.destroy();
+      console.log(`[Disconnect] ✅ Destroy successful for ${companyName}`);
+    } catch (err) {
+      console.warn(
+        `[Disconnect] ⚠️ Destroy error for ${companyName}:`,
+        err.message
+      );
+      success = false;
+    }
+
+    console.log(`[Disconnect] Removing client from map for ${companyName}`);
+    this.clients.delete(companyName);
+
+    // Clean up session data
+    try {
+      console.log(`[Disconnect] Cleaning session data for ${companyName}...`);
+      const store = await this.getMongoStore(companyName);
+      try {
+        await store.remove({ session: companyName });
+      } catch (err) {
+        console.warn(`[Disconnect] ⚠️ Failed to remove session:`, err.message);
+      }
+
+      console.log(`[Disconnect] 🧹 Session removed from DB for ${companyName}`);
+    } catch (err) {
+      console.error(
+        `[Disconnect] ❌ Failed to remove session for ${companyName}:`,
+        err.message
+      );
+      success = false;
+    }
+
+    // Clean up mongoose connection
     if (mongooseConnections.has(companyName)) {
       try {
+        console.log(
+          `[Disconnect] Closing MongoDB connection for ${companyName}...`
+        );
         await mongooseConnections.get(companyName).disconnect();
         mongooseConnections.delete(companyName);
+        console.log(
+          `[Disconnect] ✅ MongoDB connection closed for ${companyName}`
+        );
       } catch (err) {
         console.error(
-          `❌ Error closing MongoDB connection for ${companyName}:`,
+          `[Disconnect] ❌ Error closing MongoDB connection for ${companyName}:`,
           err
         );
         success = false;
@@ -307,7 +495,7 @@ class WhatsAppService extends EventEmitter {
     }
 
     console.log(
-      `✅ Disconnect ${
+      `[Disconnect] Disconnect ${
         success ? "successful" : "with errors"
       } for ${companyName}`
     );
@@ -315,16 +503,29 @@ class WhatsAppService extends EventEmitter {
   }
 
   async getLatestQrCode(companyName) {
-    if (!this.clients.has(companyName)) return null;
+    console.log(`[QR] Requested latest QR code for ${companyName}`);
+
+    if (!this.clients.has(companyName)) {
+      console.log(`[QR] No client found for ${companyName}`);
+      return null;
+    }
+
     const client = this.clients.get(companyName);
-    return client.qrCode || null;
+    const qr = client.qrCode || null;
+    console.log(
+      `[QR] Returning ${qr ? "found" : "no"} QR code for ${companyName}`
+    );
+    return qr;
   }
 }
 
 // Singleton instance
+console.log("[App] Creating WhatsAppService singleton instance...");
 const whatsappService = new WhatsAppService();
 
 // Export both the instance and helper function
 module.exports = whatsappService;
 module.exports.getCompanyNameFromRequest =
   whatsappService.getCompanyNameFromRequest.bind(whatsappService);
+
+console.log("[App] WhatsAppService module exported");

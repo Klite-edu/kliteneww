@@ -10,6 +10,7 @@ import { IoTicketOutline } from "react-icons/io5";
 import { BiRevision, BiTask } from "react-icons/bi";
 import { GrCompliance } from "react-icons/gr";
 import RaiseTicketModal from "./RaiseTicketModal";
+import Navbar from "../../../Navbar/Navbar";
 
 const DelegationList = () => {
   const [tasks, setTasks] = useState([]);
@@ -39,7 +40,7 @@ const DelegationList = () => {
     type: "Help",
     priority: "Medium",
     relatedTask: "",
-    employeeName: ""
+    employeeName: "",
   });
   const [employees, setEmployees] = useState([]);
   const [completedTasks, setCompletedTasks] = useState({});
@@ -49,30 +50,41 @@ const DelegationList = () => {
   const [token, setToken] = useState("");
   const navigate = useNavigate();
 
-  const fetchTasks = useCallback(async (token) => {
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/delegation/list`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            withCredentials: true,
-          },
+  const fetchTasks = useCallback(
+    async (token) => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/delegation/list`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              withCredentials: true,
+            },
+          }
+        );
+
+        let taskList = response.data;
+
+        if (role === "user" && userId) {
+          taskList = taskList.filter((task) => {
+            return (
+              task.doer &&
+              (String(task.doer._id) === String(userId) ||
+                String(task.doer) === String(userId))
+            );
+          });
         }
-      );
 
-      let taskList = response.data;
+        console.log("tasklist", taskList);
 
-      if (role === "user" && userId) {
-        taskList = taskList.filter((task) => task.doer?._id === userId);
+        setTasks(taskList);
+        setFilteredTasks(taskList);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
       }
-
-      setTasks(taskList);
-      setFilteredTasks(taskList);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    }
-  }, [role, userId]);
+    },
+    [role, userId]
+  );
 
   const fetchEmployees = useCallback(async (token) => {
     try {
@@ -114,20 +126,20 @@ const DelegationList = () => {
         const userPermissions = permissionsRes.data.permissions || {};
 
         if (!userToken || !userRole) {
-          navigate("/login");
+          navigate("/");
           return;
         }
 
         setToken(userToken);
         setRole(userRole);
-        setUserId(roleRes.data.userId);
+        setUserId(tokenRes.data.userId);
         setCustomPermissions(userPermissions);
 
         await fetchEmployees(userToken);
         await fetchTasks(userToken);
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/login");
+        navigate("/");
       }
     };
 
@@ -288,7 +300,7 @@ const DelegationList = () => {
       type: "Help",
       priority: "Medium",
       relatedTask: task._id,
-      employeeName: task.doer.fullName
+      employeeName: task.doer.fullName,
     });
     setShowTicketModal(true);
   };
@@ -321,6 +333,7 @@ const DelegationList = () => {
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
+      <Navbar />
       <div className="delegation-wrapper">
         <h2 className="title">TASK DELEGATION DASHBOARD</h2>
 
@@ -384,8 +397,10 @@ const DelegationList = () => {
               <tbody>
                 {filteredTasks.map((task) => {
                   const isEditing = editingTask && editingTask._id === task._id;
-                  const isRevising = revisingTask && revisingTask._id === task._id;
-                  const isCompleted = task.status === "Completed" || completedTasks[task._id];
+                  const isRevising =
+                    revisingTask && revisingTask._id === task._id;
+                  const isCompleted =
+                    task.status === "Completed" || completedTasks[task._id];
 
                   return (
                     <tr key={task._id}>
@@ -449,7 +464,11 @@ const DelegationList = () => {
                       )}
 
                       <td>{task.status || "Pending"}</td>
-                      <td>{task.completedAt ? new Date(task.completedAt).toLocaleString() : "N/A"}</td>
+                      <td>
+                        {task.completedAt
+                          ? new Date(task.completedAt).toLocaleString()
+                          : "N/A"}
+                      </td>
 
                       {isRevising ? (
                         <>
@@ -481,7 +500,11 @@ const DelegationList = () => {
                         </>
                       ) : (
                         <>
-                          <td>{task.revisedDate ? new Date(task.revisedDate).toLocaleDateString() : "N/A"}</td>
+                          <td>
+                            {task.revisedDate
+                              ? new Date(task.revisedDate).toLocaleDateString()
+                              : "N/A"}
+                          </td>
                           <td>{task.revisedTime || "N/A"}</td>
                           <td>{task.revisedReason || "N/A"}</td>
                         </>
@@ -490,13 +513,35 @@ const DelegationList = () => {
                       <td>
                         {isEditing ? (
                           <>
-                            <button className="btn green" onClick={handleUpdateTask}>Save</button>
-                            <button className="btn red" onClick={() => setEditingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                            <button
+                              className="btn green"
+                              onClick={handleUpdateTask}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="btn red"
+                              onClick={() => setEditingTask(null)}
+                              style={{ marginLeft: "8px" }}
+                            >
+                              Cancel
+                            </button>
                           </>
                         ) : isRevising ? (
                           <>
-                            <button className="btn green" onClick={handleReviseSubmit}>Save</button>
-                            <button className="btn red" onClick={() => setRevisingTask(null)} style={{ marginLeft: "8px" }}>Cancel</button>
+                            <button
+                              className="btn green"
+                              onClick={handleReviseSubmit}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="btn red"
+                              onClick={() => setRevisingTask(null)}
+                              style={{ marginLeft: "8px" }}
+                            >
+                              Cancel
+                            </button>
                           </>
                         ) : (
                           <>
@@ -504,33 +549,62 @@ const DelegationList = () => {
                               <>
                                 {isCompleted ? (
                                   <span className="completed-icon">
-                                    <FaCheck style={{ color: "green", fontSize: "20px" }} />
+                                    <FaCheck
+                                      style={{
+                                        color: "green",
+                                        fontSize: "20px",
+                                      }}
+                                    />
                                   </span>
                                 ) : (
                                   <div className="d-flex">
-                                    <button className="btn green" onClick={() => handleCompleteTask(task._id)}>
+                                    <button
+                                      className="btn green"
+                                      onClick={() =>
+                                        handleCompleteTask(task._id)
+                                      }
+                                    >
                                       <GrCompliance className="fw-bold fs-3" />
                                     </button>
-                                    <button className="btn blue" onClick={() => handleReviseClick(task)}>
+                                    <button
+                                      className="btn blue"
+                                      onClick={() => handleReviseClick(task)}
+                                    >
                                       <BiRevision className="fw-bold fs-3" />
                                     </button>
-                                    <button className="btn btn-warning" onClick={() => handleTicketClick(task)} aria-label="Create ticket" title="Create Ticket">
+                                    <button
+                                      className="btn btn-warning"
+                                      onClick={() => handleTicketClick(task)}
+                                      aria-label="Create ticket"
+                                      title="Create Ticket"
+                                    >
                                       <IoTicketOutline className="fw-bold fs-3" />
                                     </button>
                                   </div>
                                 )}
                               </>
                             )}
-                            {role === "client" && task.status !== "Completed" && (
-                              <div className="d-flex">
-                                <button className="btn green me-2" onClick={() => handleEditClick(task)} aria-label="Edit task" title="Edit">
-                                  <CiEdit className="fw-bold fs-3" />
-                                </button>
-                                <button className="btn red" onClick={() => handleDeleteTask(task._id)} aria-label="Delete task" title="Delete">
-                                  <MdDelete className="fw-bold fs-3" />
-                                </button>
-                              </div>
-                            )}
+                            {role === "client" &&
+                              task.status !== "Completed" && (
+                                <div className="d-flex">
+                                  <button
+                                    className="btn green me-2"
+                                    onClick={() => handleEditClick(task)}
+                                    aria-label="Edit task"
+                                    title="Edit"
+                                  >
+                                    <CiEdit className="fw-bold fs-3" />
+                                  </button>
+                                  <button
+                                    className="btn red"
+                                    onClick={() => handleDeleteTask(task._id)}
+                                    aria-label="Delete task"
+                                    title="Delete"
+                                  >
+                                    <MdDelete className="fw-bold fs-3" />
+                                  </button>
+                                </div>
+                              )}
                           </>
                         )}
                       </td>

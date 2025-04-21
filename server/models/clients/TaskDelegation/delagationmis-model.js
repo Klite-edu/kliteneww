@@ -43,7 +43,6 @@ delegationManifestationSchema.pre("save", function (next) {
   next();
 });
 
-// Function to get the DelegationManifestation model from the dynamic database
 const getDelegationManifestModel = async (companyName) => {
   const clientDB = await createClientDatabase(companyName);
   return clientDB.model("DelegationManifestation", delegationManifestationSchema);

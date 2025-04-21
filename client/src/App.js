@@ -54,6 +54,8 @@ import BotTrigger from "./component/clients/Automations/Triggers/ChatbotLeadTrig
 import Variables from "./component/clients/Variables/Variables";
 import SeleniumWeb from "./component/clients/Chatbot/SeleniumWeb";
 import IssueDashboard from "./component/clients/Issue/IssueDashboard";
+import ScrollToTop from "./component/ScrollToTop";
+import Microsoft from "./component/clients/AppStore/IndiaMart/Microsoft/Microsoft";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -72,6 +74,7 @@ const App = () => {
   return (
     <div className="app">
       <TrackImpressions />
+      <ScrollToTop />
       <Routes>
         {/* ✅ Public Routes (Accessible Without Login) */}
         <Route path="/" element={<PanelLogin />} />
@@ -125,6 +128,7 @@ const App = () => {
         <Route path="/variables" element={<Variables />} />
         <Route path="/seleniumweb" element={<SeleniumWeb />} />
         <Route path="/issue" element={<IssueDashboard />} />
+        <Route path="/microsoft" element={<Microsoft />} />
       </Routes>
     </div>
   );

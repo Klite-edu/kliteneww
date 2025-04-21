@@ -62,6 +62,8 @@ const { getUserChatModel } = require("../models/clients/chat/userchat-model");
 const { getTicketModel } = require("../models/clients/chat/ticket-model");
 const { getContactVariableModel } = require("../models/clients/Variables/variable-model");
 const { getTicketRaiseModel } = require("../models/clients/TicketRaise/TicketRaise-model");
+const { getMicrosoftSessionModel } = require("../models/clients/Microsoft/Session-model");
+const { getMicrosoftUploadModel } = require("../models/clients/Microsoft/Upload-model");
 
 // Utility function to dynamically load models
 const modelLoaders = {
@@ -81,6 +83,8 @@ const modelLoaders = {
   Ticket: getTicketModel,
   CustomVariables: getContactVariableModel,
   raiseTicket: getTicketRaiseModel,
+  MicrosoftSession: getMicrosoftSessionModel,
+  MicrosoftUpload: getMicrosoftUploadModel,
 };
 
 // Middleware to dynamically set client DB models

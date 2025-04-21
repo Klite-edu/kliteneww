@@ -2,7 +2,7 @@
 
 :root {
   --primary-color: #0d6e6e;
-  --secondary-color: #f5f7fa;
+  --delegation-secondary-color: #f5f7fa;
   --text-color: #333;
   --light-text: #666;
   --border-color: #ddd;
@@ -21,7 +21,7 @@
   max-width: 78vw;
   margin: 0 auto;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--secondary-color);
+  background-color: var(--delegation-secondary-color);
   min-height: 100vh;
   box-sizing: border-box;
   position: relative;

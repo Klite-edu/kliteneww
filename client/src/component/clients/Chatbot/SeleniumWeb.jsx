@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import io from "socket.io-client";
 import QRCode from "react-qr-code";
 import axios from "axios";
@@ -7,6 +7,9 @@ import Sidebar from "../../Sidebar/Sidebar";
 import Navbar from "../../Navbar/Navbar";
 
 const SeleniumWeb = () => {
+  const isDev = process.env.NODE_ENV === "development";
+  if (isDev) console.log("[Component] Initializing SeleniumWeb component");
+
   const [qr, setQr] = useState("");
   const [connected, setConnected] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -17,10 +20,70 @@ const SeleniumWeb = () => {
     "Checking WhatsApp status..."
   );
   const [socket, setSocket] = useState(null);
+  const [companyName, setCompanyName] = useState(null);
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return null;
+  };
+
+  useEffect(() => {
+    const fetchCompanyName = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          {
+            withCredentials: true,
+          }
+        );
+
+        console.log("📦 /api/get-token response:", res.data);
+
+        if (res.data?.token) {
+          const payload = JSON.parse(atob(res.data.token.split(".")[1]));
+          console.log("✅ Token Payload:", payload);
+          setCompanyName(payload.companyName);
+          window.companyName = payload.companyName;
+          return;
+        }
+
+        console.warn(
+          "⚠️ Token missing in /api/get-token response. Trying cookie fallback..."
+        );
+        const cookieToken = getCookie("token");
+        if (cookieToken) {
+          const payload = JSON.parse(atob(cookieToken.split(".")[1]));
+          setCompanyName(payload.companyName);
+          window.companyName = payload.companyName;
+          console.log(
+            "✅ Extracted companyName from cookie:",
+            payload.companyName
+          );
+        } else {
+          console.error(
+            "❌ Could not extract companyName from token or cookie."
+          );
+        }
+      } catch (err) {
+        console.error("❌ Error fetching companyName:", err.message);
+      }
+    };
+
+    fetchCompanyName();
+  }, []);
 
   const fetchInitialData = useCallback(async () => {
     try {
-      console.log("🔄 Fetching role and permissions...");
       const [roleRes, permissionsRes] = await Promise.all([
         axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
           withCredentials: true,
@@ -32,13 +95,6 @@ const SeleniumWeb = () => {
           }
         ),
       ]);
-
-      console.log(
-        "✅ Role and permissions fetched:",
-        roleRes.data,
-        permissionsRes.data
-      );
-
       setRole(roleRes.data.role);
       setCustomPermissions(permissionsRes.data.permissions || {});
     } catch (error) {
@@ -48,13 +104,11 @@ const SeleniumWeb = () => {
 
   const checkStatus = useCallback(async () => {
     try {
-      console.log("🌐 Checking WhatsApp connection status...");
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/whatsapp/status`,
         { withCredentials: true }
       );
-
-      console.log("✅ Status response:", response.data);
+      if (!isMounted.current) return;
 
       if (response.data.connected) {
         setConnected(true);
@@ -70,16 +124,11 @@ const SeleniumWeb = () => {
       } else if (response.data.state === "DISCONNECTED") {
         setConnected(false);
         setPhoneNumber("");
-        if (qr) {
-          setStatusMessage("📲 Waiting for QR scan...");
-        } else {
-          setStatusMessage("❌ Disconnected");
-        }
+        setStatusMessage(qr ? "📲 Waiting for QR scan..." : "❌ Disconnected");
       } else {
         setStatusMessage("📡 Initializing client...");
       }
     } catch (err) {
-      console.error("❌ Status check error:", err);
       setConnected(false);
       setPhoneNumber("");
       setQr("");
@@ -88,95 +137,96 @@ const SeleniumWeb = () => {
   }, [qr]);
 
   useEffect(() => {
-    fetchInitialData();
+    if (!companyName) return;
 
-    console.log("🧩 Connecting socket...");
     const newSocket = io(`${process.env.REACT_APP_API_URL}`, {
+      path: "/socket.io",
       withCredentials: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
     });
 
-    newSocket.onAny((event, ...args) => {
-      console.log("📡 Socket Event:", event, args);
-    });
-
     setSocket(newSocket);
-    checkStatus(); // initial
+    console.log("🔌 Socket created. Joining room:", companyName);
 
     newSocket.on("connect", () => {
-      console.log("✅ Socket connected");
-      checkStatus();
+      console.log("✅ Socket connected:", newSocket.id);
+      newSocket.emit("join-room", companyName);
     });
 
-    newSocket.on("whatsapp-qr", (qrData) => {
-      console.log("📲 Received QR code from server");
-      setQr(qrData);
-      setConnected(false);
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [companyName]);
+
+  useEffect(() => {
+    if (!socket || !companyName) return;
+
+    const onQr = (qrData) => {
+      console.log("📲 QR received", qrData);
+      setQr(typeof qrData === "string" ? qrData : qrData.qr);
       setStatusMessage("📲 Waiting for QR scan...");
-    });
+    };
 
-    newSocket.on("whatsapp-ready", () => {
+    const onReady = () => {
       console.log("✅ WhatsApp client is ready");
       checkStatus();
-    });
+    };
 
-    newSocket.on("whatsapp-authenticated", () => {
+    const onAuthenticated = () => {
       console.log("🔐 WhatsApp authenticated");
       setStatusMessage("🔐 Authenticated");
-    });
+    };
 
-    newSocket.on("whatsapp-disconnected", (data) => {
-      console.log("🔌 WhatsApp client disconnected", data);
+    const onWhatsappDisconnected = () => {
       setStatusMessage("❌ WhatsApp disconnected");
       setConnected(false);
       setQr("waiting");
       setPhoneNumber("");
-    });
+    };
 
-    newSocket.on("disconnect", () => {
-      console.warn("🚫 Socket disconnected");
-      setStatusMessage("🔌 Connection lost - reconnecting...");
-    });
+    socket.on("whatsapp-qr", onQr);
+    socket.on("whatsapp-ready", onReady);
+    socket.on("whatsapp-authenticated", onAuthenticated);
+    socket.on("whatsapp-disconnected", onWhatsappDisconnected);
 
-    newSocket.on("connect_error", (err) => {
-      console.error("❌ Socket connection error:", err);
-      setStatusMessage("❌ Connection error - reconnecting...");
-    });
+    checkStatus();
 
     return () => {
-      console.log("🧹 Cleaning up socket...");
-      newSocket.disconnect();
+      socket.off("whatsapp-qr", onQr);
+      socket.off("whatsapp-ready", onReady);
+      socket.off("whatsapp-authenticated", onAuthenticated);
+      socket.off("whatsapp-disconnected", onWhatsappDisconnected);
     };
-  }, [fetchInitialData, checkStatus]);
+  }, [socket, checkStatus]);
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const handleDisconnect = async () => {
     setLoading(true);
-    console.log("📴 Disconnecting WhatsApp...");
     try {
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/whatsapp/disconnect`,
         {},
         { withCredentials: true }
       );
-
       if (response.data.success) {
-        console.log("✅ Disconnected successfully");
-        // ✅ Reset state immediately
         setConnected(false);
         setPhoneNumber("");
         setQr("");
         setStatusMessage("❌ Disconnected");
-
-        // ✅ Recheck to force UI refresh if needed
         await checkStatus();
       } else {
-        console.warn("⚠️ Failed to disconnect:", response.data.message);
-        setStatusMessage("❌ Disconnection failed");
+        // even if already disconnected, treat as success
+        setConnected(false);
+        setPhoneNumber("");
+        setQr("");
+        setStatusMessage("ℹ️ Already disconnected");
       }
     } catch (err) {
-      console.error("❌ Disconnect error:", err);
       setStatusMessage("❌ Error disconnecting");
     } finally {
       setLoading(false);
@@ -184,16 +234,39 @@ const SeleniumWeb = () => {
   };
 
   const handleConnect = async () => {
+    setLoading(true);
     try {
       setStatusMessage("⏳ Connecting...");
-      await axios.post(
+
+      const newSocket = io(`${process.env.REACT_APP_API_URL}`, {
+        path: "/socket.io",
+        withCredentials: true,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+      });
+
+      newSocket.on("connect", () => {
+        console.log("✅ Socket connected:", newSocket.id);
+        newSocket.emit("join-room", companyName);
+      });
+
+      setSocket(newSocket);
+
+      // 🔁 Call the connect route — QR will always be triggered now
+      const res = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/whatsapp/connect`,
         {},
         { withCredentials: true }
       );
+
+      console.log("✅ Connect request successful:", res.data);
+      setStatusMessage("📲 Waiting for QR scan...");
     } catch (err) {
-      console.error("❌ Connection trigger failed:", err.message);
+      console.error("❌ Connect error:", err);
       setStatusMessage("❌ Failed to trigger connection.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -219,13 +292,11 @@ const SeleniumWeb = () => {
             >
               {loading ? (
                 <>
-                  <span className="button-spinner"></span>
-                  Connecting...
+                  <span className="button-spinner"></span> Connecting...
                 </>
               ) : (
                 <>
-                  <span className="whatsapp-icon"></span>
-                  Connect Device
+                  <span className="whatsapp-icon"></span> Connect Device
                 </>
               )}
             </button>
@@ -256,8 +327,7 @@ const SeleniumWeb = () => {
                   WhatsApp is successfully connected!
                 </p>
                 <p className="success-subtitle">
-                  Task delegation will automatically send WhatsApp
-                  notifications.
+                  Task delegation will send WhatsApp notifications.
                 </p>
               </div>
             </div>
@@ -273,8 +343,7 @@ const SeleniumWeb = () => {
             >
               {loading ? (
                 <>
-                  <span className="button-spinner"></span>
-                  Disconnecting...
+                  <span className="button-spinner"></span> Disconnecting...
                 </>
               ) : (
                 "Disconnect WhatsApp"
