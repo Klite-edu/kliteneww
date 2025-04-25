@@ -67,7 +67,7 @@ const sidebarConfig = {
       icon: faListCheck,
       options: [
         { name: "Task List", path: "/check-tasklist", icon: faCheckDouble },
-        { name: "Add Task", path: "/check-addtask", icon: faCircleCheck },
+        { name: "Add Checklist Task", path: "/check-addtask", icon: faCircleCheck },
         { name: "Checklist MIS", path: "/check-mis", icon: faProjectDiagram },
       ],
     },
@@ -76,9 +76,9 @@ const sidebarConfig = {
       path: "/task-delegation",
       icon: faListCheck,
       options: [
-        { name: "Add Task", path: "/delegation-taskadd", icon: faCircleCheck },
+        { name: "Delegate Task", path: "/delegation-taskadd", icon: faCircleCheck },
         {
-          name: "Task List",
+          name: "Delegation List",
           path: "/delegation-tasklist",
           icon: faCheckDouble,
         },
@@ -90,7 +90,7 @@ const sidebarConfig = {
       ],
     },
     { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
-    { name: "Microsoft Connect", path: "/microsoft", icon: faProjectDiagram },
+    { name: "OneDrive Connect", path: "/microsoft", icon: faProjectDiagram },
     { name: "Whatsapp Web", path: "/seleniumweb", icon: faComments },
     { name: "Raised Ticket", path: "/issue", icon: faProjectDiagram },
     { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
@@ -102,10 +102,10 @@ const sidebarConfig = {
         { name: "Permissions", path: "/permissions", icon: faUserGear },
         {
           name: "Contact Management",
-          path: "/contactmgmt",
+          path: "/employee",
           icon: faIdCard,
           options: [
-            { name: "Employees", path: "/contactmgmt/contacts", icon: faUsers },
+            { name: "Employees", path: "/employee", icon: faUsers },
             {
               name: "Companies",
               path: "/contactmgmt/clients",

@@ -383,7 +383,7 @@ const Sidebar = ({ role }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarOptions, setSidebarOptions] = useState([]);
-  const defaultLogoUrl = process.env.PUBLIC_URL + "/images/logo.png";
+  const defaultLogoUrl = `${window.location.origin}/images/logo.png`;
   const [logoUrl, setLogoUrl] = useState(defaultLogoUrl);
   const location = useLocation();
 

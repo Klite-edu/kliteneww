@@ -167,6 +167,66 @@ body {
   outline: none;
 }
 
+/* Pagination styles */
+.dele-pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 10px 0;
+}
+
+.dele-pagination-controls-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.dele-items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dele-items-per-page select {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.dele-pagination-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.dele-page-item {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.dele-page-item:hover:not(.disabled) {
+  background: #f0f0f0;
+}
+
+.dele-page-item.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.dele-page-item.disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.dele-pagination-info {
+  font-size: 14px;
+  color: #666;
+}
+
 /* Responsive Breakpoints */
 @media (min-width: 768px) {
   .delegation-wrapper {

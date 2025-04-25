@@ -203,7 +203,7 @@ const EditContact = () => {
                     />
                   </div>
                   <div className="form-employee-input">
-                    <label>Designation</label>
+                    <label>Department</label>
                     <input
                       type="text"
                       name="designation"
@@ -374,14 +374,14 @@ const EditContact = () => {
               <button
                 className="discard-btn"
                 type="button"
-                onClick={() => navigate("/contactmgmt/contacts")}
+                onClick={() => navigate("/employee")}
               >
                 Discard
               </button>
               <button
                 className="create-btn"
                 type="submit"
-                onClick={() => navigate("/contactmgmt/contacts")}
+                onClick={() => navigate("/employee")}
               >
                 Update Employee
               </button>

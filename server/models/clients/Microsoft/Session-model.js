@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { createClientDatabase } = require("../../../database/db"); // adjust path if needed
+const { createClientDatabase } = require("../../../database/db");
 
 const SessionSchema = new mongoose.Schema({
   sessionId: String,
@@ -10,7 +10,14 @@ const SessionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// ✅ Function to get dynamic Session model
+// Add static method for session validation
+SessionSchema.statics.validateSession = async function(sessionId) {
+  return this.findOne({
+    sessionId,
+    expiresAt: { $gt: new Date() }
+  }).select('userId expiresAt');
+};
+
 const getMicrosoftSessionModel = async (companyName) => {
   const clientDB = await createClientDatabase(companyName);
   return clientDB.model("MicrosoftSession", SessionSchema);

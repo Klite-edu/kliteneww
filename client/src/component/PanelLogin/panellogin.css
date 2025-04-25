@@ -1,6 +1,6 @@
 :root {
   --gray: #f8f8f8;
-  --primary-color: #0D6E6E;
+  --primary-color: #0d6e6e;
   --primary-light: #4f9e9e;
   --primary-dark: #094a4a;
   --text-color: #333;
@@ -14,7 +14,7 @@
   align-items: center;
   min-height: 100vh;
   background-color: var(--gray);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
 }
 
@@ -48,6 +48,33 @@
 
 .panel-input-group {
   margin-bottom: 20px;
+}
+.google-login-wrapper {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.google-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #fff;
+  color: #444;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.google-login-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.google-logo {
+  height: 20px;
 }
 
 .panel-input-group input {

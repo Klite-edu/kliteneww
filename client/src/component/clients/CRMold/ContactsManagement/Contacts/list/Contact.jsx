@@ -65,7 +65,7 @@ const Contact = () => {
         await fetchContacts(tokenRes.data.token);
       } catch (error) {
         console.error("Authentication error:", error);
-        navigate("/login");
+        navigate("/");
       } finally {
         setLoading(false);
       }
@@ -86,7 +86,7 @@ const Contact = () => {
       } catch (error) {
         console.error("Failed to fetch contacts:", error);
         if (error.response?.status === 401) {
-          navigate("/login");
+          navigate("/");
         }
       }
     };
@@ -131,7 +131,7 @@ const Contact = () => {
     } catch (error) {
       console.error("Error deleting employee:", error);
       if (error.response?.status === 401) {
-        navigate("/login");
+        navigate("/");
       } else {
         alert("Failed to delete employee");
       }
@@ -186,7 +186,7 @@ const Contact = () => {
             <button className="export-btn-list" onClick={handleExport}>
               <FontAwesomeIcon icon={faCloudArrowDown} /> Export
             </button>
-            <Link to="/contactmgmt/create" style={{ textDecoration: "none" }}>
+            <Link to="/employee-create" style={{ textDecoration: "none" }}>
               <button className="Add-btn-list">
                 <FontAwesomeIcon icon={faPlus} /> Add Employee
               </button>
@@ -278,13 +278,13 @@ const Contact = () => {
                       <Dropdown.Menu>
                         <Dropdown.Item
                           as={Link}
-                          to={`/contactsmgmt/view/${contact._id}`}
+                          to={`/view/${contact._id}`}
                         >
                           View
                         </Dropdown.Item>
                         <Dropdown.Item
                           as={Link}
-                          to={`/contactmgmt/edit/${contact._id}`}
+                          to={`/edit/${contact._id}`}
                         >
                           Edit
                         </Dropdown.Item>

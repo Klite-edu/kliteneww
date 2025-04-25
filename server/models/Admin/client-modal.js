@@ -34,6 +34,17 @@ const clientSchema = new mongoose.Schema(
     },
     status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
     role: { type: String, default: "client" },
+    companyConfig: {
+      workingDays: [{ 
+        day: { type: String, enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+        isWorking: { type: Boolean, default: true }
+      }],
+      holidays: [{
+        date: Date,
+        description: String,
+        repeatsAnnually: Boolean
+      }]
+    },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

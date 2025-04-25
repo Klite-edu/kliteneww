@@ -1,4 +1,9 @@
-import { faCircleUser, faGear, faMagnifyingGlass, faBars } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCircleUser,
+  faGear,
+  faMagnifyingGlass,
+  faBars,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import { Dropdown } from "react-bootstrap";
@@ -21,10 +26,13 @@ const Navbar = () => {
           icon={faMagnifyingGlass}
           className="admin-icon search"
         />
+        <Link to="/workingday">
+          <button>Working Days</button>
+        </Link>
       </div>
       <div className="nav-right">
-        <Link to="/contactmgmt/contacts">
-        <FontAwesomeIcon icon={faGear} className="admin-icon gear" />
+        <Link to="/employee">
+          <FontAwesomeIcon icon={faGear} className="admin-icon gear" />
         </Link>
 
         <Dropdown align="end">
@@ -32,10 +40,7 @@ const Navbar = () => {
             id="dropdown-custom-components"
             className="custom-dropdown-toggle"
           >
-            <FontAwesomeIcon
-              icon={faCircleUser}
-              className="admin-icon user"
-            />
+            <FontAwesomeIcon icon={faCircleUser} className="admin-icon user" />
           </Dropdown.Toggle>
 
           <Dropdown.Menu className="custom-dropdown-menu">

@@ -34,6 +34,28 @@
   color: #0D6E6E;
 }
 
+/* Working Days Button Styles */
+.nav-left button {
+  background-color: #0D6E6E;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-left button:hover {
+  background-color: #0b5e5e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 /* Dropdown Styles */
 .custom-dropdown-toggle {
   background: transparent !important;
@@ -75,18 +97,6 @@
   text-align: center;
 }
 
-/* Mobile Menu Toggle Button (for navbar) */
-.navbar-mobile-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: #555;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  margin-right: 1rem;
-}
-
 /* Responsive Media Queries */
 @media (max-width: 1199px) {
   .admin-navbar {
@@ -100,20 +110,12 @@
   .admin-navbar {
     width: 100%;
     left: 0;
-    padding-left: 70px; /* Space for mobile toggle */
+    padding-left: 70px;
   }
   
-  .navbar-mobile-toggle {
-    display: block;
-  }
-  
-  .nav-left,
-  .nav-right {
-    gap: 1rem;
-  }
-  
-  .admin-icon {
-    font-size: 1.1rem;
+  .nav-left button {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -123,13 +125,9 @@
     padding: 0 1rem 0 60px;
   }
   
-  .custom-dropdown-menu {
-    min-width: 160px;
-  }
-  
-  .custom-dropdown-menu .dropdown-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+  .nav-left button {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -138,16 +136,8 @@
     padding: 0 0.8rem 0 50px;
   }
   
-  .nav-left,
-  .nav-right {
-    gap: 0.8rem;
-  }
-  
-  .admin-icon {
-    font-size: 1rem;
-  }
-  
-  .custom-dropdown-menu {
-    min-width: 140px;
+  .nav-left button {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
   }
 }

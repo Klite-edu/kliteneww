@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import "./microsoft.css";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../../Sidebar/Sidebar";
 import Navbar from "../../../../Navbar/Navbar";
 
@@ -9,217 +11,296 @@ function Microsoft() {
   const [uploads, setUploads] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState("");
+  const [hasValidSession, setHasValidSession] = useState(false);
   const [role, setRole] = useState("");
   const [customPermissions, setCustomPermissions] = useState({});
+  const navigate = useNavigate();
+
+  // Check session status
+  const checkSession = async () => {
+    try {
+      setIsLoading(true);
+      const [sessionRes, roleRes, permissionsRes] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_API_URL}/api/auth/check-session`, {
+          withCredentials: true,
+        }),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
+          withCredentials: true,
+        }),
+        axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          { withCredentials: true }
+        ),
+      ]);
+
+      if (sessionRes.data.valid) {
+        setRole(roleRes.data.role);
+        setCustomPermissions(permissionsRes.data.permissions || {});
+        setHasValidSession(true);
+        return true;
+      } else {
+        setHasValidSession(false);
+        return false;
+      }
+    } catch (error) {
+      setHasValidSession(false);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch uploads
+  const fetchUploads = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/auth/uploads`,
+        { withCredentials: true }
+      );
+      setUploads(response.data);
+      setError("");
+    } catch (error) {
+      setError("Failed to fetch uploads");
+    }
+  };
 
   useEffect(() => {
-    console.log("Component mounted - starting initial data fetch");
-    const fetchInitialData = async () => {
-      try {
-        setIsLoading(true);
-        console.log("Fetching token, role, and permissions");
-
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, {
-            withCredentials: true,
-          }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
-            withCredentials: true,
-          }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, {
-            withCredentials: true,
-          }),
-        ]);
-
-        const userToken = tokenRes.data.token;
-        const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
-
-        console.log("Received token:", userToken ? "Token received" : "No token");
-        console.log("Received role:", userRole);
-        console.log("Received permissions:", userPermissions);
-
-        setToken(userToken);
-        setRole(userRole);
-        setCustomPermissions(userPermissions);
-
-        // Fetch uploads using token
-        console.log("Fetching upload history");
-        const uploadsRes = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/microsoft/uploads`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            withCredentials: true,
-          }
-        );
-
-        const uploads = uploadsRes.data;
-        console.log("Uploads received:", uploads.length);
-        setUploads(uploads);
-        setUser(uploads.length > 0 ? uploads[0].userId : null);
-        console.log("User set:", uploads.length > 0 ? uploads[0].userId : "No user");
-      } catch (err) {
-        console.error("Error in fetchInitialData:", err);
-        if (err.response?.status === 401) {
-          console.log("401 Unauthorized - clearing user");
-          setUser(null);
-        } else {
-          console.error("Failed to load upload history:", err.message);
-          setError("Failed to load upload history");
-        }
-      } finally {
-        setIsLoading(false);
-        console.log("Initial data fetch completed");
+    const initialize = async () => {
+      const sessionValid = await checkSession();
+      if (sessionValid) {
+        await fetchUploads();
       }
     };
-
-    fetchInitialData();
+    initialize();
   }, []);
 
   const handleLogin = () => {
-    console.log("Login button clicked, redirecting to Microsoft auth");
-    window.location.replace(`${process.env.REACT_APP_API_URL}/api/microsoft/auth/login`);
+    window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/login`;
   };
 
   const handleLogout = async () => {
-    console.log("Logout initiated");
     try {
-      await axios.get(`${process.env.REACT_APP_API_URL}/api/microsoft/auth/logout`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      });
-      console.log("Logout successful");
-      setUploads([]);
-      setUser(null);
-    } catch (err) {
-      console.error("Logout failed:", err);
-      setError("Logout failed");
+      setIsLoading(true);
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/auth/logout`,
+        {
+          withCredentials: true,
+          headers: { Accept: "application/json" },
+        }
+      );
+      if (response.data.success) {
+        setHasValidSession(false);
+        setUploads([]);
+        window.location.href = "/microsoft";
+      }
+    } catch (error) {
+      if (
+        error.message.includes("Network Error") ||
+        error.message.includes("Failed to fetch")
+      ) {
+        setHasValidSession(false);
+        setUploads([]);
+        window.location.href = "/microsoft";
+      } else {
+        setError("Logout failed. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const uploadFile = async (e) => {
+  const handleFileUpload = async (e) => {
     e.preventDefault();
-    console.log("Upload initiated");
-    
     if (!file) {
-      console.log("No file selected");
-      return setError("Please select a file");
+      setError("Please select a file");
+      return;
     }
 
-    console.log("Uploading file:", file.name, "Size:", file.size);
-    
     try {
       setIsLoading(true);
       setError("");
-
       const formData = new FormData();
       formData.append("file", file);
 
-      console.log("Sending upload request");
-      const { data } = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/microsoft/upload`,
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/auth/upload`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true,
         }
       );
-
-      console.log("Upload successful, response:", data);
-      setUploads([data, ...uploads]);
+      await fetchUploads();
       setFile(null);
       document.getElementById("file-input").value = "";
-    } catch (err) {
-      console.error("Upload failed:", err);
-      console.error("Response data:", err.response?.data);
-      setError(err.response?.data?.error || "Upload failed. Please try again.");
+    } catch (error) {
+      const errorMessage =
+        typeof error.response?.data?.error === "object"
+          ? JSON.stringify(error.response.data.error)
+          : error.response?.data?.error || "Upload failed";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
-      console.log("Upload process completed");
     }
   };
-
-  console.log("Rendering component with state:", { 
-    isLoggedIn: !!user, 
-    uploadsCount: uploads.length, 
-    hasFile: !!file,
-    isLoading,
-    hasError: !!error
-  });
 
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
-      <div className="microsoft-app">
-        <header className="microsoft-header">
-          <h1 className="microsoft-h1">OneDrive Uploader</h1>
-          {user ? (
-            <button className="microsoft-button" onClick={handleLogout} disabled={isLoading}>
-              Logout
-            </button>
-          ) : (
-            <button className="microsoft-button" onClick={handleLogin} disabled={isLoading}>
-              Login with Microsoft
-            </button>
-          )}
+      <div className="ms-container">
+        <header className="ms-header">
+          <div className="ms-header-content">
+            <div className="ms-logo">
+              <svg viewBox="0 0 23 23" width="32" height="32">
+                <path fill="#f25022" d="M1 1h10v10H1z"></path>
+                <path fill="#7fba00" d="M12 1h10v10H12z"></path>
+                <path fill="#00a4ef" d="M1 12h10v10H1z"></path>
+                <path fill="#ffb900" d="M12 12h10v10H12z"></path>
+              </svg>
+              <h1 className="ms-title">OneDrive</h1>
+            </div>
+            {hasValidSession ? (
+              <button
+                onClick={handleLogout}
+                disabled={isLoading}
+                className="ms-button ms-button-primary"
+              >
+                {isLoading ? "Signing out..." : "Sign out"}
+              </button>
+            ) : (
+              <button
+                onClick={handleLogin}
+                disabled={isLoading}
+                className="ms-button ms-button-primary"
+              >
+                {isLoading ? "Connecting..." : "Sign in"}
+              </button>
+            )}
+          </div>
         </header>
 
-        <main>
-          {user && (
-            <section className="microsoft-upload-section">
-              <h2 className="microsoft-h2">Upload a File</h2>
-              <form className="microsoft-form" onSubmit={uploadFile}>
-                <input
-                  id="file-input"
-                  className="microsoft-input"
-                  type="file"
-                  onChange={(e) => {
-                    console.log("File selected:", e.target.files[0]?.name);
-                    setFile(e.target.files[0]);
-                  }}
-                  disabled={isLoading}
-                />
-                <button className="microsoft-button" type="submit" disabled={!file || isLoading}>
-                  {isLoading ? "Uploading..." : "Upload"}
+        <main className="ms-main">
+          {hasValidSession ? (
+            <>
+              <section className="ms-upload-section">
+                <div className="ms-section-header">
+                  <h2 className="ms-section-title">Upload files</h2>
+                </div>
+                <form onSubmit={handleFileUpload} className="ms-upload-form">
+                  <div className="ms-file-upload">
+                    <input
+                      id="file-input"
+                      type="file"
+                      className="ms-file-input"
+                      onChange={(e) => setFile(e.target.files[0])}
+                    />
+                    <label htmlFor="file-input" className="ms-file-label">
+                      <svg className="ms-upload-icon" viewBox="0 0 24 24">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"></path>
+                      </svg>
+                      <span>{file ? file.name : "Choose a file"}</span>
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!file || isLoading}
+                    className="ms-button ms-button-primary"
+                  >
+                    {isLoading ? (
+                      <span className="ms-spinner"></span>
+                    ) : (
+                      "Upload"
+                    )}
+                  </button>
+                </form>
+              </section>
+
+              <section className="ms-files-section">
+                <div className="ms-section-header">
+                  <h2 className="ms-section-title">Your files</h2>
+                </div>
+                {uploads.length > 0 ? (
+                  <div className="ms-files-grid">
+                    {uploads.map((item) => (
+                      <div key={item._id} className="ms-file-card">
+                        <div className="ms-file-icon">
+                          <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"></path>
+                          </svg>
+                        </div>
+                        <div className="ms-file-info">
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ms-file-name"
+                          >
+                            {item.name || item.link.split("/").pop() || "File"}
+                          </a>
+                          <div className="ms-file-meta">
+                            <span className="ms-file-date">
+                              {new Date(item.uploadedAt).toLocaleDateString()}
+                            </span>
+                            <span className="ms-file-size">
+                              {item.size ? formatFileSize(item.size) : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ms-empty-state">
+                    <svg className="ms-empty-icon" viewBox="0 0 24 24">
+                      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"></path>
+                    </svg>
+                    <p>No files uploaded yet</p>
+                  </div>
+                )}
+              </section>
+            </>
+          ) : (
+            <div className="ms-welcome">
+              <div className="ms-welcome-content">
+                <svg className="ms-welcome-icon" viewBox="0 0 48 48">
+                  <path d="M24 23.5C29.8 23.5 34.5 18.8 34.5 13S29.8 2.5 24 2.5 13.5 7.2 13.5 13 18.2 23.5 24 23.5zm12 4.5h-1.3c-1.9 0-3.6 1-4.6 2.5H17.9c-1 1.5-2.7 2.5-4.6 2.5H12C5.4 33 0 38.4 0 45v3h48v-3c0-6.6-5.4-12-12-12z"></path>
+                </svg>
+                <h2>Connect to OneDrive</h2>
+                <p>Sign in to access and manage your OneDrive files</p>
+                <button
+                  onClick={handleLogin}
+                  className="ms-button ms-button-primary ms-button-large"
+                >
+                  Sign in
                 </button>
-              </form>
-              {error && <p className="microsoft-error">{error}</p>}
-            </section>
+              </div>
+            </div>
           )}
 
-          <section className="microsoft-uploads-section">
-            <h2 className="microsoft-h2">Your Uploads</h2>
-            {isLoading && !uploads.length ? (
-              <p>Loading...</p>
-            ) : uploads.length > 0 ? (
-              <ul>
-                {uploads.map((upload) => (
-                  <li key={upload._id}>
-                    <a href={upload.link} target="_blank" rel="noopener noreferrer">
-                      {upload.filename}
-                    </a>
-                    <span>{new Date(upload.uploadedAt).toLocaleString()}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>{user ? "No uploads yet." : "Login to upload files."}</p>
-            )}
-          </section>
+          {error && (
+            <div className="ms-error-message">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
+              </svg>
+              <span>
+                {typeof error === "object" ? JSON.stringify(error) : error}
+              </span>
+            </div>
+          )}
         </main>
       </div>
     </>
   );
+}
+
+// Helper function to format file size
+function formatFileSize(bytes) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 export default Microsoft;

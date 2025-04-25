@@ -1,0 +1,75 @@
+const { parseISO, getDay, isWithinInterval, setHours, setMinutes } = require('date-fns');
+const { zonedTimeToUtc, utcToZonedTime } = require('date-fns-tz');
+const TenantWorkConfig = require('../models/TenantWorkConfig');
+
+async function validateTask(req, res, next) {
+  const { dueDate, tenantId, assignedShift } = req.body;
+  
+  if (!dueDate || !tenantId) {
+    return res.status(400).json({ 
+      error: "Due date and tenant ID are required" 
+    });
+  }
+
+  try {
+    // 1. Fetch tenant's work config
+    const config = await TenantWorkConfig.findOne({ tenantId }).lean();
+    if (!config) {
+      return res.status(404).json({ error: "Tenant configuration not found" });
+    }
+
+    // 2. Convert dueDate to tenant's timezone
+    const zonedDueDate = utcToZonedTime(parseISO(dueDate), config.timezone);
+    const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][getDay(zonedDueDate)];
+
+    // 3. Check working day
+    const workDay = config.workingDays.find(d => d.day === dayOfWeek);
+    if (!workDay?.isWorking) {
+      return res.status(400).json({ 
+        error: `Task cannot be assigned on ${dayOfWeek} (non-working day)` 
+      });
+    }
+
+    // 4. Check holidays (including recurring)
+    const isHoliday = config.holidays.some(holiday => {
+      const holidayDate = utcToZonedTime(holiday.date, config.timezone);
+      return (
+        (holiday.repeatsAnnually 
+          ? holidayDate.getMonth() === zonedDueDate.getMonth() && 
+            holidayDate.getDate() === zonedDueDate.getDate()
+          : isSameDay(holidayDate, zonedDueDate))
+      );
+    });
+
+    if (isHoliday) {
+      return res.status(400).json({ error: "Task due date falls on a holiday" });
+    }
+
+    // 5. Validate shift timing (if shift is specified)
+    if (assignedShift) {
+      const shift = config.shifts.find(s => s._id.equals(assignedShift));
+      if (!shift) {
+        return res.status(400).json({ error: "Invalid shift ID" });
+      }
+
+      const [startHour, startMinute] = shift.startTime.split(':').map(Number);
+      const [endHour, endMinute] = shift.endTime.split(':').map(Number);
+
+      const shiftStart = setMinutes(setHours(zonedDueDate, startHour), startMinute);
+      const shiftEnd = setMinutes(setHours(zonedDueDate, endHour), endMinute);
+
+      if (!isWithinInterval(zonedDueDate, { start: shiftStart, end: shiftEnd })) {
+        return res.status(400).json({ 
+          error: `Task time must be between ${shift.startTime}-${shift.endTime}` 
+        });
+      }
+    }
+
+    next();
+  } catch (err) {
+    console.error(`Task validation failed for tenant ${tenantId}:`, err);
+    res.status(500).json({ error: "Internal server error during validation" });
+  }
+}
+
+module.exports = validateTask;

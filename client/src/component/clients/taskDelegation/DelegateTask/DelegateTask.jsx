@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import "./delegatetask.css";
 import Sidebar from "../../../Sidebar/Sidebar";
 import Navbar from "../../../Navbar/Navbar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const DelegateTask = () => {
   const [doers, setDoers] = useState([]);
@@ -15,6 +17,12 @@ const DelegateTask = () => {
   const navigate = useNavigate();
   const [token, setToken] = useState("");
   const [role, setRole] = useState("");
+  const [calendarConfig, setCalendarConfig] = useState({
+    workingDays: [],
+    holidays: [],
+    shifts: [],
+  });
+
   const [customPermissions, setCustomPermissions] = useState({});
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -66,6 +74,80 @@ const DelegateTask = () => {
     fetchInitialData();
   }, [navigate]);
 
+  const highlightWithRanges = {
+    "working-day": calendarConfig.workingDays.map((day) => {
+      const today = new Date();
+      const daysToAdd =
+        (["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(day) -
+          today.getDay() +
+          7) %
+        7;
+      const date = new Date(today);
+      date.setDate(today.getDate() + daysToAdd);
+      return date;
+    }),
+    holiday: calendarConfig.holidays.map((h) => new Date(h.date)),
+  };
+  
+  useEffect(() => {
+    if (!selectedDoer || !doers.length || !calendarConfig.shifts.length) return;
+
+    const doer = doers.find((d) => d._id === selectedDoer);
+    if (doer && doer.shifts?.length > 0) {
+      const defaultShift = doer.shifts.find((s) => s.isDefault);
+      if (defaultShift) {
+        setTime(defaultShift.startTime); // You can also show full range if needed
+        console.log("🕒 Auto-filled from default shift:", defaultShift);
+      }
+    }
+  }, [selectedDoer, doers, calendarConfig.shifts]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchCalendarConfig = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/workingdays/get`,
+          {
+            withCredentials: true,
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (res.data.success) {
+          setCalendarConfig(res.data.data);
+          console.log("📅 Config Loaded:", res.data.data);
+        }
+      } catch (err) {
+        console.error("❌ Calendar config fetch error:", err);
+      }
+    };
+
+    fetchCalendarConfig();
+  }, [token]);
+  
+  const handleDateChange = (date) => {
+    if (!date) return;
+
+    const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
+    const isHoliday = calendarConfig.holidays.some(
+      (h) => new Date(h.date).toDateString() === date.toDateString()
+    );
+    const isWorkingDay = calendarConfig.workingDays.includes(weekday);
+
+    if (!isWorkingDay) {
+      alert("❌ This is not a working day.");
+      return;
+    }
+
+    if (isHoliday) {
+      alert("❌ This is a holiday.");
+      return;
+    }
+
+    setDueDate(date);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const taskData = {
@@ -83,8 +165,8 @@ const DelegateTask = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            withCredentials: true,
           },
+          withCredentials: true,
         }
       );
       if (response.status === 201) {
@@ -127,25 +209,6 @@ const DelegateTask = () => {
             onChange={(e) => setTaskDescription(e.target.value)}
             required
           />
-
-          <label htmlFor="due-date">Planned Date</label>
-          <input
-            type="date"
-            id="due-date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            required
-          />
-
-          <label htmlFor="time">Time</label>
-          <input
-            type="time"
-            id="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
-
           <label htmlFor="doer-select">Select Employee</label>
           <select
             id="doer-select"
@@ -160,6 +223,63 @@ const DelegateTask = () => {
               </option>
             ))}
           </select>
+          <label htmlFor="due-date">Planned Date</label>
+          <DatePicker
+            id="due-date"
+            selected={dueDate}
+            onChange={handleDateChange}
+            minDate={new Date()}
+            highlightDates={highlightWithRanges}
+            filterDate={(date) => {
+              const weekday = date.toLocaleDateString("en-US", {
+                weekday: "short",
+              });
+              const isHoliday = calendarConfig.holidays.some(
+                (h) => new Date(h.date).toDateString() === date.toDateString()
+              );
+              return calendarConfig.workingDays.includes(weekday) && !isHoliday;
+            }}
+            placeholderText={
+              !selectedDoer ? "Select Employee First" : "Pick a working day"
+            }
+            disabled={!selectedDoer}
+            className="dele-date-picker-input"
+            dateFormat="MMMM d, yyyy"
+            popperClassName="dele-date-picker-popper"
+            wrapperClassName="dele-date-picker-wrapper"
+            showPopperArrow={false}
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="select"
+            inline={false} // Set to true if you want calendar always visible
+            shouldCloseOnSelect={true}
+            calendarClassName="calendar-month-view" // Add this class
+          />
+          {selectedDoer &&
+            (() => {
+              const doer = doers.find((d) => d._id === selectedDoer);
+              const shift = doer?.shifts?.find((s) => s.isDefault);
+              return (
+                <>
+                  <label htmlFor="time">Time</label>
+                  <input
+                    type="time"
+                    id="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    required
+                    disabled={!selectedDoer}
+                    min={shift?.startTime}
+                    max={shift?.endTime}
+                  />
+                  {shift && (
+                    <p style={{ fontSize: "12px", color: "#777" }}>
+                      Valid shift: {shift.startTime} - {shift.endTime}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
 
           <button type="submit">Submit Task</button>
         </form>

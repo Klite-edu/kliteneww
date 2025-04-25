@@ -56,6 +56,7 @@ import SeleniumWeb from "./component/clients/Chatbot/SeleniumWeb";
 import IssueDashboard from "./component/clients/Issue/IssueDashboard";
 import ScrollToTop from "./component/ScrollToTop";
 import Microsoft from "./component/clients/AppStore/IndiaMart/Microsoft/Microsoft";
+import WorkingDay from "./component/clients/WorkingDays/WorkingDay";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -97,12 +98,12 @@ const App = () => {
         <Route path="/users/edit/:id" element={<UserEdit />} />
         <Route path="/permissions" element={<Permisssions />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/contactmgmt/contacts" element={<Contacts />} />
+        <Route path="/employee" element={<Contacts />} />
         {/* <Route path="/crm/leads" element={<Leads />} /> */}
-        <Route path="/contactmgmt/create" element={<CreateContact />} />
-        <Route path="/contactmgmt/edit/:id" element={<EditContact />} />
+        <Route path="/employee-create" element={<CreateContact />} />
+        <Route path="/edit/:id" element={<EditContact />} />
         <Route path="/chatbox" element={<ChatRoomUI />} />
-        <Route path="/contactsmgmt/view/:id" element={<View />} />
+        <Route path="/view/:id" element={<View />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/check-addtask" element={<AddTask />} />
         <Route path="/check-tasklist" element={<TaskList />} />
@@ -129,6 +130,7 @@ const App = () => {
         <Route path="/seleniumweb" element={<SeleniumWeb />} />
         <Route path="/issue" element={<IssueDashboard />} />
         <Route path="/microsoft" element={<Microsoft />} />
+        <Route path="/workingday" element={<WorkingDay />} />
       </Routes>
     </div>
   );

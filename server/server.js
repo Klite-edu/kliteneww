@@ -9,7 +9,6 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const { updateTaskFrequency } = require("./middlewares/TaskScheduler");
 const { connectMainDB } = require("./database/db");
-// const { createClientDatabase } = require("./database/db");
 const socketIo = require("socket.io");
 const whatsappService = require("./routes/clients/WhatsappWeb/Whatsappservice");
 // ✅ Import Multer Configuration
@@ -19,7 +18,7 @@ const upload = require("./config/multerConfig");
 const adminRoutes = require("./routes/Admin/adminRoutes");
 const clientRoutes = require("./routes/Admin/clientRoute");
 const userRoutes = require("./routes/userRoute");
-const paymentRoutes = require("./routes/googleRoute");
+// const paymentRoutes = require("./routes/googleRoute");
 const DashboardRoutes = require("./routes/DashboardRoute");
 const LeadRoutes = require("./routes/leadsRoute");
 const WebHookRoutes = require("./routes/webhookRoutes");
@@ -48,7 +47,8 @@ const IndiamartRoutes = require("./routes/clients/appstore/indiamart/IndiamartRo
 const checkmisRoutes = require("./routes/clients/checklist/checkmisRoutes");
 const DelagationMISRoute = require("./routes/clients/taskDelegation/DelegationMIS");
 const variablesRoutes = require("./routes/clients/Variables/variablesRoutes");
-const MicrosoftRoutes = require("./routes/clients/Microsoft/MicrosoftRouter");
+const WorkingdaysRoutes = require("./routes/clients/workingDays/WorkingRouter");
+const GoogleRoutes = require("./routes/clients/Google/GoogleRoutes");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
@@ -62,9 +62,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 // Initialize Socket.IO after defining allowedOrigins
 const io = socketIo(server, {
   cors: {
-    origin: function (origin, callback) {
-      callback(null, true); // allow all for dev
-    },
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -82,7 +80,6 @@ io.on("connection", (socket) => {
 });
 // ✅ Connect to Main Database
 connectMainDB();
-// createClientDatabase();
 app.use(
   cors({
     origin: allowedOrigins,
@@ -129,7 +126,7 @@ app.use("/api", ImpressionRoute);
 app.use("/api/admin", adminRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/auth", paymentRoutes);
+// app.use("/api/auth", paymentRoutes);
 app.use("/api", DashboardRoutes);
 app.use("/api/leads", LeadRoutes);
 app.use("/", WebHookRoutes);
@@ -157,7 +154,8 @@ app.use("/api/store", IndiamartRoutes);
 app.use("/api/checkmis", checkmisRoutes);
 app.use("/api/delegationmis", DelagationMISRoute);
 app.use("/api/variables", variablesRoutes);
-app.use("/api/microsoft", MicrosoftRoutes);
+app.use("/api/workingdays", WorkingdaysRoutes);
+app.use("/", GoogleRoutes);
 app.use(
   "/api/whatsapp",
   require("./routes/clients/WhatsappWeb/WhatsappwebRoutes")

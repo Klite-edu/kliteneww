@@ -26,14 +26,25 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
     const populatedTask = await req.delegation
       .findById(savedTask._id)
       .populate("doer");
-    const companyName = req.companyName; // ✅ This is correct
+    const companyName = req.companyName;
 
     console.log("👉 Delegation Triggered for:", companyName);
     console.log("📞 Doer Number:", populatedTask?.doer?.number);
 
     if (populatedTask?.doer?.number && companyName) {
       try {
-        const message = `🚀 New Task Assigned!\n\n*Task:* ${name}\n*Description:* ${description}\n*Due Date:* ${dueDate}\n*Time:* ${time}`;
+        // Format the date to dd-mm-yyyy
+        const formattedDate = new Date(dueDate).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }).replace(/\//g, '-');
+        
+        // Combine formatted date and time
+        const dateTime = `${formattedDate} at ${time}`;
+
+        const message = `🚀 New Task Assigned!\n\n*Task:* ${name}\n*Description:* ${description}\n*DueDateTime:* ${dateTime}`;
+        
         try {
           const status = await whatsappService.getStatus(companyName);
 
@@ -53,8 +64,6 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
             whatsappError.message
           );
         }
-
-        console.log("✅ WhatsApp message result:", result);
       } catch (whatsappError) {
         console.error("❌ WhatsApp sendMessage error:", whatsappError.message);
       }

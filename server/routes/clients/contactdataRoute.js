@@ -4,7 +4,7 @@ const router = express.Router();
 const dbMiddleware = require("../../middlewares/dbMiddleware");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
-
+const { check, validationResult } = require("express-validator");
 // GET all contacts
 router.get("/contactinfo", dbMiddleware, async (req, res) => {
   console.log("enterting to route");
@@ -51,49 +51,93 @@ router.get("/:id", dbMiddleware, async (req, res) => {
 });
 
 // CREATE a new contact
-router.post("/create", dbMiddleware, async (req, res) => {
-  try {
-    console.log(
-      "📩 Received Employee Data:",
-      JSON.stringify(req.body, null, 2)
-    );
+router.post(
+  "/create",
+  dbMiddleware,
+  [
+    check("fullName").notEmpty().withMessage("Full name is required"),
+    check("employeeID").notEmpty().withMessage("Employee ID is required"),
+    check("designation").notEmpty().withMessage("Designation is required"),
+    check("email").isEmail().withMessage("Valid email is required"),
+    check("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
+    check("number")
+      .matches(/^91\d{10}$/)
+      .withMessage("Valid Indian mobile number required (e.g., 91XXXXXXXXXX)"),
+    check("joiningDate")
+      .isISO8601()
+      .withMessage("Valid joining date is required"),
+    check("status")
+      .isIn(["Active", "Inactive", "Suspended"])
+      .withMessage("Invalid status"),
+    check("role")
+      .isIn(["user", "team_lead", "admin", "client"])
+      .withMessage("Invalid role"),
+  ],
+  async (req, res) => {
+    console.log("🔹 Starting employee creation process");
+    console.log("🔹 Request body:", req.body);
 
-    // Extract password separately
-    const { password, ...employeeData } = req.body;
-    console.log(
-      "🔹 Extracted Employee Data (without password):",
-      JSON.stringify(employeeData, null, 2)
-    );
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log("❌ Validation errors:", errors.array());
+      return res.status(400).json({ errors: errors.array() });
+    }
+    check("number")
+      .custom((value) => {
+        // Remove all non-digit characters
+        const cleaned = value.replace(/\D/g, "");
+        // Check if it's a valid Indian mobile number (91 followed by 10 digits)
+        return /^91\d{10}$/.test(cleaned);
+      })
+      .withMessage(
+        "Valid Indian mobile number required (12 digits starting with 91)"
+      )
+      .customSanitizer((value) => {
+        // Clean the number before saving to database
+        return value.replace(/\D/g, "");
+      });
+    try {
+      console.log("🔹 Validation passed, processing employee data");
+      const employeeData = req.body;
+      console.log("🔹 Original joiningDate:", employeeData.joiningDate);
 
-    // Hash the password before saving
-    console.log("🔐 Generating Salt for Hashing...");
-    const salt = await bcrypt.genSalt(10);
-    console.log("🧂 Salt Generated:", salt);
+      employeeData.joiningDate = new Date(employeeData.joiningDate);
+      console.log("🔹 Formatted joiningDate:", employeeData.joiningDate);
 
-    console.log("🔑 Hashing Password...");
-    const hashedPassword = await bcrypt.hash(password, salt);
-    console.log("🛡️ Hashed Password:", hashedPassword);
+      console.log("🔹 Creating new employee instance");
+      const newEmployee = new req.Employee(employeeData);
+      console.log("🔹 Employee instance created:", newEmployee);
 
-    // Create new Employee with hashed password
-    const newEmployee = new req.Employee({
-      ...employeeData,
-      password: hashedPassword,
-    });
-    console.log(
-      "📌 New Employee Object (Before Save):",
-      JSON.stringify(newEmployee, null, 2)
-    );
+      console.log("🔹 Saving employee to database");
+      await newEmployee.save();
+      console.log("✅ Employee saved successfully");
 
-    // Save Employee to MongoDB
-    await newEmployee.save();
-    console.log("✅ Employee Saved Successfully!");
-
-    res.status(201).json({ message: "Employee created successfully" });
-  } catch (error) {
-    console.error("❌ Error creating employee:", error);
-    res.status(500).json({ message: "Error creating employee", error });
+      res.status(201).json({
+        success: true,
+        message: "Employee created successfully",
+        data: newEmployee,
+      });
+    } catch (error) {
+      console.error("⛔ Error creating employee:", error);
+      if (error.code === 11000) {
+        console.log("⛔ Duplicate key error:", error.keyPattern);
+        const field = Object.keys(error.keyPattern)[0];
+        return res.status(400).json({
+          success: false,
+          message: `${field} already exists`,
+          error: error.message,
+        });
+      }
+      res.status(500).json({
+        success: false,
+        message: "Failed to create employee",
+        error: error.message,
+      });
+    }
   }
-});
+);
 
 router.put("/update/:id", dbMiddleware, async (req, res) => {
   try {

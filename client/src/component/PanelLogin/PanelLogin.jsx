@@ -17,7 +17,7 @@
 
 //     try {
 //       console.log(`🔑 [LOGIN] Attempting login for email: ${email}`);
-      
+
 //       // Log input values before sending the request
 //       console.log("📥 [LOGIN] Input Data:", { email, password });
 
@@ -40,7 +40,7 @@
 //       console.log("🗃️ [LOGIN] Storing user data in localStorage...");
 //       localStorage.setItem("token", token);
 //       localStorage.setItem("email", email);
-//       localStorage.setItem("userId", userId); 
+//       localStorage.setItem("userId", userId);
 //       localStorage.setItem("role", role);
 //       localStorage.setItem("companyName", companyName);
 
@@ -51,7 +51,7 @@
 //       console.log("🔹 [LOGIN] Company Name:", companyName);
 
 //       // Redirect user based on role
-//       const config = sidebarConfig[role]; 
+//       const config = sidebarConfig[role];
 //       const redirectPath = config && config[0]?.path;
 //       console.log("➡️ [LOGIN] Redirecting to:", redirectPath || "/");
 //       navigate(redirectPath || "/");
@@ -79,7 +79,7 @@
 
 //     try {
 //       console.log(`🔑 [REGISTER] Attempting registration for email: ${email}`);
-      
+
 //       const response = await axios.post(
 //         `${process.env.REACT_APP_API_URL}/api/admin/register`,
 //         { email, password }
@@ -233,46 +233,61 @@ const PanelLogin = () => {
       setError("Error registering user");
     }
   };
-
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
+  };
   return (
     <div className="panel-login-container">
       <div className="panel-login-card">
         <div className="panel-login-header">
-          <h2>{isRegistering ? "Create Admin Account" : "Admin Portal Login"}</h2>
+          <h2>
+            {isRegistering ? "Create Admin Account" : "Admin Portal Login"}
+          </h2>
           <p className="panel-login-subtitle">
-            {isRegistering 
-              ? "Register for admin access" 
+            {isRegistering
+              ? "Register for admin access"
               : "Sign in to access the dashboard"}
           </p>
         </div>
-        
+
         {error && <div className="panel-error-message">{error}</div>}
-        
-        <form onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit}>
+
+        <form
+          onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit}
+        >
           <div className="panel-input-group">
-            <input 
-              type="email" 
-              placeholder="Email Address" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
           <div className="panel-input-group">
-            <input 
-              type="password" 
-              placeholder="Password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
-          
+
           <button type="submit" className="panel-submit-btn">
             {isRegistering ? "Register" : "Login"}
           </button>
         </form>
-        
+        <div className="google-login-wrapper">
+          <button onClick={handleGoogleLogin} className="google-login-btn">
+            {/* <img
+              src={GoogleApi.l}
+              alt="Google logo"
+              className="google-logo"
+            /> */}
+            Login with Google
+          </button>
+        </div>
         <div className="panel-toggle-mode">
           {isRegistering ? (
             <p>
@@ -286,7 +301,7 @@ const PanelLogin = () => {
             </p>
           )}
         </div>
-        
+
         <div className="panel-decoration">
           <div className="panel-decoration-circle"></div>
           <div className="panel-decoration-circle"></div>
@@ -298,7 +313,6 @@ const PanelLogin = () => {
 };
 
 export default PanelLogin;
-
 
 // import React, { useState } from "react";
 // import axios from "axios";

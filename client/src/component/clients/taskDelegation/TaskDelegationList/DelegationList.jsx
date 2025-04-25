@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { CiEdit } from "react-icons/ci";
 import { MdDelete } from "react-icons/md";
 import { IoTicketOutline } from "react-icons/io5";
-import { BiRevision, BiTask } from "react-icons/bi";
+import { PiNotePencilFill } from "react-icons/pi";
 import { GrCompliance } from "react-icons/gr";
 import RaiseTicketModal from "./RaiseTicketModal";
 import Navbar from "../../../Navbar/Navbar";
@@ -15,6 +15,7 @@ import Navbar from "../../../Navbar/Navbar";
 const DelegationList = () => {
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
+  const [displayedTasks, setDisplayedTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -48,6 +49,9 @@ const DelegationList = () => {
   const [role, setRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [token, setToken] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [tasksPerPage, setTasksPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
   const fetchTasks = useCallback(
@@ -74,8 +78,6 @@ const DelegationList = () => {
             );
           });
         }
-
-        console.log("tasklist", taskList);
 
         setTasks(taskList);
         setFilteredTasks(taskList);
@@ -170,11 +172,70 @@ const DelegationList = () => {
       });
     }
     setFilteredTasks(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [searchTerm, statusFilter, dateRange, tasks]);
 
   useEffect(() => {
     handleSearch();
   }, [handleSearch]);
+
+  // Pagination logic
+  useEffect(() => {
+    const calculateDisplayedTasks = () => {
+      const indexOfLastTask = currentPage * tasksPerPage;
+      const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+      const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+      setDisplayedTasks(currentTasks);
+      setTotalPages(Math.ceil(filteredTasks.length / tasksPerPage));
+    };
+
+    calculateDisplayedTasks();
+  }, [filteredTasks, currentPage, tasksPerPage]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleTasksPerPageChange = (e) => {
+    setTasksPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handleEditConfirmation = (task) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to edit this task?"
+    );
+    if (isConfirmed) {
+      handleEditClick(task);
+    }
+  };
+
+  const handleCompleteConfirmation = (taskId) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to mark this task as completed?"
+    );
+    if (isConfirmed) {
+      handleCompleteTask(taskId);
+    }
+  };
+
+  const handleReviseConfirmation = (task) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to revise this task?"
+    );
+    if (isConfirmed) {
+      handleReviseClick(task);
+    }
+  };
+
+  const handleTicketConfirmation = (task) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to create a ticket for this task?"
+    );
+    if (isConfirmed) {
+      handleTicketClick(task);
+    }
+  };
 
   const handleEditClick = (task) => {
     setEditingTask(task);
@@ -210,6 +271,15 @@ const DelegationList = () => {
       fetchTasks(token);
     } catch (error) {
       console.error("Error updating task:", error);
+    }
+  };
+
+  const handleDeleteConfirmation = (taskId) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+    if (isConfirmed) {
+      handleDeleteTask(taskId);
     }
   };
 
@@ -330,12 +400,76 @@ const DelegationList = () => {
     }
   };
 
+  // Generate page numbers for pagination
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPageButtons = 5; // Maximum number of page buttons to show
+
+    if (totalPages <= maxPageButtons) {
+      // Show all pages if total pages are less than or equal to maxPageButtons
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Show a range of pages around the current page
+      const halfMaxButtons = Math.floor(maxPageButtons / 2);
+      let startPage = Math.max(1, currentPage - halfMaxButtons);
+      let endPage = Math.min(totalPages, currentPage + halfMaxButtons);
+
+      if (currentPage <= halfMaxButtons) {
+        endPage = maxPageButtons;
+      } else if (currentPage + halfMaxButtons >= totalPages) {
+        startPage = totalPages - maxPageButtons + 1;
+      }
+
+      // Add first page and ellipsis if needed
+      if (startPage > 1) {
+        pageNumbers.push(1);
+        if (startPage > 2) {
+          pageNumbers.push('...');
+        }
+      }
+
+      // Add page numbers in range
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      // Add last page and ellipsis if needed
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pageNumbers.push('...');
+        }
+        pageNumbers.push(totalPages);
+      }
+    }
+
+    return pageNumbers.map((number, index) => {
+      if (number === '...') {
+        return (
+          <span key={index} className="page-item disabled">
+            {number}
+          </span>
+        );
+      }
+      return (
+        <button
+          key={index}
+          className={`page-item ${currentPage === number ? 'active' : ''}`}
+          onClick={() => handlePageChange(number)}
+        >
+          {number}
+        </button>
+      );
+    });
+  };
+
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
       <Navbar />
       <div className="delegation-wrapper">
-        <h2 className="title">TASK DELEGATION DASHBOARD</h2>
+        <h2 className="title">Task Delegation Dashboard</h2>
 
         <div className="filters">
           <input
@@ -376,7 +510,23 @@ const DelegationList = () => {
           </div>
         </div>
 
-        {filteredTasks.length > 0 ? (
+        <div className="dele-pagination-controls-top">
+          <div className="dele-items-per-page">
+            <label>Items per page:</label>
+            <select
+              value={tasksPerPage}
+              onChange={handleTasksPerPageChange}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
+
+        {displayedTasks.length > 0 ? (
           <div className="task-table-container">
             <table className="task-table">
               <thead>
@@ -384,8 +534,7 @@ const DelegationList = () => {
                   <th>Task</th>
                   <th>Task Description</th>
                   <th>Doer</th>
-                  <th>Planned Date</th>
-                  <th>Time</th>
+                  <th>Planned Date and Time</th>
                   <th>Status</th>
                   <th>Completed At</th>
                   <th>Revised Date</th>
@@ -395,7 +544,7 @@ const DelegationList = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTasks.map((task) => {
+                {displayedTasks.map((task) => {
                   const isEditing = editingTask && editingTask._id === task._id;
                   const isRevising =
                     revisingTask && revisingTask._id === task._id;
@@ -438,18 +587,21 @@ const DelegationList = () => {
                           </td>
                           <td>
                             <input
-                              type="date"
-                              name="dueDate"
-                              value={editFormData.dueDate}
-                              onChange={handleEditFormChange}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="time"
-                              name="time"
-                              value={editFormData.time}
-                              onChange={handleEditFormChange}
+                              type="datetime-local"
+                              name="datetime"
+                              value={
+                                editFormData.dueDate && editFormData.time
+                                  ? `${editFormData.dueDate}T${editFormData.time}`
+                                  : ""
+                              }
+                              onChange={(e) => {
+                                const [date, time] = e.target.value.split("T");
+                                setEditFormData({
+                                  ...editFormData,
+                                  dueDate: date,
+                                  time,
+                                });
+                              }}
                             />
                           </td>
                         </>
@@ -457,9 +609,14 @@ const DelegationList = () => {
                         <>
                           <td>{task.name}</td>
                           <td>{task.description}</td>
-                          <td>{task.doer?.fullName || "N/A"}</td>
-                          <td>{new Date(task.dueDate).toLocaleDateString()}</td>
-                          <td>{task.time}</td>
+                          <td>{task.doer?.fullName || "__"}</td>
+                          <td>
+                            {task.dueDate
+                              ? `${new Date(
+                                  task.dueDate
+                                ).toLocaleDateString()} ${task.time || ""}`
+                              : "__"}
+                          </td>
                         </>
                       )}
 
@@ -467,7 +624,7 @@ const DelegationList = () => {
                       <td>
                         {task.completedAt
                           ? new Date(task.completedAt).toLocaleString()
-                          : "N/A"}
+                          : "__"}
                       </td>
 
                       {isRevising ? (
@@ -503,10 +660,10 @@ const DelegationList = () => {
                           <td>
                             {task.revisedDate
                               ? new Date(task.revisedDate).toLocaleDateString()
-                              : "N/A"}
+                              : "__"}
                           </td>
-                          <td>{task.revisedTime || "N/A"}</td>
-                          <td>{task.revisedReason || "N/A"}</td>
+                          <td>{task.revisedTime || "__"}</td>
+                          <td>{task.revisedReason || "__"}</td>
                         </>
                       )}
 
@@ -561,20 +718,24 @@ const DelegationList = () => {
                                     <button
                                       className="btn green"
                                       onClick={() =>
-                                        handleCompleteTask(task._id)
+                                        handleCompleteConfirmation(task._id)
                                       }
                                     >
                                       <GrCompliance className="fw-bold fs-3" />
                                     </button>
                                     <button
                                       className="btn blue"
-                                      onClick={() => handleReviseClick(task)}
+                                      onClick={() =>
+                                        handleReviseConfirmation(task)
+                                      }
                                     >
-                                      <BiRevision className="fw-bold fs-3" />
+                                      <PiNotePencilFill className="fw-bold fs-3" />
                                     </button>
                                     <button
                                       className="btn btn-warning"
-                                      onClick={() => handleTicketClick(task)}
+                                      onClick={() =>
+                                        handleTicketConfirmation(task)
+                                      }
                                       aria-label="Create ticket"
                                       title="Create Ticket"
                                     >
@@ -584,27 +745,29 @@ const DelegationList = () => {
                                 )}
                               </>
                             )}
-                            {role === "client" &&
-                              task.status !== "Completed" && (
-                                <div className="d-flex">
-                                  <button
-                                    className="btn green me-2"
-                                    onClick={() => handleEditClick(task)}
-                                    aria-label="Edit task"
-                                    title="Edit"
-                                  >
-                                    <CiEdit className="fw-bold fs-3" />
-                                  </button>
-                                  <button
-                                    className="btn red"
-                                    onClick={() => handleDeleteTask(task._id)}
-                                    aria-label="Delete task"
-                                    title="Delete"
-                                  >
-                                    <MdDelete className="fw-bold fs-3" />
-                                  </button>
-                                </div>
-                              )}
+                            {role === "client" && (
+                              <div className="d-flex">
+                                <button
+                                  className="btn green me-2"
+                                  onClick={() => handleEditConfirmation(task)}
+                                  aria-label="Edit task"
+                                  title="Edit"
+                                  disabled={task.status === "Completed"}
+                                >
+                                  <CiEdit className="fw-bold fs-3" />
+                                </button>
+                                <button
+                                  className="btn red"
+                                  onClick={() =>
+                                    handleDeleteConfirmation(task._id)
+                                  }
+                                  aria-label="Delete task"
+                                  title="Delete"
+                                >
+                                  <MdDelete className="fw-bold fs-3" />
+                                </button>
+                              </div>
+                            )}
                           </>
                         )}
                       </td>
@@ -616,6 +779,47 @@ const DelegationList = () => {
           </div>
         ) : (
           <p style={{ marginTop: "20px" }}>No tasks found.</p>
+        )}
+
+        {filteredTasks.length > 0 && (
+          <div className="dele-pagination-controls">
+            <div className="dele-pagination-info">
+              Showing {(currentPage - 1) * tasksPerPage + 1} to{" "}
+              {Math.min(currentPage * tasksPerPage, filteredTasks.length)} of{" "}
+              {filteredTasks.length} tasks
+            </div>
+            <div className="dele-pagination-buttons">
+              <button
+                className="dele-page-item"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+              >
+                &laquo;
+              </button>
+              <button
+                className="dele-page-item"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                &lsaquo;
+              </button>
+              {renderPageNumbers()}
+              <button
+                className="dele-page-item"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                &rsaquo;
+              </button>
+              <button
+                className="dele-page-item"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                &raquo;
+              </button>
+            </div>
+          </div>
         )}
 
         <RaiseTicketModal
