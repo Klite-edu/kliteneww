@@ -57,6 +57,7 @@ import IssueDashboard from "./component/clients/Issue/IssueDashboard";
 import ScrollToTop from "./component/ScrollToTop";
 import Microsoft from "./component/clients/AppStore/IndiaMart/Microsoft/Microsoft";
 import WorkingDay from "./component/clients/WorkingDays/WorkingDay";
+import GoogleDriveManager from "./component/clients/Google/GoogleDrivelogin/GoogleDriveManager";
 
 const TrackImpressions = () => {
   useEffect(() => {
@@ -131,6 +132,7 @@ const App = () => {
         <Route path="/issue" element={<IssueDashboard />} />
         <Route path="/microsoft" element={<Microsoft />} />
         <Route path="/workingday" element={<WorkingDay />} />
+        <Route path="/googledrive" element={<GoogleDriveManager />} />
       </Routes>
     </div>
   );

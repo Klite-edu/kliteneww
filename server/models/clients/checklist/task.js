@@ -16,13 +16,36 @@ const TaskSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  proofDoc: {
+    fileId: String,
+    fileName: String,
+    viewLink: String,
+    uploadedAt: Date,
+    modificationReason: String, // ✨ New field for modification reason
+  },
+
+  validationStatus: {
+    type: String,
+    enum: ["Not Requested", "Requested", "Validated"],
+    default: "Not Requested",
+  },
+  validationRequestedAt: Date,
+  validatedAt: Date,
   frequency: {
     type: String,
     enum: [
-      "Daily", "Alternate Days", "Weekly", "Monthly", "Fortnightly",
-      "Quarterly", "Half-yearly", "Yearly",
-      "First of every month", "Second of every month",
-      "Third of every month", "Fourth of every month"
+      "Daily",
+      "Alternate Days",
+      "Weekly",
+      "Monthly",
+      "Fortnightly",
+      "Quarterly",
+      "Half-yearly",
+      "Yearly",
+      "First of every month",
+      "Second of every month",
+      "Third of every month",
+      "Fourth of every month",
     ],
     required: true,
   },
@@ -48,7 +71,7 @@ const TaskSchema = new mongoose.Schema({
     },
   ],
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 TaskSchema.pre("save", function (next) {

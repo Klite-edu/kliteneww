@@ -125,20 +125,38 @@ const dotenv = require("dotenv");
 dotenv.config();
 const router = express.Router();
 const Admin = require("../../models/Admin/admin-model");
+const { getClientModel } = require("../../models/Admin/client-modal");
+const { getEmployeeModel } = require("../../models/clients/contactdata");
 const { getAllClientDBNames, createClientDatabase } = require("../../database/db");
-const { getEmployeeModel} = require("../../models/clients/contactdata")
-// ✅ Helper to set cookies
-const setCookie = (res, name, value, options = {}) => {
-  res.cookie(name, value, {
+
+// Cookie helper
+const setAuthCookies = (res, user, companyName) => {
+  const token = jwt.sign(
+    { 
+      id: user._id, 
+      role: user.role, 
+      email: user.email,
+      companyName 
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "12h" }
+  );
+
+  const cookieOptions = {
     httpOnly: true,
-    maxAge: 12 * 60 * 60 * 1000, // 12 hours
-    secure: false, // set to true if using HTTPS in production
-    sameSite: 'lax',
-    ...options
-  });
+    maxAge: 12 * 60 * 60 * 1000,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  };
+
+  res.cookie('token', token, cookieOptions);
+  res.cookie('userId', user._id.toString(), cookieOptions);
+  res.cookie('role', user.role, cookieOptions);
+  res.cookie('email', user.email, cookieOptions);
+  res.cookie('companyName', companyName, cookieOptions);
 };
 
-// 🔑 Register Route
+// Register Route
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   console.log(`[REGISTER] Request received for email: ${email}`);
@@ -161,89 +179,70 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔐 Login Route
 // Login Route
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   console.log(`[LOGIN] Attempt for email: ${email}`);
 
   try {
-    // 🗝️ Admin login attempt
+    // 1. Check Admin login
     const admin = await Admin.findOne({ email });
     if (admin && await bcrypt.compare(password, admin.password)) {
-      const token = jwt.sign(
-        { id: admin._id, role: admin.role, companyName: "admin" },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
-      );
-
-      // ✅ Set cookies for admin login
-      setCookie(res, "token", token);
-      setCookie(res, "userId", admin._id.toString());
-      setCookie(res, "role", admin.role);
-      setCookie(res, "email", admin.email);
-      setCookie(res, "companyName", "admin");
-
+      setAuthCookies(res, admin, "admin");
       console.log(`[LOGIN] Admin logged in successfully: ${email}`);
-      return res.json({ message: "Login successful", role: admin.role });
+      return res.json({ 
+        message: "Login successful", 
+        role: admin.role,
+        userType: 'admin'
+      });
     }
 
-    // 🔍 Client and User (Employee) login attempt
+    // 2. Check Client/Employee login across all tenant databases
     const clientDBNames = await getAllClientDBNames();
-
+    
     for (const dbName of clientDBNames) {
       const companyName = dbName.replace("client_db_", "");
-      const clientDB = await createClientDatabase(companyName);
+      
+      try {
+        // Check Client login
+        const ClientModel = await getClientModel(companyName);
+        const client = await ClientModel.findOne({ email });
+        
+        if (client && await bcrypt.compare(password, client.password)) {
+          setAuthCookies(res, client, companyName);
+          console.log(`[LOGIN] Client logged in successfully: ${email}`);
+          return res.json({ 
+            message: "Login successful", 
+            role: client.role,
+            userType: 'client'
+          });
+        }
 
-      // 🌟 Attempting Client Login
-      const ClientModel = clientDB.model("Clients", Admin.schema);
-      const client = await ClientModel.findOne({ email });
-      if (client && await bcrypt.compare(password, client.password)) {
-        const token = jwt.sign(
-          { id: client._id, role: client.role, companyName },
-          process.env.JWT_SECRET,
-          { expiresIn: "12h" }
-        );
-
-        // ✅ Set cookies for client login
-        setCookie(res, "token", token);
-        setCookie(res, "userId", client._id.toString());
-        setCookie(res, "role", client.role);
-        setCookie(res, "email", client.email);
-        setCookie(res, "companyName", companyName);
-
-        console.log(`[LOGIN] Client logged in successfully: ${email}`);
-        return res.json({ message: "Login successful", role: client.role });
-      }
-
-      // 🌟 Attempting User (Employee) Login
-      const EmployeeModel = await getEmployeeModel(companyName);
-      const employee = await EmployeeModel.findOne({ email });
-      if (employee && await bcrypt.compare(password, employee.password)) {
-        const token = jwt.sign(
-          { id: employee._id, role: employee.role, companyName },
-          process.env.JWT_SECRET,
-          { expiresIn: "12h" }
-        );
-
-        // ✅ Set cookies for employee login
-        setCookie(res, "token", token);
-        setCookie(res, "userId", employee._id.toString());
-        setCookie(res, "role", employee.role);
-        setCookie(res, "email", employee.email);
-        setCookie(res, "companyName", companyName);
-
-        console.log(`[LOGIN] Employee (User) logged in successfully: ${email}`);
-        return res.json({ message: "Login successful", role: employee.role });
+        // Check Employee login
+        const EmployeeModel = await getEmployeeModel(companyName);
+        const employee = await EmployeeModel.findOne({ email });
+        
+        if (employee && await bcrypt.compare(password, employee.password)) {
+          setAuthCookies(res, employee, companyName);
+          console.log(`[LOGIN] Employee logged in successfully: ${email}`);
+          return res.json({ 
+            message: "Login successful", 
+            role: employee.role,
+            userType: 'employee'
+          });
+        }
+      } catch (err) {
+        console.error(`[LOGIN] Error checking company ${companyName}:`, err.message);
+        continue; // Move to next company if error occurs
       }
     }
 
+    // If no match found
     res.status(401).json({ message: "Invalid email or password" });
   } catch (error) {
     console.error("[LOGIN] Error:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 module.exports = router;

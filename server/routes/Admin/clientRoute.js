@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Client = require("../../models/Admin/client-modal");
+const dbMiddleware = require("../../middlewares/dbMiddleware")
 const { getClientPlanModel } = require("../../models/clients/clientplan");
 const Subscription = require("../../models/Admin/Subscription");
 const UserSubscription = require("../../models/Admin/userSubscription");
@@ -108,13 +108,13 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.get("/total-clients", async (req, res) => {
+router.get("/total-clients", dbMiddleware, async (req, res) => {
   try {
     // Count all clients (active and inactive)
-    const totalClients = await Client.countDocuments();
+    const totalClients = await req.Client.countDocuments();
 
     // Count active clients specifically
-    const activeClients = await Client.countDocuments({ status: "Active" });
+    const activeClients = await req.Client.countDocuments({ status: "Active" });
 
     res.status(200).json({ totalClients, activeClients });
   } catch (error) {
@@ -123,12 +123,12 @@ router.get("/total-clients", async (req, res) => {
   }
 });
 
-router.get("/monthlyrevenue", async (req, res) => {
+router.get("/monthlyrevenue", dbMiddleware, async (req, res) => {
   try {
     // Log the request for monthly revenue
 
     // Fetch all clients
-    const clients = await Client.find({});
+    const clients = await req.Client.find({});
 
     // Initialize the revenue data object
     let revenueData = {};
@@ -164,9 +164,9 @@ router.get("/monthlyrevenue", async (req, res) => {
 });
 
 
-router.get("/clientData", async (req, res) => {
+router.get("/clientData", dbMiddleware, async (req, res) => {
   try {
-    const clients = await Client.find();
+    const clients = await req.Client.find();
     console.log("clients", clients);
 
     res.status(200).json(clients);
@@ -177,7 +177,7 @@ router.get("/clientData", async (req, res) => {
   }
 });
 
-router.get("/mostPurchasedPlans", async (req, res) => {
+router.get("/mostPurchasedPlans", dbMiddleware, async (req, res) => {
   try {
     // Fetch all subscriptions
     const subscriptions = await UserSubscription.aggregate([
@@ -224,10 +224,10 @@ router.get("/mostPurchasedPlans", async (req, res) => {
   }
 });
 
-router.get("/transactionData", async (req, res) => {
+router.get("/transactionData", dbMiddleware, async (req, res) => {
   try {
     // Fetch all clients, including plan details
-    const clients = await Client.find()
+    const clients = await req .Client.find()
       .populate("selectedPlanId", "name price")  // Populate with plan details (name and price)
       .exec();
 
@@ -251,10 +251,10 @@ router.get("/transactionData", async (req, res) => {
 });
 
 
-router.get("/clientsubscriptions", async (req, res) => {
+router.get("/clientsubscriptions", dbMiddleware, async (req, res) => {
   try {
     // Fetch all clients
-    const clients = await Client.find().lean();
+    const clients = await req.Client.find().lean();
 
     if (!clients || clients.length === 0) {
       console.warn("⚠️ No clients found!");
@@ -300,9 +300,9 @@ router.get("/clientsubscriptions", async (req, res) => {
 });
 
 // Get a single client by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id", dbMiddleware, async (req, res) => {
   try {
-    const client = await Client.findById(req.params.id);
+    const client = await req.Client.findById(req.params.id);
     if (!client) {
       return res.status(404).json({ message: "Client not found" });
     }
@@ -315,9 +315,9 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update a client by ID
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", dbMiddleware, async (req, res) => {
   try {
-    const updatedClient = await Client.findByIdAndUpdate(
+    const updatedClient = await req.Client.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
@@ -336,9 +336,9 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // Delete a client by ID
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/delete/:id", dbMiddleware, async (req, res) => {
   try {
-    const deletedClient = await Client.findByIdAndDelete(req.params.id);
+    const deletedClient = await req.Client.findByIdAndDelete(req.params.id);
     if (!deletedClient) {
       return res.status(404).json({ message: "Client not found" });
     }

@@ -65,6 +65,7 @@ const { getTicketRaiseModel } = require("../models/clients/TicketRaise/TicketRai
 const { getMicrosoftSessionModel } = require("../models/clients/Microsoft/Session-model");
 const { getMicrosoftUploadModel } = require("../models/clients/Microsoft/Upload-model");
 const { getTenantWorkConfigModel } = require("../models/clients/workingConfig/working-model");
+const { getClientModel } = require("../models/Admin/client-modal");
 
 // Utility function to dynamically load models
 const modelLoaders = {
@@ -87,6 +88,7 @@ const modelLoaders = {
   MicrosoftSession: getMicrosoftSessionModel,
   MicrosoftUpload: getMicrosoftUploadModel,
   WorkingDays: getTenantWorkConfigModel,
+  Client: getClientModel,
 };
 
 // Middleware to dynamically set client DB models

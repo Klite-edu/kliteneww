@@ -31,7 +31,49 @@
   font-size: 24px;
   margin: 0;
 }
+/* Upload Modal */
+.upload-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+/* Status indicators */
+.pending-validation {
+  color: orange;
+  font-weight: bold;
+}
+
+.validated {
+  color: green;
+  font-weight: bold;
+}
+
+/* Buttons */
+.validate-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.upload-proof-btn {
+  background-color: #2196f3;
+  color: white;
+}
 .server-date {
   display: flex;
   align-items: center;
@@ -407,13 +449,13 @@
 }
 
 .status-badge.pending {
-  background-color: #FFF3CD;
+  background-color: #fff3cd;
   color: #856404;
 }
 
 .status-badge.overdue {
-  background-color: #F8D7DA;
-  color: #721C24;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 /* Responsive Breakpoints */
@@ -422,27 +464,27 @@
     max-width: 1300px;
     margin: 0 auto;
     padding: 30px;
-    left:8%;
+    left: 8%;
   }
-  
+
   .task-list-header {
     margin-bottom: 30px;
   }
-  
+
   .task-list-title {
     font-size: 28px;
   }
-  
+
   .task-list-table th,
   .task-list-table td {
     padding: 15px 20px;
     font-size: 16px;
   }
-  
+
   .action-buttons {
     gap: 12px;
   }
-  
+
   .edit-btn,
   .delete-btn,
   .complete-btn {
@@ -463,7 +505,7 @@
     left: 7%;
   }
 
-  .search-control{
+  .search-control {
     position: relative;
     min-width: 150px;
   }
@@ -479,7 +521,7 @@
     position: relative;
     min-width: 160px;
   }
-  
+
   .search-input-container {
     position: relative;
     display: flex;
@@ -520,28 +562,28 @@
     left: 11%;
     width: 100vw;
   }
-  
+
   .task-list-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .search-control {
     min-width: 200px;
   }
-  
+
   .task-list-table th,
   .task-list-table td {
     padding: 8px 10px;
     font-size: 13px;
   }
-  
+
   .action-buttons {
     flex-direction: column;
     gap: 5px;
   }
-  
+
   .edit-btn,
   .delete-btn,
   .complete-btn {
@@ -558,51 +600,51 @@
     max-width: 100%;
     width: 100%;
   }
-  
+
   .task-list-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .task-list-controls {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .controls-left,
   .controls-right {
     width: 100%;
     flex-wrap: wrap;
   }
-  
+
   .search-control {
     min-width: 100%;
   }
-  
+
   .task-list-table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow-primary);
   }
-  
+
   .task-list-table {
     min-width: 700px; /* Ensure table has minimum width for scrolling */
   }
-  
+
   .task-list-table th,
   .task-list-table td {
     padding: 10px 12px;
     font-size: 14px;
     white-space: nowrap;
   }
-  
+
   .action-buttons {
     flex-direction: row;
     gap: 5px;
   }
-  
+
   .edit-btn,
   .delete-btn,
   .complete-btn {
@@ -616,78 +658,78 @@
     top: 50px;
     padding: 8px;
   }
-  
+
   .task-list-title {
     font-size: 18px;
   }
-  
+
   .server-date {
     padding: 5px 8px;
     font-size: 12px;
   }
-  
+
   .date-icon {
     font-size: 14px;
   }
-  
+
   .search-control {
     min-width: 100%;
   }
-  
+
   .search-input {
     padding: 6px 12px 6px 35px;
     font-size: 13px;
   }
-  
+
   .search-icon {
     left: 10px;
     font-size: 14px;
   }
-  
+
   .filter-toggle {
     padding: 6px 10px;
     font-size: 13px;
   }
-  
+
   .date-range-filter {
     padding: 10px;
     gap: 10px;
   }
-  
+
   .date-picker-group {
     flex-direction: column;
     align-items: flex-start;
     gap: 5px;
   }
-  
+
   .date-picker {
     min-width: 100%;
     padding: 6px 10px;
   }
-  
+
   .task-list-table th,
   .task-list-table td {
     padding: 8px 10px;
     font-size: 12px;
   }
-  
+
   .today-badge {
     font-size: 10px;
     padding: 1px 6px;
   }
-  
+
   .action-buttons {
     flex-direction: row;
     gap: 3px;
   }
-  
+
   .edit-btn,
   .delete-btn,
   .complete-btn {
     padding: 3px 5px;
     font-size: 11px;
   }
-  
+
   .save-btn,
   .cancel-btn {
     padding: 4px 8px;
@@ -696,6 +738,10 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

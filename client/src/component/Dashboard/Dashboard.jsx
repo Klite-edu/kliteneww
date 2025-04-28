@@ -1,60 +1,3 @@
-
-
-// import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import Sidebar from "../Sidebar/Sidebar";
-// import Navbar from "../Navbar/Navbar";
-// import "./dashboard.css";
-// import AdminDashboard from "../Admin/dashboard/AdminDashboard";
-// import ClientDashboard from "../clients/dashboard/ClientDashboard";
-// import UserDashboard from "../User/dashboard/UserDashboard";
-
-// const Dashboard = () => {
-//   const navigate = useNavigate();
-//   const role = localStorage.getItem("role");
-//   const token = localStorage.getItem("token");
-//   const [customPermissions, setCustomPermissions] = useState(() => {
-//     // Load permissions from localStorage if available
-//     const storedPermissions = localStorage.getItem("permissions");
-//     return storedPermissions ? JSON.parse(storedPermissions) : {};
-//   });
-
-//   const handlePermissionsSave = (permissions) => {
-//     // Save permissions to localStorage
-//     localStorage.setItem("permissions", JSON.stringify(permissions));
-//     setCustomPermissions(permissions); // Update the custom permissions state
-//   };
-
-//   useEffect(() => {
-//     if (!token) {
-//       navigate("/");
-//     } else if (role === "admin" || role === "client" || role === "user") {
-//       navigate("/dashboard");
-//     } else {
-//       navigate("/unauthorized");
-//     }
-//   }, [role, token, navigate]);
-
-//   return (
-//     <div>
-//       <Sidebar role={role} customPermissions={customPermissions} />
-//       <Navbar />
-//       <div className="dashboard">
-//         {role === "admin" ? (
-//           <AdminDashboard />
-//         ) : role === "client" ? (
-//           <ClientDashboard onSave={handlePermissionsSave} permissions={customPermissions} />
-//         ) : (
-//           <UserDashboard onSave={handlePermissionsSave} permissions={customPermissions} />
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Dashboard;
-
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
@@ -74,7 +17,7 @@ const Dashboard = () => {
     const fetchRole = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+          `http://localhost:5000/api/permission/get-role`,
           { withCredentials: true }
         );
         const userRole = response.data.role;
@@ -92,7 +35,7 @@ const Dashboard = () => {
     const fetchPermissions = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          `http://localhost:5000/api/permission/get-permissions`,
           { withCredentials: true }
         );
         setCustomPermissions(response.data.permissions || {});
@@ -109,7 +52,7 @@ const Dashboard = () => {
   const handlePermissionsSave = async (permissions) => {
     try {
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/permission/save-permissions`,
+        `http://localhost:5000/api/permission/save-permissions`,
         { permissions },
         { withCredentials: true }
       );
@@ -122,10 +65,13 @@ const Dashboard = () => {
   if (!role) return <div>Loading...</div>;
 
   return (
-    <div>
+    <div className="main_dashboard">
       <Sidebar role={role} />
-      <Navbar />
-      <div className="dashboard">
+      {role === "admin" && <Navbar pageTitle="Super Admin Dashboard" />}
+      {role === "client" && <Navbar pageTitle="Admin Dashboard" />}
+      {role === "user" && <Navbar pageTitle="Doer Dashboard" />}
+ 
+      <div className="dashboardPanel ">
         {role === "admin" && <AdminDashboard />}
         {role === "client" && (
           <ClientDashboard

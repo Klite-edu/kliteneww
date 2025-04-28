@@ -7,7 +7,7 @@ const xss = require("xss-clean");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
-const { updateTaskFrequency } = require("./middlewares/TaskScheduler");
+const {  startTaskScheduler } = require("./middlewares/TaskScheduler");
 const { connectMainDB } = require("./database/db");
 const socketIo = require("socket.io");
 const whatsappService = require("./routes/clients/WhatsappWeb/Whatsappservice");
@@ -49,6 +49,7 @@ const DelagationMISRoute = require("./routes/clients/taskDelegation/DelegationMI
 const variablesRoutes = require("./routes/clients/Variables/variablesRoutes");
 const WorkingdaysRoutes = require("./routes/clients/workingDays/WorkingRouter");
 const GoogleRoutes = require("./routes/clients/Google/GoogleRoutes");
+const MicrosoftRoutes = require("./routes/clients/Microsoft/MicrosoftRouter");
 
 // ✅ Initialize Express app and HTTP server
 const app = express();
@@ -109,9 +110,9 @@ app.use(
 );
 
 // ✅ Middleware for Parsing and Sanitization
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(xss());
 app.use(hpp());
 app.use((req, res, next) => {
@@ -156,6 +157,7 @@ app.use("/api/delegationmis", DelagationMISRoute);
 app.use("/api/variables", variablesRoutes);
 app.use("/api/workingdays", WorkingdaysRoutes);
 app.use("/", GoogleRoutes);
+app.use("/api", MicrosoftRoutes);
 app.use(
   "/api/whatsapp",
   require("./routes/clients/WhatsappWeb/WhatsappwebRoutes")
@@ -184,7 +186,7 @@ whatsappService.on("auth_failure", (msg) =>
 );
 
 // ✅ Start Scheduled Jobs
-updateTaskFrequency();
+startTaskScheduler();
 
 // ✅ Base Route for Server Status
 app.get("/", (req, res) => {

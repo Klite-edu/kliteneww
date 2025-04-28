@@ -236,6 +236,9 @@ const PanelLogin = () => {
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
   };
+  const handleMicrosoftLogin = () => {
+    window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/login`;
+  };
   return (
     <div className="panel-login-container">
       <div className="panel-login-card">
@@ -286,6 +289,11 @@ const PanelLogin = () => {
               className="google-logo"
             /> */}
             Login with Google
+          </button>
+        </div>
+        <div className="google-login-wrapper">
+          <button onClick={handleMicrosoftLogin} className="google-login-btn">
+            Login with Microsoft
           </button>
         </div>
         <div className="panel-toggle-mode">

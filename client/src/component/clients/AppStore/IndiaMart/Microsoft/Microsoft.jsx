@@ -20,22 +20,15 @@ function Microsoft() {
   const checkSession = async () => {
     try {
       setIsLoading(true);
-      const [sessionRes, roleRes, permissionsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/auth/check-session`, {
+
+      const sessionRes = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/auth/check-session`,
+        {
           withCredentials: true,
-        }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
-          withCredentials: true,
-        }),
-        axios.get(
-          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-          { withCredentials: true }
-        ),
-      ]);
+        }
+      );
 
       if (sessionRes.data.valid) {
-        setRole(roleRes.data.role);
-        setCustomPermissions(permissionsRes.data.permissions || {});
         setHasValidSession(true);
         return true;
       } else {
@@ -50,6 +43,40 @@ function Microsoft() {
     }
   };
 
+  useEffect(() => {
+    const fetchRoleAndPermissions = async () => {
+      try {
+        const [roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+        ]);
+
+        setRole(roleRes.data.role);
+        setCustomPermissions(permissionsRes.data.permissions || {});
+      } catch (error) {
+        console.error("Failed to fetch role or permissions:", error);
+        setRole("");
+        setCustomPermissions({});
+      }
+    };
+
+    fetchRoleAndPermissions();
+  }, []);
+  useEffect(() => {
+    const initialize = async () => {
+      const sessionValid = await checkSession();
+      if (sessionValid) {
+        await fetchUploads();
+      }
+    };
+    initialize();
+  }, []);
   // Fetch uploads
   const fetchUploads = async () => {
     try {
@@ -64,18 +91,27 @@ function Microsoft() {
     }
   };
 
-  useEffect(() => {
-    const initialize = async () => {
-      const sessionValid = await checkSession();
-      if (sessionValid) {
-        await fetchUploads();
-      }
-    };
-    initialize();
-  }, []);
-
   const handleLogin = () => {
     window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/login`;
+  };
+  const handleDisconnectMicrosoft = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/auth/disconnect-microsoft`,
+        { withCredentials: true }
+      );
+      if (response.data.success) {
+        alert("Disconnected from OneDrive successfully");
+        setHasValidSession(false); // sirf session hata, login active rahe
+        await fetchUploads(); // uploads ko refresh karo
+      }
+    } catch (error) {
+      console.error("Error disconnecting from OneDrive:", error);
+      alert("Error disconnecting from OneDrive");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -161,13 +197,23 @@ function Microsoft() {
               <h1 className="ms-title">OneDrive</h1>
             </div>
             {hasValidSession ? (
-              <button
-                onClick={handleLogout}
-                disabled={isLoading}
-                className="ms-button ms-button-primary"
-              >
-                {isLoading ? "Signing out..." : "Sign out"}
-              </button>
+              <>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoading}
+                  className="ms-button ms-button-primary"
+                >
+                  {isLoading ? "Signing out..." : "Sign out"}
+                </button>
+                <button
+                  onClick={handleDisconnectMicrosoft}
+                  disabled={isLoading}
+                  className="ms-button ms-button-secondary"
+                  style={{ marginLeft: "10px" }}
+                >
+                  {isLoading ? "Disconnecting..." : "Disconnect OneDrive"}
+                </button>
+              </>
             ) : (
               <button
                 onClick={handleLogin}

@@ -141,11 +141,13 @@ router.put("/markCompleted/:id", dbDBMiddleware, async (req, res) => {
       "📥 Received data for marking task as completed:",
       selectedDateTime
     );
-
     const task = await req.Task.findById(req.params.id);
-    if (!task) {
-      console.error("❌ Task not found:", req.params.id);
-      return res.status(404).json({ error: "Task not found" });
+
+    if (!task.proofDoc || task.validationStatus !== "Validated") {
+      return res.status(400).json({
+        error:
+          "Proof must be uploaded and validated by admin before completion",
+      });
     }
 
     const selectedDateTimeObj = new Date(selectedDateTime);
@@ -186,7 +188,7 @@ router.put("/markCompleted/:id", dbDBMiddleware, async (req, res) => {
 });
 
 // Delete Task
-router.delete("/delete/:id", dbDBMiddleware, verifyToken,  async (req, res) => {
+router.delete("/delete/:id", dbDBMiddleware, verifyToken, async (req, res) => {
   try {
     const deletedTask = await req.Task.findByIdAndDelete(req.params.id);
 
@@ -202,8 +204,111 @@ router.delete("/delete/:id", dbDBMiddleware, verifyToken,  async (req, res) => {
       .json({ error: "Error deleting task", details: error.message });
   }
 });
+router.post("/uploadProof/:taskId", dbDBMiddleware, async (req, res) => {
+  try {
+    const { fileId, fileName, viewLink } = req.body;
+    const task = await req.Task.findByIdAndUpdate(
+      req.params.taskId,
+      {
+        proofDoc: {
+          fileId,
+          fileName,
+          viewLink,
+          uploadedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
 
-router.get("/serverdate" ,dbDBMiddleware, (req, res) => {
+    res.json({ message: "Proof document uploaded", task });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Request Validation
+router.post("/requestValidation/:taskId", dbDBMiddleware, async (req, res) => {
+  try {
+    const task = await req.Task.findById(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    if (task.validationStatus !== "Not Requested") {
+      return res.status(400).json({
+        error: "Validation already requested or completed",
+      });
+    }
+
+    task.validationStatus = "Requested";
+    task.validationRequestedAt = new Date();
+    await task.save();
+
+    res.json({ message: "Validation requested", task });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Validate Task (Admin only)
+router.post(
+  "/validate/:taskId",
+  dbDBMiddleware,
+  verifyToken,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "client") {
+        return res
+          .status(403)
+          .json({ error: "Only admins can validate tasks" });
+      }
+
+      const { action, modificationReason, newPlannedDateTime } = req.body;
+
+      const task = await req.Task.findById(req.params.taskId);
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      if (action === "approve") {
+        task.validationStatus = "Validated";
+        task.validatedAt = new Date();
+
+        task.statusHistory.push({
+          date: new Date(),
+          status: "Completed",
+          completedDateTime: task.validatedAt,
+        });
+
+        await task.save();
+        return res.json({ message: "Task validated and completed", task });
+      } else if (action === "modification") {
+        if (!modificationReason || !newPlannedDateTime) {
+          return res
+            .status(400)
+            .json({ error: "Modification reason and new date required" });
+        }
+
+        task.validationStatus = "Not Requested";
+        task.proofDoc.modificationReason = modificationReason;
+        task.plannedDateTime = new Date(newPlannedDateTime);
+        task.nextDueDateTime = new Date(newPlannedDateTime); // Important to update both!
+
+        await task.save();
+        return res.json({
+          message: "Modification requested with new date",
+          task,
+        });
+      } else {
+        return res.status(400).json({ error: "Invalid action" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+router.get("/serverdate", dbDBMiddleware, (req, res) => {
   const currentDate = new Date().toISOString();
   res.json({ currentDate });
 });

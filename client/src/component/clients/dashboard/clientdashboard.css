@@ -22,12 +22,9 @@
   padding: 15px;
   background-color: var(--client-gray);
   min-height: 100vh;
-  position: relative;
-  left: 0;
-  top: 0;
   width: 100%;
-  box-sizing: border-box;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0px;
 }
 
 .client-dashboard-header {
@@ -194,6 +191,7 @@
 .client-transaction-list {
   max-height: 400px;
   overflow-y: auto;
+  padding-right: 5px;
 }
 
 .client-transaction-item {
@@ -203,7 +201,8 @@
 .client-recent-transaction {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 10px;  
+  padding-right: 5px;
 }
 
 .client-task-index {
@@ -402,10 +401,6 @@
 
 /* 350px - 599px */
 @media (min-width: 350px) and (max-width: 599px) {
-  .client-dashboard {
-    padding: 10px;
-  }
-
   .client-dashboard-header {
     padding: 12px;
   }
@@ -468,9 +463,6 @@
 
 /* 600px and up */
 @media (min-width: 600px) {
-  .client-dashboard {
-    padding: 20px;
-  }
 
   .client-dashboard-header {
     padding: 15px 20px;
@@ -501,11 +493,6 @@
 }
 
 @media (min-width: 768px) {
-  .client-dashboard {
-    left: 60px;
-    top: 30px;
-    width: calc(100% - 60px);
-  }
 
   .client-dashboard-header h2 {
     font-size: 1.6rem;
@@ -528,12 +515,6 @@
 }
 
 @media (min-width: 950px) and (max-width: 1050px) {
-  .client-dashboard {
-    left: 100px;
-    top: 25px;
-    width: calc(100% - 80px);
-    padding: 20px 25px;
-  }
 
   .client-dashboard-header {
     flex-direction: row;
@@ -592,12 +573,6 @@
 }
 
 @media (min-width: 1051px) and (max-width: 1199px) {
-  .client-dashboard {
-    left: 9.5%;
-    top: 20px;
-    width: 92%;
-  }
-
   .client-dashboard-graphs {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
@@ -612,11 +587,6 @@
 }
 
 @media (min-width: 1200px) and (max-width: 1299px) {
-  .client-dashboard {
-    width: 76vw;
-    left: 12.5%;
-    top: 30px;
-  }
 
   .client-dashboard-header h2 {
     font-size: 1.8rem;
@@ -655,12 +625,6 @@
 }
 
 @media (min-width: 1300px) {
-  .client-dashboard {
-    width: 76vw;
-    left: 19%;
-    top: 80px;
-  }
-
   .client-dashboard-header h2 {
     font-size: 1.8rem;
   }

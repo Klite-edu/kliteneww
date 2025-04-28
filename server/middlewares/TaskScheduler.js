@@ -1,18 +1,17 @@
 const cron = require("node-cron");
+const moment = require('moment-timezone');
 const { getTaskModel } = require("../models/clients/checklist/task");
 const { getAllClientDBNames } = require("../database/db");
 
 // Function to calculate the next due datetime based on frequency
-// Updated calculateNextDueDateTime function
 const calculateNextDueDateTime = (plannedDateTime, frequency) => {
-  // Create a new date object to avoid modifying the original
   let nextDueDateTime = new Date(plannedDateTime);
-  
-  // Preserve time components
+
+  // Preserve original time
   const hours = nextDueDateTime.getUTCHours();
   const minutes = nextDueDateTime.getUTCMinutes();
   const seconds = nextDueDateTime.getUTCSeconds();
-  
+
   switch (frequency) {
     case "Daily":
       nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 1);
@@ -57,55 +56,98 @@ const calculateNextDueDateTime = (plannedDateTime, frequency) => {
     default:
       return null;
   }
-  
-  // Restore the original time components after date calculations
+
+  // Restore original time
   nextDueDateTime.setUTCHours(hours);
   nextDueDateTime.setUTCMinutes(minutes);
   nextDueDateTime.setUTCSeconds(seconds);
-  
+
   return nextDueDateTime;
 };
 
-// Scheduled Task to Update Recurring Tasks for All Client Databases
+
+// Function to update task frequency across all clients
 const updateTaskFrequency = async () => {
   try {
-    const now = new Date();
+    const now = moment.tz("Asia/Kolkata").toDate(); // IST current time
+
     const clientDBNames = await getAllClientDBNames();
 
     for (const dbName of clientDBNames) {
+
       try {
         const companyName = dbName.replace("client_db_", "");
-        const Task = await getTaskModel(companyName);
-        const tasks = await Task.find({ nextDueDateTime: { $lte: now } });
 
-        if (tasks.length === 0) continue;
+        const Task = await getTaskModel(companyName);
+
+        // 🔄 Use IST-based start and end of day
+        const startDate = moment.tz("Asia/Kolkata").startOf('day');
+        const endDate = startDate.clone().add(1, 'day');
+
+        const tasks = await Task.find({
+          nextDueDateTime: {
+            $gte: startDate.toDate(),
+            $lt: endDate.toDate()
+          }
+        });
+
+        if (!tasks.length) {
+          continue;
+        }
 
         for (let task of tasks) {
-          let newDueDateTime = calculateNextDueDateTime(task.nextDueDateTime, task.frequency);
+          const fullTask = await Task.findById(task._id);
+          if (!fullTask) continue;
 
-          if (!newDueDateTime) continue;
+          const isPendingAndPastDue = fullTask.status === "Pending" && new Date(fullTask.nextDueDateTime) < now;
 
-          try {
-            await Task.findByIdAndUpdate(task._id, {
-              nextDueDateTime: newDueDateTime,
-              status: "Pending",
+          if (fullTask.statusHistory?.length) {
+            fullTask.statusHistory = fullTask.statusHistory.map(history => {
+              const isMissed = history.status === "Pending" && new Date(history.changedAt || history.date) < now;
+              return {
+                ...history,
+                status: isMissed ? "Missed" : history.status
+              };
             });
-          } catch (updateError) {
-            console.error(`❌ Error updating task ${task.taskName} in ${companyName}:`, updateError.message);
           }
+
+          const nextDate = calculateNextDueDateTime(fullTask.nextDueDateTime, fullTask.frequency);
+          fullTask.nextDueDateTime = moment(nextDate).toISOString();
+
+          fullTask.statusHistory.push({
+            date: startDate.toISOString(),
+            status: "Pending"
+          });
+
+          await fullTask.save();
         }
+
       } catch (companyError) {
-        console.error(`❌ Error processing tasks for company: ${dbName}`, companyError.message);
+        console.error(`❌ Error processing tasks for ${dbName}:`, companyError.message);
       }
     }
+
   } catch (error) {
-    console.error("❌ Error updating tasks:", error.message);
+    console.error("Stack trace:", error.stack);
   }
 };
 
-// Schedule to run the task update daily at midnight
-cron.schedule("0 0 * * *", () => {
-  updateTaskFrequency();
-});
 
-module.exports = { calculateNextDueDateTime, updateTaskFrequency };
+
+
+// Function to start the daily scheduler (to be called in server.js)
+const startTaskScheduler = () => {
+
+  const cronExpression = "0 0 * * *";
+
+  cron.schedule(cronExpression, () => {
+    updateTaskFrequency();
+  });
+
+};
+
+module.exports = {
+  startTaskScheduler,
+  calculateNextDueDateTime,
+  updateTaskFrequency,
+};

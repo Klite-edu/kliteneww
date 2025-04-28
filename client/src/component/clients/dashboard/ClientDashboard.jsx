@@ -24,7 +24,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import axios from "axios";
+import axios from "axios"; 
 
 const ClientDashboard = () => {
   const [totalEmployee, setTotalEmployee] = useState(0);
@@ -42,8 +42,8 @@ const ClientDashboard = () => {
   const fetchUserData = async () => {
     try {
       const [emailRes, tokenRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-email`, { withCredentials: true }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
+        axios.get(`http://localhost:5000/api/permission/get-email`, { withCredentials: true }),
+        axios.get(`http://localhost:5000/api/permission/get-token`, { withCredentials: true }),
       ]);
 
       setUserEmail(emailRes.data.email);
@@ -71,13 +71,13 @@ const ClientDashboard = () => {
         delegationRes,
         issueRes
       ] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`, headers),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`, headers),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`, headers),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/clients/monthlyrevenue`, headers),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/list`, headers),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/delegation/list`, headers),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/ticketRaise/list`, headers)
+        axios.get(`http://localhost:5000/api/clientdash/total-employee`, headers),
+        axios.get(`http://localhost:5000/api/clientdash/trigger-count`, headers),
+        axios.get(`http://localhost:5000/api/clientdash/pipeline-stage-count`, headers),
+        axios.get(`http://localhost:5000/api/clients/monthlyrevenue`, headers),
+        axios.get(`http://localhost:5000/api/tasks/list`, headers),
+        axios.get(`http://localhost:5000/api/delegation/list`, headers),
+        axios.get(`http://localhost:5000/api/ticketRaise/list`, headers)
       ]);
 
       setTotalEmployee(employeeRes.data.totalEmployee);
@@ -99,8 +99,6 @@ const ClientDashboard = () => {
   useEffect(() => {
     fetchUserData();
   }, []);
-
-  console.log(`raiseTicket - `, raiseTicket);
 
 
   const data = [
@@ -154,7 +152,7 @@ const ClientDashboard = () => {
   const handleMarkIssueComplete = async (issueId) => {
     try {
       await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/ticketRaise/resolve/${issueId}`,{},
+        `http://localhost:5000/api/ticketRaise/resolve/${issueId}`,{},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -173,13 +171,6 @@ const ClientDashboard = () => {
 
   return (
     <div className="client-dashboard">
-      <div className="client-dashboard-header">
-        <h2>Admin Dashboard</h2>
-        <div className="client-user-info">
-          <span className="client-user-email">{userEmail}</span>
-        </div>
-      </div>
-
       <div className="client-dashboard-graphs">
         {data.map((item, index) => (
           <div
@@ -267,6 +258,7 @@ const ClientDashboard = () => {
             </button>
           </div>
           <hr className="client-hr" />
+
           <div className="client-transaction-list">
             {delegation.length > 0 ? (
               delegation.map((task, idx) => (
@@ -284,6 +276,7 @@ const ClientDashboard = () => {
                         })}
                       </p>
                     </div>
+
                     <div className="client-trans-plan-price">
                       <p>{task.doer?.fullName || "Unassigned"}</p>
                       <p className={`client-status-${task.status.toLowerCase()}`}>

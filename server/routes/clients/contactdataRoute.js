@@ -7,12 +7,8 @@ const mongoose = require("mongoose");
 const { check, validationResult } = require("express-validator");
 // GET all contacts
 router.get("/contactinfo", dbMiddleware, async (req, res) => {
-  console.log("enterting to route");
-
   try {
     const contacts = await req.Employee.find();
-    console.log("employee data", contacts);
-
     res.json(contacts);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -22,8 +18,7 @@ router.get("/contactinfo", dbMiddleware, async (req, res) => {
 // GET a single contact
 router.get("/:id", dbMiddleware, async (req, res) => {
   try {
-    console.log("\n📡 Incoming request to fetch employee details...");
-    console.log("🔹 Requested Employee ID:", req.params.id);
+
 
     const { id } = req.params;
 
@@ -32,15 +27,12 @@ router.get("/:id", dbMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Employee ID is required." });
     }
 
-    console.log("📡 Fetching employee details for ID:", id);
     const employee = await req.Employee.findById(id);
 
     if (!employee) {
       console.warn("❌ Employee not found in the database.");
       return res.status(404).json({ message: "Employee not found" });
     }
-
-    console.log("✅ Employee found:", employee.fullName);
     res.json(employee);
   } catch (error) {
     console.error("❌ Error fetching employee:", error);
