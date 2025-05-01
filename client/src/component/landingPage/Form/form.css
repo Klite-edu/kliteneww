@@ -27,6 +27,33 @@
   color: #6c757d;
   margin: 5px 0 0;
 }
+.form-card {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.form-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.form-delete-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease;
+}
+
+.form-delete-button:hover {
+  transform: scale(1.1);
+}
 
 .form-create-button {
   display: flex;
@@ -142,8 +169,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error Styles */
@@ -390,7 +421,7 @@
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
   }

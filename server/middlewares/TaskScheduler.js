@@ -68,8 +68,11 @@ const calculateNextDueDateTime = (plannedDateTime, frequency) => {
 
 // Function to update task frequency across all clients
 const updateTaskFrequency = async () => {
+
+  console.log(`Abhijeet Task`);
+
   try {
-    const now = moment.tz("Asia/Kolkata").toDate(); // IST current time
+    const now = moment.tz("Asia/Kolkata").toDate();
 
     const clientDBNames = await getAllClientDBNames();
 
@@ -99,26 +102,14 @@ const updateTaskFrequency = async () => {
           const fullTask = await Task.findById(task._id);
           if (!fullTask) continue;
 
-          const isPendingAndPastDue = fullTask.status === "Pending" && new Date(fullTask.nextDueDateTime) < now;
-
-          if (fullTask.statusHistory?.length) {
-            fullTask.statusHistory = fullTask.statusHistory.map(history => {
-              const isMissed = history.status === "Pending" && new Date(history.changedAt || history.date) < now;
-              return {
-                ...history,
-                status: isMissed ? "Missed" : history.status
-              };
-            });
-          }
-
           const nextDate = calculateNextDueDateTime(fullTask.nextDueDateTime, fullTask.frequency);
-          fullTask.nextDueDateTime = moment(nextDate).toISOString();
-
           fullTask.statusHistory.push({
-            date: startDate.toISOString(),
+            date: fullTask.nextDueDateTime,
             status: "Pending"
           });
 
+          fullTask.plannedDateTime = fullTask.nextDueDateTime;
+          fullTask.nextDueDateTime = moment(nextDate).toISOString();
           await fullTask.save();
         }
 
@@ -138,12 +129,12 @@ const updateTaskFrequency = async () => {
 // Function to start the daily scheduler (to be called in server.js)
 const startTaskScheduler = () => {
 
-  const cronExpression = "0 0 * * *";
+  // const cronExpression = "0 0 * * *";
 
-  cron.schedule(cronExpression, () => {
-    updateTaskFrequency();
-  });
-
+  // cron.schedule(cronExpression, () => {
+  //   updateTaskFrequency();
+  // }); 
+  updateTaskFrequency();
 };
 
 module.exports = {

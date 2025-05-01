@@ -28,15 +28,15 @@ const AddTask = () => {
         // Fetch token, role, and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            `http://localhost:5000/api/permission/get-token`,
             { withCredentials: true }
           ),
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            `http://localhost:5000/api/permission/get-role`,
             { withCredentials: true }
           ),
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            `http://localhost:5000/api/permission/get-permissions`,
             { withCredentials: true }
           ),
         ]);
@@ -56,7 +56,7 @@ const AddTask = () => {
 
         // Fetch employees
         const employeesRes = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
+          `http://localhost:5000/api/employee/contactinfo`,
           {
             headers: { Authorization: `Bearer ${userToken}` },
             withCredentials: true,
@@ -99,7 +99,7 @@ const AddTask = () => {
       const plannedDateTime = dateObj.toISOString();
 
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/tasks/add`,
+        `http://localhost:5000/api/tasks/add`,
         {
           ...task,
           plannedDateTime,

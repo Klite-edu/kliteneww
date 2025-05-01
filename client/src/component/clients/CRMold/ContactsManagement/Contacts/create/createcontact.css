@@ -24,6 +24,13 @@
   color: var(--primary-color);
   margin-bottom: 10px;
 }
+.password-helper-text {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 4px;
+  margin-left: 2px;
+}
+
 
 .create-subheading {
   color: #666;
@@ -100,6 +107,7 @@
   font-size: 14px;
   transition: all 0.3s ease;
   background-color: #f9f9f9;
+  width: 15vw;
 }
 
 .form-employee-input input:focus,

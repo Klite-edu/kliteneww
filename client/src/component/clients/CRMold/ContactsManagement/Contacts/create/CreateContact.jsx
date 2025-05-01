@@ -4,7 +4,7 @@ import Sidebar from "../../../../../Sidebar/Sidebar";
 import Navbar from "../../../../../Navbar/Navbar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import { FiEye, FiEyeOff } from "react-icons/fi";
 const CreateEmployee = () => {
   console.log("🔄 Component rendering");
 
@@ -32,7 +32,7 @@ const CreateEmployee = () => {
 
   console.log("📌 Initial employee state:", employee);
   const [employeeShifts, setEmployeeShifts] = useState([]);
-
+  const [showPassword, setShowPassword] = useState(false);
   const [token, setToken] = useState("");
   const [role, setRole] = useState("");
   const [customPermissions, setCustomPermissions] = useState({});
@@ -344,17 +344,20 @@ const CreateEmployee = () => {
     fieldName,
     type = "text",
     placeholder = "",
-    extraProps = {}
+    extraProps = {},
+    helperText = ""
   ) => {
+    const isPasswordField = fieldName === "password";
+
     return (
-      <>
+      <div style={{ position: "relative" }}>
         {renderLabel(
           fieldName,
           fieldName.charAt(0).toUpperCase() +
             fieldName.slice(1).replace(/([A-Z])/g, " $1")
         )}
         <input
-          type={type}
+          type={isPasswordField ? (showPassword ? "text" : "password") : type}
           name={fieldName}
           value={employee[fieldName]}
           onChange={handleChange}
@@ -362,10 +365,25 @@ const CreateEmployee = () => {
           className={fieldErrors[fieldName] ? "error-input" : ""}
           {...extraProps}
         />
+        {isPasswordField && (
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "relative",
+              left: "-30px",
+              // top: "45px",
+              cursor: "pointer",
+              color: "#666",
+            }}
+          >
+            {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+          </span>
+        )}
+        {helperText && <p className="password-helper-text">{helperText}</p>}
         {fieldErrors[fieldName] && (
           <div className="error-message">{fieldErrors[fieldName]}</div>
         )}
-      </>
+      </div>
     );
   };
 
@@ -535,10 +553,15 @@ const CreateEmployee = () => {
                 <h4 className="section-title">Account Settings</h4>
                 <div className="form-grid">
                   <div className="form-employee-input">
-                    {renderInput("password", "password", "••••••••", {
-                      required: true,
-                    })}
+                    {renderInput(
+                      "password",
+                      "password",
+                      "••••••••",
+                      { required: true },
+                      "Create password with at least 6 characters"
+                    )}
                   </div>
+
                   <div className="form-employee-input">
                     {renderSelect(
                       "status",

@@ -22,7 +22,6 @@ const View = () => {
       try {
         setLoading(true);
         
-        // Fetch token, role and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
           axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { 
             withCredentials: true 
@@ -43,7 +42,6 @@ const View = () => {
         setRole(roleRes.data.role);
         setCustomPermissions(permissionsRes.data.permissions || {});
 
-        // Fetch employee data after successful auth
         await fetchEmployee(tokenRes.data.token);
       } catch (error) {
         console.error("Authentication error:", error);
@@ -80,7 +78,7 @@ const View = () => {
 
   const handleDelete = async (id) => {
     try {
-      if (window.confirm("Do you want to delete this employee?")) {
+      if (window.confirm("Are you sure you want to delete this employee?")) {
         await axios.delete(
           `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`,
           {
@@ -91,7 +89,7 @@ const View = () => {
           }
         );
         alert("Employee deleted successfully");
-        navigate("/contactmgmt/contacts");
+        navigate("/employee");
       }
     } catch (error) {
       console.error("Error deleting employee:", error);
@@ -101,6 +99,22 @@ const View = () => {
         alert("Failed to delete employee");
       }
     }
+  };
+
+  const formatPhoneNumber = (number) => {
+    if (!number) return "N/A";
+    // Format as +91 XXXX XXX XXX
+    return number.replace(/(\d{2})(\d{5})(\d{5})/, "+$1 $2 $3");
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   if (loading) {
@@ -127,7 +141,7 @@ const View = () => {
           </button>
           <h2>Employee Details</h2>
           <div className="header-actions">
-            <Link to={`/contactmgmt/edit/${employee._id}`} className="edit-btn">
+            <Link to={`/employee/edit/${employee._id}`} className="edit-btn">
               <FontAwesomeIcon icon={faPen} /> Edit
             </Link>
             <button
@@ -150,20 +164,24 @@ const View = () => {
               <h3>{employee.fullName}</h3>
               <p className="designation">{employee.designation}</p>
               <p className="employee-id">ID: {employee.employeeID}</p>
-              <p className="status-badge active">Active</p>
+              <p className={`status-badge ${employee.status.toLowerCase()}`}>
+                {employee.status}
+              </p>
             </div>
           </div>
 
           <div className="employee-details-grid">
             <div className="detail-section">
-              <h4>Contact Information</h4>
+              <h4>Personal Information</h4>
               <div className="detail-row">
                 <span className="detail-label">Email:</span>
-                <span className="detail-value">{employee.email}</span>
+                <span className="detail-value">{employee.email || "N/A"}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Phone:</span>
-                <span className="detail-value">{employee.number}</span>
+                <span className="detail-value">
+                  {formatPhoneNumber(employee.number)}
+                </span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Address:</span>
@@ -174,77 +192,60 @@ const View = () => {
             </div>
 
             <div className="detail-section">
-              <h4>Work Information</h4>
-              <div className="detail-row">
-                <span className="detail-label">Department:</span>
-                <span className="detail-value">
-                  {employee.department || "N/A"}
-                </span>
-              </div>
+              <h4>Employment Details</h4>
               <div className="detail-row">
                 <span className="detail-label">Joining Date:</span>
                 <span className="detail-value">
-                  {employee.joiningDate
-                    ? new Date(employee.joiningDate).toLocaleString()
-                    : "N/A"}
+                  {formatDate(employee.joiningDate)}
                 </span>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Work Email:</span>
+                <span className="detail-label">Role:</span>
                 <span className="detail-value">
-                  {employee.specificEmail || "N/A"}
-                </span>
-              </div>
-            </div>
-
-            <div className="detail-section">
-              <h4>Work Details</h4>
-              <div className="detail-row">
-                <span className="detail-label">Work Assigned:</span>
-                <span className="detail-value">
-                  {employee.workAssigned || "N/A"}
+                  {employee.role === "user" ? "Employee" : 
+                   employee.role === "team_lead" ? "Team Lead" : 
+                   employee.role === "admin" ? "Admin" : employee.role}
                 </span>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Team Association:</span>
+                <span className="detail-label">Team:</span>
                 <span className="detail-value">
                   {employee.teamAssociation || "N/A"}
                 </span>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Access Level:</span>
-                <span className="detail-value">
-                  {employee.permissionAccessLevel || "N/A"}
-                </span>
-              </div>
             </div>
 
             <div className="detail-section">
-              <h4>Additional Information</h4>
-              <div className="detail-row">
-                <span className="detail-label">Notes:</span>
-                <span className="detail-value">{employee.notes || "N/A"}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Call Data:</span>
-                <span className="detail-value">
-                  {employee.callData || "N/A"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="activity-section">
-            <h4>Activity Log</h4>
-            <div className="activity-content">
-              {employee.activityLog || "No activity logged"}
-            </div>
-          </div>
-
-          <div className="history-section">
-            <h4>Past Data History</h4>
-            <div className="history-content">
-              {employee.pastDataHistory || "No history available"}
+              <h4>Shift Information</h4>
+              {employee.shifts && employee.shifts.length > 0 ? (
+                employee.shifts.map((shift, index) => (
+                  <div key={index} className="shift-details">
+                    <div className="detail-row">
+                      <span className="detail-label">Shift Name:</span>
+                      <span className="detail-value">
+                        {shift.name || "N/A"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Start Time:</span>
+                      <span className="detail-value">
+                        {shift.startTime || "N/A"}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">End Time:</span>
+                      <span className="detail-value">
+                        {shift.endTime || "N/A"}
+                      </span>
+                    </div>
+                    {shift.isDefault && (
+                      <div className="default-shift-badge">Default Shift</div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="no-shifts">No shift information available</div>
+              )}
             </div>
           </div>
         </div>

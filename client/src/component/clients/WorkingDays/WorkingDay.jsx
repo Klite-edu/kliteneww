@@ -32,9 +32,18 @@ const WorkingDay = () => {
       try {
         // Fetch authentication data
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true }),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
         ]);
 
         const userToken = tokenRes.data.token;
@@ -55,8 +64,9 @@ const WorkingDay = () => {
         );
 
         if (configRes.data && configRes.data.success) {
-          const { workingDays, shifts, holidays, timezone } = configRes.data.data;
-          
+          const { workingDays, shifts, holidays, timezone } =
+            configRes.data.data;
+
           // Update state with saved data
           setWorkingDays(workingDays || []);
           setShifts(shifts || []);
@@ -64,12 +74,12 @@ const WorkingDay = () => {
           setTimezone(timezone || "Asia/Kolkata");
 
           // Create calendar events
-          const savedHolidayEvents = (holidays || []).map(holiday => ({
+          const savedHolidayEvents = (holidays || []).map((holiday) => ({
             title: holiday.description,
             start: new Date(holiday.date),
             end: new Date(holiday.date),
             type: "custom-holiday",
-            className: "working-day-custom-holiday-event"
+            className: "working-day-custom-holiday-event",
           }));
 
           // Predefined festival events
@@ -79,22 +89,22 @@ const WorkingDay = () => {
               start: new Date(new Date().getFullYear(), 10, 12),
               end: new Date(new Date().getFullYear(), 10, 12),
               type: "festival",
-              className: "working-day-festival-event"
+              className: "working-day-festival-event",
             },
             {
               title: "Christmas",
               start: new Date(new Date().getFullYear(), 11, 25),
               end: new Date(new Date().getFullYear(), 11, 25),
               type: "holiday",
-              className: "working-day-holiday-event"
+              className: "working-day-holiday-event",
             },
             {
               title: "New Year",
               start: new Date(new Date().getFullYear() + 1, 0, 1),
               end: new Date(new Date().getFullYear() + 1, 0, 1),
               type: "holiday",
-              className: "working-day-holiday-event"
-            }
+              className: "working-day-holiday-event",
+            },
           ];
 
           setEvents([...festivalEvents, ...savedHolidayEvents]);
@@ -124,46 +134,56 @@ const WorkingDay = () => {
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-          importedHolidays = jsonData.map(item => ({
+          importedHolidays = jsonData.map((item) => ({
             date: item.date ? new Date(item.date) : null,
             description: item.description || "",
-            repeatsAnnually: Boolean(item.repeatsAnnually) || false
+            repeatsAnnually: Boolean(item.repeatsAnnually) || false,
           }));
         } else {
           Papa.parse(data, {
             header: true,
             complete: (results) => {
-              importedHolidays = results.data.map(item => ({
+              importedHolidays = results.data.map((item) => ({
                 date: item.date ? new Date(item.date) : null,
                 description: item.description || "",
-                repeatsAnnually: Boolean(item.repeatsAnnually) || false
+                repeatsAnnually: Boolean(item.repeatsAnnually) || false,
               }));
             },
             error: (error) => {
               console.error("CSV parsing error:", error);
-              setImportProgress({ status: "error", message: "Error parsing CSV file" });
-            }
+              setImportProgress({
+                status: "error",
+                message: "Error parsing CSV file",
+              });
+            },
           });
         }
 
         // Filter out invalid dates and empty descriptions
         const validHolidays = importedHolidays.filter(
-          h => h.date instanceof Date && !isNaN(h.date) && h.description.trim()
+          (h) =>
+            h.date instanceof Date && !isNaN(h.date) && h.description.trim()
         );
 
         if (validHolidays.length === 0) {
-          setImportProgress({ status: "error", message: "No valid holidays found in file" });
+          setImportProgress({
+            status: "error",
+            message: "No valid holidays found in file",
+          });
           return;
         }
 
         setHolidays([...holidays, ...validHolidays]);
         setImportProgress({
           status: "success",
-          message: `Successfully imported ${validHolidays.length} holidays`
+          message: `Successfully imported ${validHolidays.length} holidays`,
         });
       } catch (error) {
         console.error("File import error:", error);
-        setImportProgress({ status: "error", message: "Error processing file" });
+        setImportProgress({
+          status: "error",
+          message: "Error processing file",
+        });
       }
     };
 
@@ -177,11 +197,54 @@ const WorkingDay = () => {
       reader.readAsText(file);
     }
   };
+  const handleDeleteConfig = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete the working days configuration? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/workingdays/delete`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        alert("Work configuration deleted successfully!");
+        setWorkingDays([]);
+        setShifts([]);
+        setHolidays([]);
+        setTimezone("Asia/Kolkata");
+        setEvents([]);
+      } else {
+        alert("Failed to delete work configuration.");
+      }
+    } catch (error) {
+      console.error("Error deleting configuration:", error);
+      alert("Error deleting work configuration.");
+    }
+  };
 
   const downloadTemplate = () => {
     const templateData = [
-      { date: "2023-01-26", description: "Republic Day", repeatsAnnually: true },
-      { date: "2023-08-15", description: "Independence Day", repeatsAnnually: true }
+      {
+        date: "2023-01-26",
+        description: "Republic Day",
+        repeatsAnnually: true,
+      },
+      {
+        date: "2023-08-15",
+        description: "Independence Day",
+        repeatsAnnually: true,
+      },
     ];
 
     if (fileImportType === "excel") {
@@ -216,19 +279,19 @@ const WorkingDay = () => {
 
       if (response.data.success) {
         alert("Configuration saved successfully!");
-        
+
         // Update calendar events with saved holidays
-        const holidayEvents = holidays.map(holiday => ({
+        const holidayEvents = holidays.map((holiday) => ({
           title: holiday.description,
           start: new Date(holiday.date),
           end: new Date(holiday.date),
           type: "custom-holiday",
-          className: "working-day-custom-holiday-event"
+          className: "working-day-custom-holiday-event",
         }));
 
         // Keep the predefined festival events
         const festivalEvents = events.filter(
-          event => event.type === "festival" || event.type === "holiday"
+          (event) => event.type === "festival" || event.type === "holiday"
         );
 
         setEvents([...festivalEvents, ...holidayEvents]);
@@ -248,7 +311,10 @@ const WorkingDay = () => {
   };
 
   const addShift = () => {
-    setShifts([...shifts, { name: "", startTime: "", endTime: "", isActive: true }]);
+    setShifts([
+      ...shifts,
+      { name: "", startTime: "", endTime: "", isActive: true },
+    ]);
   };
 
   const removeShift = (index) => {
@@ -258,7 +324,10 @@ const WorkingDay = () => {
   };
 
   const addHoliday = () => {
-    setHolidays([...holidays, { date: "", description: "", repeatsAnnually: false }]);
+    setHolidays([
+      ...holidays,
+      { date: "", description: "", repeatsAnnually: false },
+    ]);
   };
 
   const removeHoliday = (index) => {
@@ -280,8 +349,8 @@ const WorkingDay = () => {
         opacity: 0.8,
         color: "white",
         border: "0px",
-        display: "block"
-      }
+        display: "block",
+      },
     };
   };
 
@@ -294,13 +363,17 @@ const WorkingDay = () => {
           <h2>Working Days Configuration</h2>
           <div className="working-day-tabs">
             <button
-              className={`working-day-tab ${activeTab === "configuration" ? "active" : ""}`}
+              className={`working-day-tab ${
+                activeTab === "configuration" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("configuration")}
             >
               Configuration
             </button>
             <button
-              className={`working-day-tab ${activeTab === "calendar" ? "active" : ""}`}
+              className={`working-day-tab ${
+                activeTab === "calendar" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("calendar")}
             >
               Calendar View
@@ -313,24 +386,28 @@ const WorkingDay = () => {
             <div className="working-day-section">
               <h3 className="working-day-section-title">Working Days</h3>
               <div className="working-day-checkbox-group">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => (
-                  <label key={day} className="working-day-checkbox-label">
-                    <input
-                      type="checkbox"
-                      className="working-day-checkbox"
-                      value={day}
-                      checked={workingDays.includes(day)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setWorkingDays([...workingDays, day]);
-                        } else {
-                          setWorkingDays(workingDays.filter(d => d !== day));
-                        }
-                      }}
-                    />
-                    <span className="working-day-checkbox-custom">{day}</span>
-                  </label>
-                ))}
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                  (day) => (
+                    <label key={day} className="working-day-checkbox-label">
+                      <input
+                        type="checkbox"
+                        className="working-day-checkbox"
+                        value={day}
+                        checked={workingDays.includes(day)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setWorkingDays([...workingDays, day]);
+                          } else {
+                            setWorkingDays(
+                              workingDays.filter((d) => d !== day)
+                            );
+                          }
+                        }}
+                      />
+                      <span className="working-day-checkbox-custom">{day}</span>
+                    </label>
+                  )
+                )}
               </div>
             </div>
 
@@ -356,25 +433,33 @@ const WorkingDay = () => {
                     placeholder="Shift Name"
                     className="working-day-input"
                     value={shift.name}
-                    onChange={(e) => handleShiftChange(index, "name", e.target.value)}
+                    onChange={(e) =>
+                      handleShiftChange(index, "name", e.target.value)
+                    }
                   />
                   <input
                     type="time"
                     className="working-day-input"
                     value={shift.startTime}
-                    onChange={(e) => handleShiftChange(index, "startTime", e.target.value)}
+                    onChange={(e) =>
+                      handleShiftChange(index, "startTime", e.target.value)
+                    }
                   />
                   <input
                     type="time"
                     className="working-day-input"
                     value={shift.endTime}
-                    onChange={(e) => handleShiftChange(index, "endTime", e.target.value)}
+                    onChange={(e) =>
+                      handleShiftChange(index, "endTime", e.target.value)
+                    }
                   />
                   <label className="working-day-checkbox-label">
                     <input
                       type="checkbox"
                       checked={shift.isActive}
-                      onChange={(e) => handleShiftChange(index, "isActive", e.target.checked)}
+                      onChange={(e) =>
+                        handleShiftChange(index, "isActive", e.target.checked)
+                      }
                     />
                     <span>Active</span>
                   </label>
@@ -398,7 +483,7 @@ const WorkingDay = () => {
 
             <div className="working-day-section">
               <h3 className="working-day-section-title">Holidays</h3>
-              
+
               <div className="working-day-import-section">
                 <h4>Import Holidays</h4>
                 <div className="working-day-import-controls">
@@ -414,7 +499,9 @@ const WorkingDay = () => {
                     Choose File
                     <input
                       type="file"
-                      accept={fileImportType === "excel" ? ".xlsx,.xls" : ".csv"}
+                      accept={
+                        fileImportType === "excel" ? ".xlsx,.xls" : ".csv"
+                      }
                       onChange={handleFileImport}
                       style={{ display: "none" }}
                     />
@@ -428,7 +515,9 @@ const WorkingDay = () => {
                   </button>
                 </div>
                 {importProgress && (
-                  <div className={`working-day-import-status ${importProgress.status}`}>
+                  <div
+                    className={`working-day-import-status ${importProgress.status}`}
+                  >
                     {importProgress.message}
                   </div>
                 )}
@@ -441,7 +530,11 @@ const WorkingDay = () => {
                     <input
                       type="date"
                       className="working-day-input"
-                      value={holiday.date ? moment(holiday.date).format("YYYY-MM-DD") : ""}
+                      value={
+                        holiday.date
+                          ? moment(holiday.date).format("YYYY-MM-DD")
+                          : ""
+                      }
                       onChange={(e) => {
                         const newHolidays = [...holidays];
                         newHolidays[index].date = e.target.value;
@@ -489,9 +582,18 @@ const WorkingDay = () => {
               </div>
             </div>
 
-            <button type="submit" className="working-day-submit-button">
-              Save Configuration
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button type="submit" className="working-day-submit-button">
+                Save Configuration
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfig}
+                className="working-day-delete-button"
+              >
+                Delete Configuration
+              </button>
+            </div>
           </form>
         ) : (
           <div className="working-day-calendar-container">

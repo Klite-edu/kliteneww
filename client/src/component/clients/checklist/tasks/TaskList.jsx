@@ -1088,8 +1088,8 @@ const TaskList = () => {
                 <th>Upcoming Date & Time</th>
                 <th>Status</th>
                 <th>Validation</th>
-                <th>Actions</th>
                 <th>Completed At</th>
+                <th>Actions</th>
                 <th>Proof</th>
               </tr>
             </thead>

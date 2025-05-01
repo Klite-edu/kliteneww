@@ -1,5 +1,5 @@
 const express = require("express");
-const DBMiddleware = require("../../../middlewares/dbMiddleware")
+const DBMiddleware = require("../../../middlewares/dbMiddleware");
 const router = express.Router();
 const mongoose = require("mongoose");
 const { Types } = mongoose; // Import Types for ObjectId
@@ -9,12 +9,19 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
   const { submissions, user_email, data, clientId } = req.body;
 
   console.log("\n========== New Form Submission ==========");
-  console.log({ formId, clientId, user_email, submissionCount: submissions?.length });
+  console.log({
+    formId,
+    clientId,
+    user_email,
+    submissionCount: submissions?.length,
+  });
 
   try {
     // 🔹 Step 1: Validate Form ID
     if (!mongoose.Types.ObjectId.isValid(formId)) {
-      return res.status(400).json({ error: "Invalid form ID format", details: { formId } });
+      return res
+        .status(400)
+        .json({ error: "Invalid form ID format", details: { formId } });
     }
 
     // 🔹 Step 2: Get Form
@@ -35,7 +42,11 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
     });
 
     // 🔹 Step 3: Client Access Check
-    if (form.client.length && !form.client.includes(clientId)) {
+    if (
+      form.client?.length > 0 &&
+      clientId &&
+      !form.client.includes(clientId)
+    ) {
       return res.status(403).json({
         error: "Unauthorized access",
         details: { clientId, allowed: form.client },
@@ -47,7 +58,9 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Submissions must be an array" });
     }
     if (!submissions.length) {
-      return res.status(400).json({ error: "At least one submission is required" });
+      return res
+        .status(400)
+        .json({ error: "At least one submission is required" });
     }
 
     // 🔹 Step 5: Process Submissions
@@ -56,14 +69,17 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
     const invalidFields = [];
 
     for (const { fieldLabel, value, fieldCategory } of submissions) {
-      const field = form.fields.find(f => f.label === fieldLabel);
+      const field = form.fields.find((f) => f.label === fieldLabel);
       if (!field) {
         missingFields.push(fieldLabel);
         continue;
       }
 
       if (field.required && !value) {
-        invalidFields.push({ field: fieldLabel, reason: "Required field is empty" });
+        invalidFields.push({
+          field: fieldLabel,
+          reason: "Required field is empty",
+        });
         continue;
       }
 
@@ -72,8 +88,16 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
         continue;
       }
 
-      if (field.type === "select" && field.options?.length && !field.options.includes(value)) {
-        invalidFields.push({ field: fieldLabel, reason: "Invalid select option", validOptions: field.options });
+      if (
+        field.type === "select" &&
+        field.options?.length &&
+        !field.options.includes(value)
+      ) {
+        invalidFields.push({
+          field: fieldLabel,
+          reason: "Invalid select option",
+          validOptions: field.options,
+        });
         continue;
       }
 
@@ -94,7 +118,7 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
 
     console.log("✅ Validated Submissions:", {
       total: processed.length,
-      categories: [...new Set(processed.map(s => s.fieldCategory))],
+      categories: [...new Set(processed.map((s) => s.fieldCategory))],
     });
 
     // 🔹 Step 6: Determine Initial Stage via Trigger
@@ -108,8 +132,12 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
       });
 
       if (trigger?.action?.move_to_stage) {
-        const pipeline = await req.pipeline.findOne({ "stages._id": trigger.action.move_to_stage });
-        const stage = pipeline?.stages.find(s => s._id.toString() === trigger.action.move_to_stage.toString());
+        const pipeline = await req.pipeline.findOne({
+          "stages._id": trigger.action.move_to_stage,
+        });
+        const stage = pipeline?.stages.find(
+          (s) => s._id.toString() === trigger.action.move_to_stage.toString()
+        );
         if (stage) {
           initialStageId = stage._id;
           initialStageName = stage.stageName;
@@ -128,7 +156,9 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
       submissions: processed,
       current_stage_id: initialStageId,
       metadata: {
-        fieldCategories: Object.fromEntries(processed.map(f => [f.fieldLabel, f.fieldCategory])),
+        fieldCategories: Object.fromEntries(
+          processed.map((f) => [f.fieldLabel, f.fieldCategory])
+        ),
       },
     };
 
@@ -149,7 +179,6 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
       currentStage: initialStageName,
       fieldCategories: submissionPayload.metadata.fieldCategories,
     });
-
   } catch (err) {
     console.error("❌ Submission Error:", err);
     return res.status(500).json({
@@ -162,8 +191,6 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
     console.log("========== End of Submission ==========\n");
   }
 });
-
-
 
 router.get("/forms", DBMiddleware, async (req, res) => {
   try {
@@ -208,127 +235,6 @@ router.get("/forms", DBMiddleware, async (req, res) => {
   }
 });
 
-
-
-
-
-// router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
-//   try {
-//     console.log("🚀 Fetching leads grouped by stages...");
-
-//     // Step 1: Fetch all pipelines (includes stages array)
-//     console.log("📥 Step 1: Fetching pipelines...");
-//     const pipelines = await req.pipeline.find();
-//     console.log(
-//       "✅ Pipelines fetched successfully. Total pipelines:",
-//       pipelines.length
-//     );
-
-//     pipelines.forEach((pipeline, index) => {
-//       console.log(`Pipeline ${index + 1}: ${pipeline.pipelineName}`);
-//       pipeline.stages.forEach((stage, idx) => {
-//         console.log(
-//           `  Stage ${idx + 1}: ${stage.stageName} (ID: ${stage._id})`
-//         );
-//       });
-//     });
-
-//     // Step 2: Fetch all submissions directly from the Submission model
-//     console.log("📥 Step 2: Fetching submissions...");
-//     const submissions = await req.Submission.find().lean();
-//     console.log(
-//       `✅ Submissions fetched successfully. Total submissions: ${submissions.length}`
-//     );
-
-//     // Log each submission with details
-//     submissions.forEach((submission, idx) => {
-//       console.log(`  Submission ${idx + 1}:`);
-//       console.log(`    ID: ${submission._id}`);
-//       console.log(`    Current Stage ID: ${submission.current_stage_id}`);
-//       console.log(`    Submitted At: ${submission.submittedAt}`);
-//       console.log("    Submission Data:");
-//       submission.submissions.forEach((fieldData, dataIdx) => {
-//         console.log(
-//           `      ${dataIdx + 1}. ${fieldData.fieldLabel}: ${fieldData.value}`
-//         );
-//       });
-//     });
-
-//     // Step 3: Group submissions under stages based on current_stage_id
-//     console.log("📂 Step 3: Grouping submissions under stages...");
-//     const leadsByStages = pipelines.flatMap((pipeline) =>
-//       pipeline.stages.map((stage) => {
-//         console.log(`🔍 Checking stage: ${stage.stageName} (ID: ${stage._id})`);
-
-//         // Filter submissions correctly using ObjectId comparison
-//         const stageLeads = submissions
-//           .filter((submission) => {
-//             // Comparing ObjectId as strings
-//             const match =
-//               String(submission.current_stage_id) === String(stage._id);
-//             console.log(
-//               `    Submission ID ${submission._id} - Matches: ${match}`
-//             );
-//             return match;
-//           })
-//           .map((submission) => {
-//             const data = {};
-//             submission.submissions.forEach((fieldData) => {
-//               data[fieldData.fieldLabel] = fieldData.value;
-//               console.log(
-//                 `      Field: ${fieldData.fieldLabel}, Value: ${fieldData.value}`
-//               );
-//             });
-//             return {
-//               submission_id: submission._id,
-//               submittedAt: submission.submittedAt,
-//               data: data,
-//             };
-//           });
-
-//         console.log(
-//           `✅ Found ${stageLeads.length} leads for stage: ${stage.stageName}`
-//         );
-
-//         return {
-//           stage: stage.stageName,
-//           stage_id: stage._id,
-//           leads: stageLeads,
-//         };
-//       })
-//     );
-
-//     // Step 4: Filter out empty stages to return only populated ones
-//     const filteredLeadsByStages = leadsByStages.filter(
-//       (group) => group.leads && group.leads.length > 0
-//     );
-
-//     console.log("✅ Leads grouped successfully. Final result:");
-//     filteredLeadsByStages.forEach((group, groupIdx) => {
-//       console.log(`Group ${groupIdx + 1}:`);
-//       console.log(`  Stage: ${group.stage}`);
-//       console.log(`  Number of Leads: ${group.leads.length}`);
-//       group.leads.forEach((lead, leadIdx) => {
-//         console.log(`    Lead ${leadIdx + 1}:`);
-//         console.log(`      ID: ${lead.submission_id}`);
-//         console.log(`      Submitted At: ${lead.submittedAt}`);
-//         console.log("      Data:");
-//         Object.keys(lead.data).forEach((key) => {
-//           console.log(`        ${key}: ${lead.data[key]}`);
-//         });
-//       });
-//     });
-
-//     res.status(200).json(filteredLeadsByStages);
-//   } catch (error) {
-//     console.error("❌ Error fetching leads by stages:", error);
-//     res.status(500).json({
-//       message: "Error fetching leads by stages",
-//       error: error.message,
-//     });
-//   }
-// });
-
 router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
   try {
     console.log("🚀 Fetching leads grouped by stages...");
@@ -353,7 +259,10 @@ router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
     const leadsByStages = pipelines.flatMap((pipeline) =>
       pipeline.stages.map((stage) => {
         const stageLeads = submissions
-          .filter((submission) => String(submission.current_stage_id) === String(stage._id))
+          .filter(
+            (submission) =>
+              String(submission.current_stage_id) === String(stage._id)
+          )
           .map((submission, index) => {
             // Log each submission
             console.log(`📥 Submission ${index + 1}: ${submission._id}`);
@@ -364,12 +273,14 @@ router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
             // Build full field list with label, value, and category
             const data = submission.submissions.map((field, i) => {
               console.log(
-                `      ${i + 1}. ${field.fieldLabel} | ${field.value} | ${field.fieldCategory || "N/A"}`
+                `      ${i + 1}. ${field.fieldLabel} | ${field.value} | ${
+                  field.fieldCategory || "N/A"
+                }`
               );
               return {
                 fieldLabel: field.fieldLabel,
                 value: field.value,
-                category: field.fieldCategory || "N/A"
+                category: field.fieldCategory || "N/A",
               };
             });
 
@@ -377,16 +288,18 @@ router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
               submission_id: submission._id,
               submittedAt: submission.submittedAt,
               data,
-              category: "N/A" // optional category label
+              category: "N/A", // optional category label
             };
           });
 
-        console.log(`✅ Stage: ${stage.stageName} → ${stageLeads.length} leads`);
+        console.log(
+          `✅ Stage: ${stage.stageName} → ${stageLeads.length} leads`
+        );
 
         return {
           stage: stage.stageName,
           stage_id: stage._id,
-          leads: stageLeads
+          leads: stageLeads,
         };
       })
     );
@@ -408,7 +321,6 @@ router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
 
     // Send response
     return res.status(200).json(result);
-
   } catch (error) {
     console.error("❌ Error in /leads-by-stages:", error);
     return res.status(500).json({
@@ -417,10 +329,6 @@ router.get("/leads-by-stages", DBMiddleware, async (req, res) => {
     });
   }
 });
-
-
-
-
 
 router.post("/move-to-next-stage", DBMiddleware, async (req, res) => {
   // Start transaction logging
@@ -610,9 +518,9 @@ router.post("/move-to-next-stage", DBMiddleware, async (req, res) => {
       error:
         process.env.NODE_ENV === "development"
           ? {
-            message: error.message,
-            stack: error.stack,
-          }
+              message: error.message,
+              stack: error.stack,
+            }
           : undefined,
     });
   } finally {

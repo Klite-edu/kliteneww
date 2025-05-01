@@ -69,4 +69,21 @@ router.post("/save", dbMiddleware, async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+// ✅ Delete Work Config for a Company
+router.delete("/delete", dbMiddleware, async (req, res) => {
+  try {
+    console.log("DELETE /config/work - Request received");
+    const result = await req.WorkingDays.deleteOne({});
+    
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: "No config found to delete" });
+    }
+
+    res.status(200).json({ success: true, message: "Work configuration deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting work configuration:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

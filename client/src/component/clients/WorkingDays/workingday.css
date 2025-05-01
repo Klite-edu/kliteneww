@@ -78,6 +78,21 @@
   background: #d4edda;
   color: #155724;
 }
+.working-day-delete-button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.working-day-delete-button:hover {
+  background: #c0392b;
+}
 
 .working-day-import-status.error {
   background: #f8d7da;

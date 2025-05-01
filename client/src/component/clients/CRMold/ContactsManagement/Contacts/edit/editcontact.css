@@ -1,212 +1,241 @@
-/* editcontact.css */
+:root {
+  --primary-color: #0D6E6E;
+  --primary-light: #E0F2F2;
+  --gray: #f8f8f8;
+  --text-dark: #333;
+  --text-medium: #555;
+  --text-light: #777;
+  --border-color: #e0e0e0;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --white: #ffffff;
+}
+
 .edit-create-div {
-    padding: 30px;
-    width: 83vw;
-    margin: 20px auto;
-    background-color: var(--gray);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-primary);
-    position: relative;
-    left: 7.5%;
-    top: 100px;
-    border: 1px solid #e0e0e0;
+  width: 83vw;
+  background: var(--white);
+  position: relative;
+  left: 7%;
+  top: 90px;
+  padding: 30px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+}
+
+.create-header-container {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(13, 110, 110, 0.1);
+}
+
+.Edit-create-head {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.create-subheading {
+  color: var(--text-medium);
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.required-note {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.required-star {
+  color: var(--danger-color);
+  margin-left: 3px;
+}
+
+.employee-create-edit-info {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  padding: 25px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.form-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: var(--gray);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-left: 3px solid var(--primary-color);
+}
+
+.section-title {
+  color: var(--primary-color);
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-employee-input {
+  margin-bottom: 15px;
+}
+
+.form-employee-input label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.form-employee-input input,
+.form-employee-input select,
+.form-employee-input textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: var(--white);
+  transition: all 0.2s ease;
+}
+
+.form-employee-input input:focus,
+.form-employee-input select:focus,
+.form-employee-input textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(13, 110, 110, 0.1);
+}
+
+.form-employee-input textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.password-input-container {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 5px;
+}
+
+.error-input {
+  border-color: var(--danger-color) !important;
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.bottom-create-button {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.discard-btn,
+.create-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.discard-btn {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.discard-btn:hover {
+  background-color: #f5c6cb;
+}
+
+.create-btn {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.create-btn:hover {
+  background-color: #0b5e5e;
+}
+
+.loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1000;
+}
+
+@media (max-width: 992px) {
+  .edit-create-div {
+    width: 90vw;
+    left: 10%;
+    padding: 25px;
   }
-  
-  .create-header-container {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(13, 110, 110, 0.1);
-  }
-  
-  .Edit-create-head {
-    font-size: 2em;
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-bottom: 10px;
-  }
-  
-  .create-subheading {
-    color: #666;
-    font-size: 1em;
-    margin: 0;
-  }
-  
-  .employee-create-edit-info {
-    background: white;
-    border-radius: var(--border-radius);
-    padding: 30px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
-  
-  .form-section {
-    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .edit-create-div {
+    width: 95vw;
+    left: 5%;
     padding: 20px;
-    background: white;
-    border-radius: var(--border-radius);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border-left: 4px solid var(--primary-color);
+    top: 80px;
   }
-  
-  .section-title {
-    color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.2em;
-    display: flex;
-    align-items: center;
-  }
-  
-  .section-title::before {
-    content: "";
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: var(--primary-color);
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
+
   .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: 1fr;
   }
-  
-  .form-employee-input {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-  }
-  
-  .form-employee-input.full-width {
-    grid-column: 1 / -1;
-  }
-  
-  .form-employee-input label {
-    font-weight: 600;
-    color: #555;
-    font-size: 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .form-employee-input input,
-  .form-employee-input select,
-  .form-employee-input textarea {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    background-color: #f9f9f9;
-  }
-  
-  .form-employee-input input:focus,
-  .form-employee-input select:focus,
-  .form-employee-input textarea:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(13, 110, 110, 0.2);
-    background-color: white;
-  }
-  
-  .form-employee-input input::placeholder,
-  .form-employee-input textarea::placeholder {
-    color: #aaa;
-  }
-  
-  textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-  
+
   .bottom-create-button {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(13, 110, 110, 0.1);
+    flex-direction: column;
   }
-  
+
   .discard-btn,
   .create-btn {
-    padding: 12px 25px;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 150px;
+    width: 100%;
   }
-  
-  .discard-btn {
-    background-color: #ff6b6b;
-    color: white;
+}
+
+@media (max-width: 480px) {
+  .Edit-create-head {
+    font-size: 1.5rem;
   }
-  
-  .discard-btn:hover {
-    background-color: #ff5252;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+
+  .form-section {
+    padding: 15px;
   }
-  
-  .create-btn {
-    background-color: var(--primary-color);
-    color: white;
-  }
-  
-  .create-btn:hover {
-    background-color: #0b5a5a;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(13, 110, 110, 0.3);
-  }
-  
-  .notes-section {
-    background-color: #f5f9f9;
-    border-left: 4px solid #4db6ac;
-  }
-  
-  .notes-section .section-title {
-    color: #4db6ac;
-  }
-  
-  .notes-section .section-title::before {
-    background-color: #4db6ac;
-  }
-  
-  @media (max-width: 768px) {
-    .edit-create-div {
-      padding: 20px;
-      top: 80px;
-    }
-    
-    .form-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .bottom-create-button {
-      flex-direction: column;
-    }
-    
-    .discard-btn,
-    .create-btn {
-      width: 100%;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .Edit-create-head {
-      font-size: 1.5em;
-    }
-    
-    .form-section {
-      padding: 15px;
-    }
-  }
+}

@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../Sidebar/Sidebar";
 import Navbar from "../../Navbar/Navbar";
 import "./form.css";
+import { useParams } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const Form = () => {
   const [forms, setForms] = useState([]);
@@ -19,19 +21,90 @@ const Form = () => {
   const navigate = useNavigate();
   const [formCategories, setFormCategories] = useState({
     "Recent Forms": [],
-    "All Forms": []
+    "All Forms": [],
   });
+  const params = useParams();
+  const directFormId = params.formId;
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      console.log("Starting fetchInitialData");
       try {
         setLoading(true);
-        const [tokenRes, roleRes, permissionsRes, emailRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-email`, { withCredentials: true }),
-        ]);
+        console.log("Loading set to true");
+
+        if (directFormId) {
+          console.log("Direct form ID detected:", directFormId);
+          try {
+            setLoading(true);
+            console.log("Loading set to true for direct form fetch");
+
+            let companyName = Cookies.get("companyName");
+            console.log("Initial companyName from cookies:", companyName);
+
+            if (!companyName) {
+              const urlParamCompany = new URLSearchParams(
+                window.location.search
+              ).get("company");
+              console.log(
+                "No companyName in cookies, checking URL params:",
+                urlParamCompany
+              );
+              if (urlParamCompany) companyName = urlParamCompany;
+            }
+
+            console.log("Final companyName being used:", companyName);
+
+            const res = await axios.get(
+              `${process.env.REACT_APP_API_URL}/api/builder/public/${directFormId}?company=${companyName}`
+            );
+            console.log("Public form fetch response:", res.data);
+
+            setSelectedForm(res.data.form);
+            console.log("Selected form set:", res.data.form);
+
+            setViewMode("full");
+            console.log("View mode set to 'full'");
+
+            return; // Stop further dashboard fetching
+          } catch (error) {
+            console.error("Error fetching public form:", error);
+            setError("Public form not found or inaccessible.");
+            console.log("Error state set");
+            setLoading(false);
+            console.log("Loading set to false after error");
+            return;
+          }
+        }
+
+        console.log("Starting dashboard data fetch");
+        const [tokenRes, roleRes, permissionsRes, emailRes] = await Promise.all(
+          [
+            axios.get(
+              `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+              { withCredentials: true }
+            ),
+            axios.get(
+              `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+              { withCredentials: true }
+            ),
+            axios.get(
+              `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+              { withCredentials: true }
+            ),
+            axios.get(
+              `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
+              { withCredentials: true }
+            ),
+          ]
+        );
+
+        console.log("Auth responses:", {
+          tokenRes: tokenRes.data,
+          roleRes: roleRes.data,
+          permissionsRes: permissionsRes.data,
+          emailRes: emailRes.data,
+        });
 
         const userToken = tokenRes.data.token;
         const userRole = roleRes.data.role;
@@ -39,17 +112,35 @@ const Form = () => {
         const email = emailRes.data.email;
         const userId = tokenRes.data.userId || email;
 
+        console.log("Extracted user data:", {
+          userToken,
+          userRole,
+          userPermissions,
+          email,
+          userId,
+        });
+
         if (!userToken || !userId) {
+          console.warn("Authentication missing - redirecting to login");
           alert("Authentication required. Please login.");
           navigate("/login");
           return;
         }
 
         setToken(userToken);
+        console.log("Token set in state");
+
         setRole(userRole);
+        console.log("Role set in state");
+
         setCustomPermissions(userPermissions);
+        console.log("Permissions set in state");
+
         setClientId(userId);
+        console.log("Client ID set in state");
+
         setUserEmail(email);
+        console.log("Email set in state");
 
         const formsResponse = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/builder/forms`,
@@ -58,31 +149,79 @@ const Form = () => {
             withCredentials: true,
           }
         );
+        console.log("Forms fetch response:", formsResponse.data);
 
         const formsData = formsResponse.data.forms;
         setForms(formsData);
+        console.log("Forms set in state:", formsData);
 
         const categorized = {
           "Recent Forms": formsData.slice(0, 4),
-          "All Forms": formsData
+          "All Forms": formsData,
         };
+        console.log("Categorized forms:", categorized);
 
         setFormCategories(categorized);
+        console.log("Form categories set in state");
       } catch (error) {
-        console.error("Error fetching initial data:", error);
+        console.error("Error in fetchInitialData:", {
+          error: error,
+          response: error.response,
+          message: error.message,
+        });
         setError("Failed to fetch data. Please try again.");
-        navigate("/login");
+        console.log("Error state set");
+        navigate("/");
       } finally {
         setLoading(false);
+        console.log("Loading set to false in finally block");
       }
     };
 
     fetchInitialData();
-  }, [navigate]);
+  }, [navigate, directFormId]);
 
   const handleFormClick = (form) => {
     setSelectedForm(form);
     setViewMode("full");
+  };
+  const handleDeleteForm = async (formId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this form? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/builder/delete/${formId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+
+      alert("Form deleted successfully!");
+
+      // Remove the deleted form from state
+      setForms((prevForms) => prevForms.filter((form) => form._id !== formId));
+
+      // Update categorized form view also
+      setFormCategories((prevCategories) => {
+        const updatedCategories = {};
+        for (const [category, formsList] of Object.entries(prevCategories)) {
+          updatedCategories[category] = formsList.filter(
+            (form) => form._id !== formId
+          );
+        }
+        return updatedCategories;
+      });
+    } catch (error) {
+      console.error("Error deleting form:", error.message);
+      alert("Failed to delete form. Please try again.");
+    }
   };
 
   const handleBackToGrid = () => {
@@ -132,7 +271,10 @@ const Form = () => {
             onClick={() => navigate("/FormBuilder")}
           >
             <svg viewBox="0 0 24 24" width="18" height="18">
-              <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              <path
+                fill="currentColor"
+                d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+              />
             </svg>
             Create New Form
           </button>
@@ -147,50 +289,93 @@ const Form = () => {
                   <button className="view-all-button">View All</button>
                 )}
               </div>
-              
+
               <div className="form-grid">
                 {forms.map((form) => (
-                  <div
-                    key={form._id}
-                    className="form-card"
-                    onClick={() => handleFormClick(form)}
-                  >
-                    <div className="form-card-icon">
-                      <svg viewBox="0 0 24 24" width="28" height="28">
-                        <path
-                          fill="#4e73df"
-                          d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H14V17H7V15Z"
-                        />
-                      </svg>
+                  <div key={form._id} className="form-card">
+                    {/* 🗑️ Trash Delete Button */}
+                    <div className="form-card-actions">
+                      <button
+                        className="form-delete-button"
+                        onClick={(e) => {
+                          e.stopPropagation(); // ❗ Important: prevent card click
+                          handleDeleteForm(form._id);
+                        }}
+                        title="Delete Form"
+                      >
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                          <path
+                            fill="red"
+                            d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6Z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className="form-copy-link-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const companyName = Cookies.get("companyName");
+                          console.log("companynamecopybutton", companyName);
+
+                          const url = `${window.location.origin}/forms/view/${form._id}?company=${companyName}`;
+                          console.log("url", url);
+
+                          navigator.clipboard.writeText(url);
+                          alert("✅ Public form link copied!");
+                        }}
+                        title="Copy Public Link"
+                      >
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                          <path
+                            fill="green"
+                            d="M3,3V21H21V3H3M19,19H5V5H19V19Z"
+                          />
+                        </svg>
+                      </button>
                     </div>
-                    <div className="form-card-content">
-                      <h3>{form.formInfo?.title || "Untitled Form"}</h3>
-                      {form.formInfo?.description && (
-                        <p className="form-description">
-                          {form.formInfo.description.length > 60
-                            ? `${form.formInfo.description.substring(0, 60)}...`
-                            : form.formInfo.description}
-                        </p>
-                      )}
-                      <div className="form-meta-data">
-                        <span>
-                          <svg viewBox="0 0 24 24" width="14" height="14">
-                            <path
-                              fill="#6c757d"
-                              d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
-                            />
-                          </svg>
-                          {form.fields?.length || 0} fields
-                        </span>
-                        <span>
-                          <svg viewBox="0 0 24 24" width="14" height="14">
-                            <path
-                              fill="#6c757d"
-                              d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"
-                            />
-                          </svg>
-                          {new Date(form.createdAt).toLocaleDateString()}
-                        </span>
+
+                    {/* 📄 Clicking on this area will open Form */}
+                    <div onClick={() => handleFormClick(form)}>
+                      <div className="form-card-icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28">
+                          <path
+                            fill="#4e73df"
+                            d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H14V17H7V15Z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="form-card-content">
+                        <h3>{form.formInfo?.title || "Untitled Form"}</h3>
+                        {form.formInfo?.description && (
+                          <p className="form-description">
+                            {form.formInfo.description.length > 60
+                              ? `${form.formInfo.description.substring(
+                                  0,
+                                  60
+                                )}...`
+                              : form.formInfo.description}
+                          </p>
+                        )}
+                        <div className="form-meta-data">
+                          <span>
+                            <svg viewBox="0 0 24 24" width="14" height="14">
+                              <path
+                                fill="#6c757d"
+                                d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
+                              />
+                            </svg>
+                            {form.fields?.length || 0} fields
+                          </span>
+                          <span>
+                            <svg viewBox="0 0 24 24" width="14" height="14">
+                              <path
+                                fill="#6c757d"
+                                d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"
+                              />
+                            </svg>
+                            {new Date(form.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -211,7 +396,7 @@ const FormFullView = ({
   customPermissions,
   token,
   clientId,
-  userEmail
+  userEmail,
 }) => {
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -243,7 +428,7 @@ const FormFullView = ({
       const submissions = form.fields.map((field) => ({
         fieldLabel: field.label,
         value: formData[field.label] || "",
-        fieldCategory: field.fieldCategory || "other"
+        fieldCategory: field.fieldCategory || "other",
       }));
 
       const payload = {
@@ -263,7 +448,7 @@ const FormFullView = ({
       );
 
       setSuccessMessage("Form submitted successfully!");
-      
+
       // Reset form after 2 seconds
       setTimeout(() => {
         const resetData = {};
@@ -277,7 +462,7 @@ const FormFullView = ({
       console.error("Error submitting form:", error);
       setSubmitError(
         error.response?.data?.message ||
-        "Failed to submit form. Please try again."
+          "Failed to submit form. Please try again."
       );
     } finally {
       setSubmitting(false);
@@ -309,7 +494,10 @@ const FormFullView = ({
 
           <form onSubmit={handleSubmit} className="form-fields-container">
             {form.fields.map((field, index) => (
-              <div key={index} className={`form-field ${field.fieldCategory || ""}`}>
+              <div
+                key={index}
+                className={`form-field ${field.fieldCategory || ""}`}
+              >
                 <div className="field-header">
                   <label>
                     {field.label}
@@ -321,11 +509,13 @@ const FormFullView = ({
                     </span>
                   )}
                 </div>
-                
+
                 {field.type === "select" ? (
                   <select
                     value={formData[field.label] || ""}
-                    onChange={(e) => handleInputChange(field.label, e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(field.label, e.target.value)
+                    }
                     required={field.required}
                   >
                     <option value="">Select an option</option>
@@ -339,7 +529,9 @@ const FormFullView = ({
                   <input
                     type={field.type}
                     value={formData[field.label] || ""}
-                    onChange={(e) => handleInputChange(field.label, e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange(field.label, e.target.value)
+                    }
                     required={field.required}
                     placeholder={`Enter ${field.label.toLowerCase()}`}
                   />
@@ -354,7 +546,9 @@ const FormFullView = ({
                     type="checkbox"
                     required
                     checked={formData.policy || false}
-                    onChange={(e) => handleInputChange("policy", e.target.checked)}
+                    onChange={(e) =>
+                      handleInputChange("policy", e.target.checked)
+                    }
                   />
                   <span className="checkmark"></span>
                   <span className="policy-text">{form.policyInfo.title}</span>
