@@ -1,11 +1,15 @@
 const cron = require("node-cron");
 const moment = require('moment-timezone');
 const { getTaskModel } = require("../models/clients/checklist/task");
+const { getTenantWorkConfigModel } = require("../models/clients/workingConfig/working-model");
 const { getAllClientDBNames } = require("../database/db");
 
 // Function to calculate the next due datetime based on frequency
-const calculateNextDueDateTime = (plannedDateTime, frequency) => {
+const calculateNextDueDateTime = (plannedDateTime, frequency, config) => {
+  console.log('\n\ncalculateNextDueDateTime - ', plannedDateTime, frequency);
+
   let nextDueDateTime = new Date(plannedDateTime);
+  console.log(`\n\nNext Due Date - `, nextDueDateTime);
 
   // Preserve original time
   const hours = nextDueDateTime.getUTCHours();
@@ -62,17 +66,32 @@ const calculateNextDueDateTime = (plannedDateTime, frequency) => {
   nextDueDateTime.setUTCMinutes(minutes);
   nextDueDateTime.setUTCSeconds(seconds);
 
+  console.log(`holiday day configuration - `, config)
+
+  const workingDays = config?.workingDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const holidays = (config?.holidays || []).map(h => new Date(h).toDateString());
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  let attempts = 0;
+  while (
+    (!workingDays.includes(dayNames[nextDueDateTime.getUTCDay()]) ||
+      holidays.includes(new Date(nextDueDateTime).toDateString()))
+    && attempts < 10
+  ) {
+    nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 1);
+    attempts++;
+  }
+
+  console.log("✅ Final Next Working Day (Excludes Holidays):", nextDueDateTime.toISOString());
+
   return nextDueDateTime;
 };
 
 
 // Function to update task frequency across all clients
 const updateTaskFrequency = async () => {
-
-  console.log(`Abhijeet Task`);
-
   try {
-    const now = moment.tz("Asia/Kolkata").toDate();
+    const now = moment.tz("Asia/Kolkata").toDate(); // IST current time
 
     const clientDBNames = await getAllClientDBNames();
 
@@ -82,6 +101,7 @@ const updateTaskFrequency = async () => {
         const companyName = dbName.replace("client_db_", "");
 
         const Task = await getTaskModel(companyName);
+        const WorkingDays = await getTenantWorkConfigModel(companyName);
 
         // 🔄 Use IST-based start and end of day
         const startDate = moment.tz("Asia/Kolkata").startOf('day');
@@ -102,14 +122,14 @@ const updateTaskFrequency = async () => {
           const fullTask = await Task.findById(task._id);
           if (!fullTask) continue;
 
-          const nextDate = calculateNextDueDateTime(fullTask.nextDueDateTime, fullTask.frequency);
+          const nextDate = calculateNextDueDateTime(fullTask.nextDueDateTime, fullTask.frequency, WorkingDays);
+          fullTask.nextDueDateTime = moment(nextDate).toISOString();
+
           fullTask.statusHistory.push({
-            date: fullTask.nextDueDateTime,
+            date: startDate.toISOString(),
             status: "Pending"
           });
 
-          fullTask.plannedDateTime = fullTask.nextDueDateTime;
-          fullTask.nextDueDateTime = moment(nextDate).toISOString();
           await fullTask.save();
         }
 
@@ -129,12 +149,12 @@ const updateTaskFrequency = async () => {
 // Function to start the daily scheduler (to be called in server.js)
 const startTaskScheduler = () => {
 
-  // const cronExpression = "0 0 * * *";
+  const cronExpression = "0 0 * * *";
 
-  // cron.schedule(cronExpression, () => {
-  //   updateTaskFrequency();
-  // }); 
-  updateTaskFrequency();
+  cron.schedule(cronExpression, () => {
+    updateTaskFrequency();
+  });
+
 };
 
 module.exports = {

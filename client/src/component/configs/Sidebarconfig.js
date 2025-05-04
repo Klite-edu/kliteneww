@@ -92,7 +92,7 @@ const sidebarConfig = {
     { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
     { name: "OneDrive Connect", path: "/microsoft", icon: faProjectDiagram },
     { name: "GoogleDrive Connect", path: "/googledrive", icon: faProjectDiagram },
-    { name: "Whatsapp Web", path: "/seleniumweb", icon: faComments },
+    { name: "Whatsapp Web", path: "/whatsapp-web", icon: faComments },
     { name: "Raised Ticket", path: "/issue", icon: faProjectDiagram },
     { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
     {

@@ -29,6 +29,31 @@ router.get("/public/:id", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+router.get("/private-view/:id", DBMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const companyName = req.query.company || req.cookies.companyName;
+
+    if (!companyName) {
+      return res
+        .status(400)
+        .json({ error: "Missing company name from query or cookies" });
+    }
+
+    const FormBuilder = await getFormBuilderModel(companyName);
+    const form = await FormBuilder.findById(id).lean();
+
+    if (!form) {
+      return res.status(404).json({ error: "Private form not found" });
+    }
+
+    return res.status(200).json({ form });
+  } catch (error) {
+    console.error("❌ Private Form Fetch Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 // Create a form
 router.post("/create", DBMiddleware, async (req, res) => {

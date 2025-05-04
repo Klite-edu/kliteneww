@@ -150,6 +150,22 @@ const IndiaMart = () => {
       color: "#0078D4",
       requiresToken: false,
     },
+    {
+      id: 11,
+      name: "Tally",
+      category: "Accounting Software",
+      description:
+        "Simplify your business accounting and finance management with Tally's powerful software solutions.",
+      icon: "https://logo.clearbit.com/tallysolutions.com",
+      ageRating: "4+",
+      price: "Paid",
+      inAppPurchases: false,
+      enabled: true,
+      featured: false,
+      color: "#FFB400",
+      requiresToken: false,
+    }
+    
   ];
 
   const fetchCrmData = async (token) => {

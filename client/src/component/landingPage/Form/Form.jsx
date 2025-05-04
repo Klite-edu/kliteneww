@@ -5,7 +5,7 @@ import Sidebar from "../../Sidebar/Sidebar";
 import Navbar from "../../Navbar/Navbar";
 import "./form.css";
 import { useParams } from "react-router-dom";
-import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 
 const Form = () => {
   const [forms, setForms] = useState([]);
@@ -18,6 +18,7 @@ const Form = () => {
   const [token, setToken] = useState("");
   const [clientId, setClientId] = useState(null);
   const [userEmail, setUserEmail] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const navigate = useNavigate();
   const [formCategories, setFormCategories] = useState({
     "Recent Forms": [],
@@ -25,122 +26,100 @@ const Form = () => {
   });
   const params = useParams();
   const directFormId = params.formId;
+  const isPrivateForm = window.location.pathname.includes("/private-view/");
 
   useEffect(() => {
     const fetchInitialData = async () => {
       console.log("Starting fetchInitialData");
       try {
         setLoading(true);
-        console.log("Loading set to true");
+
+        // 🔥 Step 1: Get token first
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
+        const userToken = tokenRes.data.token;
+        const decoded = jwtDecode(userToken);
+        const userCompanyName = decoded.companyName;
+
+        setToken(userToken);
+        setCompanyName(userCompanyName);
 
         if (directFormId) {
           console.log("Direct form ID detected:", directFormId);
           try {
-            setLoading(true);
-            console.log("Loading set to true for direct form fetch");
-
-            let companyName = Cookies.get("companyName");
-            console.log("Initial companyName from cookies:", companyName);
-
-            if (!companyName) {
-              const urlParamCompany = new URLSearchParams(
-                window.location.search
-              ).get("company");
-              console.log(
-                "No companyName in cookies, checking URL params:",
-                urlParamCompany
+            if (isPrivateForm) {
+              // 🔥 Private Form Fetch
+              const res = await axios.get(
+                `${process.env.REACT_APP_API_URL}/api/builder/private-view/${directFormId}?company=${userCompanyName}`,
+                {
+                  headers: { Authorization: `Bearer ${userToken}` },
+                  withCredentials: true,
+                }
               );
-              if (urlParamCompany) companyName = urlParamCompany;
+
+              console.log("Private form fetch response:", res.data);
+
+              setSelectedForm(res.data.form);
+              setViewMode("full");
+              return;
+            } else {
+              // 🔥 Public Form Fetch
+              let encodedCompany = new URLSearchParams(
+                window.location.search
+              ).get("c");
+              let companyQuery = encodedCompany
+                ? decodeURIComponent(escape(atob(encodedCompany)))
+                : null;
+              if (!companyQuery) {
+                throw new Error(
+                  "Company name is required to fetch the public form."
+                );
+              }
+
+              const res = await axios.get(
+                `${process.env.REACT_APP_API_URL}/api/builder/public/${directFormId}?company=${companyQuery}`
+              );
+              console.log("Public form fetch response:", res.data);
+
+              setSelectedForm(res.data.form);
+              setViewMode("full");
+              return;
             }
-
-            console.log("Final companyName being used:", companyName);
-
-            const res = await axios.get(
-              `${process.env.REACT_APP_API_URL}/api/builder/public/${directFormId}?company=${companyName}`
-            );
-            console.log("Public form fetch response:", res.data);
-
-            setSelectedForm(res.data.form);
-            console.log("Selected form set:", res.data.form);
-
-            setViewMode("full");
-            console.log("View mode set to 'full'");
-
-            return; // Stop further dashboard fetching
           } catch (error) {
-            console.error("Error fetching public form:", error);
-            setError("Public form not found or inaccessible.");
-            console.log("Error state set");
+            console.error("Error fetching form:", error);
+            setError("Form not found or inaccessible.");
             setLoading(false);
-            console.log("Loading set to false after error");
             return;
           }
         }
 
-        console.log("Starting dashboard data fetch");
-        const [tokenRes, roleRes, permissionsRes, emailRes] = await Promise.all(
-          [
-            axios.get(
-              `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-              { withCredentials: true }
-            ),
-            axios.get(
-              `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-              { withCredentials: true }
-            ),
-            axios.get(
-              `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-              { withCredentials: true }
-            ),
-            axios.get(
-              `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
-              { withCredentials: true }
-            ),
-          ]
-        );
+        // 🔥 Step 2: Now fetch user role, email, permissions
+        const [roleRes, permissionsRes, emailRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
+            { withCredentials: true }
+          ),
+        ]);
 
-        console.log("Auth responses:", {
-          tokenRes: tokenRes.data,
-          roleRes: roleRes.data,
-          permissionsRes: permissionsRes.data,
-          emailRes: emailRes.data,
-        });
-
-        const userToken = tokenRes.data.token;
         const userRole = roleRes.data.role;
         const userPermissions = permissionsRes.data.permissions || {};
         const email = emailRes.data.email;
-        const userId = tokenRes.data.userId || email;
-
-        console.log("Extracted user data:", {
-          userToken,
-          userRole,
-          userPermissions,
-          email,
-          userId,
-        });
-
-        if (!userToken || !userId) {
-          console.warn("Authentication missing - redirecting to login");
-          alert("Authentication required. Please login.");
-          navigate("/login");
-          return;
-        }
-
-        setToken(userToken);
-        console.log("Token set in state");
+        const userId = decoded.userId;
 
         setRole(userRole);
-        console.log("Role set in state");
-
         setCustomPermissions(userPermissions);
-        console.log("Permissions set in state");
-
         setClientId(userId);
-        console.log("Client ID set in state");
-
         setUserEmail(email);
-        console.log("Email set in state");
 
         const formsResponse = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/builder/forms`,
@@ -149,32 +128,22 @@ const Form = () => {
             withCredentials: true,
           }
         );
-        console.log("Forms fetch response:", formsResponse.data);
 
         const formsData = formsResponse.data.forms;
         setForms(formsData);
-        console.log("Forms set in state:", formsData);
 
         const categorized = {
           "Recent Forms": formsData.slice(0, 4),
           "All Forms": formsData,
         };
-        console.log("Categorized forms:", categorized);
 
         setFormCategories(categorized);
-        console.log("Form categories set in state");
       } catch (error) {
-        console.error("Error in fetchInitialData:", {
-          error: error,
-          response: error.response,
-          message: error.message,
-        });
+        console.error("Error in fetchInitialData:", error);
         setError("Failed to fetch data. Please try again.");
-        console.log("Error state set");
         navigate("/");
       } finally {
         setLoading(false);
-        console.log("Loading set to false in finally block");
       }
     };
 
@@ -252,6 +221,8 @@ const Form = () => {
         token={token}
         clientId={clientId}
         userEmail={userEmail}
+        companyName={companyName}
+        isPrivateForm={isPrivateForm}
       />
     );
   }
@@ -314,23 +285,62 @@ const Form = () => {
                         className="form-copy-link-button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const companyName = Cookies.get("companyName");
-                          console.log("companynamecopybutton", companyName);
 
-                          const url = `${window.location.origin}/forms/view/${form._id}?company=${companyName}`;
-                          console.log("url", url);
+                          if (!companyName) {
+                            alert(
+                              "Company name not found. Please login again."
+                            );
+                            return;
+                          }
 
+                          const encodedCompany = btoa(
+                            unescape(encodeURIComponent(companyName))
+                          );
+                          const url = `${window.location.origin}/forms/view/${form._id}?c=${encodedCompany}`;
                           navigator.clipboard.writeText(url);
                           alert("✅ Public form link copied!");
                         }}
                         title="Copy Public Link"
                       >
-                        <svg viewBox="0 0 24 24" width="20" height="20">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          style={{ marginRight: "4px" }}
+                        >
                           <path
-                            fill="green"
-                            d="M3,3V21H21V3H3M19,19H5V5H19V19Z"
+                            fill="#1890ff"
+                            d="M18,5V2H10V5H18M16,11H13V14H16V11M8,16H11V19H8V16M6,12A2,2 0 0,0 4,14V18A2,2 0 0,0 6,20H9V16H6V12M13,19V16H17V20H14A2,2 0 0,1 12,18V13A2,2 0 0,1 14,11H16V8H12V10H10V8H5V10H3V5A2,2 0 0,1 5,3H10V0H18V3H19A2,2 0 0,1 21,5V10H19V12H21V14H19V16H21V18A2,2 0 0,1 19,20H17V19H13Z"
                           />
                         </svg>
+                        Public
+                      </button>
+                      <button
+                        className="form-copy-link-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const encodedCompany = btoa(
+                            unescape(encodeURIComponent(companyName))
+                          );
+                          const privateUrl = `${window.location.origin}/forms/private-view/${form._id}?c=${encodedCompany}`;
+
+                          navigator.clipboard.writeText(privateUrl);
+                          alert("✅ Private form link copied!");
+                        }}
+                        title="Copy Private Link"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          style={{ marginRight: "4px" }}
+                        >
+                          <path
+                            fill="#1890ff"
+                            d="M18,5V2H10V5H18M16,11H13V14H16V11M8,16H11V19H8V16M6,12A2,2 0 0,0 4,14V18A2,2 0 0,0 6,20H9V16H6V12M13,19V16H17V20H14A2,2 0 0,1 12,18V13A2,2 0 0,1 14,11H16V8H12V10H10V8H5V10H3V5A2,2 0 0,1 5,3H10V0H18V3H19A2,2 0 0,1 21,5V10H19V12H21V14H19V16H21V18A2,2 0 0,1 19,20H17V19H13Z"
+                          />
+                        </svg>
+                        Private
                       </button>
                     </div>
 
@@ -392,11 +402,11 @@ const Form = () => {
 const FormFullView = ({
   form,
   onBack,
-  role,
-  customPermissions,
   token,
   clientId,
   userEmail,
+  companyName,
+  isPrivateForm,
 }) => {
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -417,6 +427,21 @@ const FormFullView = ({
       [fieldLabel]: value,
     }));
   };
+  useEffect(() => {
+    if (isPrivateForm) {
+      axios
+        .get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          console.log("✅ Logged In. Token Found.");
+        })
+        .catch((err) => {
+          console.warn("⚠️ No token. Redirecting to login...");
+          window.location.href = "/"; // ya navigate("/login")
+        });
+    }
+  }, [isPrivateForm]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -437,19 +462,22 @@ const FormFullView = ({
         data: submissions,
         clientId,
       };
+      if (isPrivateForm && !token) {
+        alert("Session expired. Please login again.");
+        window.location.href = "/";
+        return;
+      }
+      const submitUrl = isPrivateForm
+        ? `${process.env.REACT_APP_API_URL}/api/form/submit/${form._id}`
+        : `${process.env.REACT_APP_API_URL}/api/form/public-submit/${form._id}?company=${companyName}`;
 
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/form/submit/${form._id}`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      );
+      await axios.post(submitUrl, payload, {
+        headers: isPrivateForm ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      });
 
       setSuccessMessage("Form submitted successfully!");
 
-      // Reset form after 2 seconds
       setTimeout(() => {
         const resetData = {};
         form.fields.forEach((field) => {
@@ -471,19 +499,7 @@ const FormFullView = ({
 
   return (
     <>
-      <Sidebar role={role} customPermissions={customPermissions} />
-      <Navbar />
       <div className="form-fullview-container">
-        <button className="back-button" onClick={onBack}>
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <path
-              fill="currentColor"
-              d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"
-            />
-          </svg>
-          Back to all forms
-        </button>
-
         <div className="form-content-container">
           <div className="form-header">
             <h1>{form.formInfo?.title || "Form"}</h1>

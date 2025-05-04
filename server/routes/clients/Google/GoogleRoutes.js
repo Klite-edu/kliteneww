@@ -21,7 +21,7 @@ console.log("🔵 [Google Auth] Creating OAuth2 client configuration");
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "http://localhost:5000/auth/google/callback"
+  "https://api.autopilotmybusiness.com/auth/google/callback"
 );
 
 const SCOPES = [
@@ -203,13 +203,13 @@ router.get("/auth/google/callback", async (req, res) => {
       `✅ [Google Auth] Login success for ${email} in ${companyName}`
     );
     console.log(`🔄 [Google Auth] Redirecting to dashboard`);
-    res.redirect("http://localhost:3000/dashboard");
+    res.redirect("https://app.autopilotmybusiness.com/dashboard");
   } catch (err) {
     console.error("❌ [Google Auth] Callback Error:", err);
     res.status(500).send("Google login failed");
   }
 });
-router.get("/disconnect-google", googleSessionMiddleware, async (req, res) => {
+router.get("/auth/disconnect-google", googleSessionMiddleware, async (req, res) => {
   const { companyName, googleUser } = req;
 
   try {
@@ -230,7 +230,7 @@ router.get("/disconnect-google", googleSessionMiddleware, async (req, res) => {
 });
 
 // Upload Route
-router.post("/upload", googleSessionMiddleware, async (req, res) => {
+router.post("/auth/upload", googleSessionMiddleware, async (req, res) => {
   console.log("⬆️ [Google Upload] Starting file upload process");
   const { fileName, mimeType, fileData } = req.body;
   const { companyName, googleUser } = req;
@@ -424,7 +424,7 @@ router.post("/upload", googleSessionMiddleware, async (req, res) => {
     });
   }
 });
-router.post("/admin/upload", googleSessionMiddleware, async (req, res) => {
+router.post("/auth/admin/upload", googleSessionMiddleware, async (req, res) => {
   console.log("⬆️ [Google Upload] Starting file upload process");
   const { fileName, mimeType, fileData } = req.body;
   const { companyName, googleUser } = req;
@@ -620,7 +620,7 @@ router.post("/admin/upload", googleSessionMiddleware, async (req, res) => {
 });
 
 // Delete File Route
-router.delete("/file/:fileId", googleSessionMiddleware, async (req, res) => {
+router.delete("/auth/file/:fileId", googleSessionMiddleware, async (req, res) => {
   const { fileId } = req.params;
   const { companyName, googleUser } = req;
 

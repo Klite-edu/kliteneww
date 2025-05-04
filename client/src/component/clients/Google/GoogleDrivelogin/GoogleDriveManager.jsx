@@ -173,7 +173,7 @@ const GoogleDriveManager = () => {
         const base64Data = e.target.result.split(",")[1];
 
         const response = await axios.post(
-          `${process.env.REACT_APP_API_URL}/admin/upload`,
+          `${process.env.REACT_APP_API_URL}/auth/admin/upload`,
           {
             fileName: file.name,
             mimeType: file.type,
@@ -246,7 +246,7 @@ const GoogleDriveManager = () => {
 
   const handleDisconnect = async () => {
     try {
-      await axios.get(`${process.env.REACT_APP_API_URL}/disconnect-google`, {
+      await axios.get(`${process.env.REACT_APP_API_URL}/auth/disconnect-google`, {
         withCredentials: true,
       });
       setGoogleToken(null); // ✅ Google access frontend se bhi hata do

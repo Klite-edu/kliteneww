@@ -83,6 +83,7 @@ const App = () => {
         <Route path="/landing" element={<Landing />} />
         <Route path="/forms/view/:formId" element={<Form />} />
         <Route path="/form" element={<Form />} />
+        <Route path="/forms/private-view/:formId" element={<Form />} />
         {/* ✅ All Routes Accessible Without Authentication */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/subscriptions" element={<Subscription />} />
@@ -128,7 +129,7 @@ const App = () => {
         <Route path="/delegation-mis" element={<DelegationMis />} />
         <Route path="/bot-trigger" element={<BotTrigger />} />
         <Route path="/variables" element={<Variables />} />
-        <Route path="/seleniumweb" element={<SeleniumWeb />} />
+        <Route path="/whatsapp-web" element={<SeleniumWeb />} />
         <Route path="/issue" element={<IssueDashboard />} />
         <Route path="/microsoft" element={<Microsoft />} />
         <Route path="/workingday" element={<WorkingDay />} />

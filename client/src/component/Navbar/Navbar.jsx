@@ -10,7 +10,7 @@ import { Dropdown } from "react-bootstrap";
 import { Link, useNavigate } from "react-router";
 import "./navbar.css";
 
-const Navbar = () => {
+const Navbar = ({ pageTitle, role, id }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -22,18 +22,20 @@ const Navbar = () => {
   return (
     <nav className="admin-navbar">
       <div className="nav-left">
+        <h2>{pageTitle}</h2>
         <FontAwesomeIcon
           icon={faMagnifyingGlass}
           className="admin-icon search"
         />
-        <Link to="/workingday">
+        {role == "client" && <Link to="/workingday">
           <button>Working Days</button>
         </Link>
+        }
       </div>
       <div className="nav-right">
-        <Link to="/employee">
+        {role == "client" && <Link to="/employee">
           <FontAwesomeIcon icon={faGear} className="admin-icon gear" />
-        </Link>
+        </Link>}
 
         <Dropdown align="end">
           <Dropdown.Toggle
@@ -44,9 +46,16 @@ const Navbar = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu className="custom-dropdown-menu">
-            <Dropdown.Item href="/profile">
-              <FontAwesomeIcon icon={faCircleUser} /> Profile
-            </Dropdown.Item>
+            {role == "client" ?
+              <Dropdown.Item href="/profile">
+                <FontAwesomeIcon icon={faCircleUser} /> Profile
+              </Dropdown.Item> :
+
+              <Dropdown.Item href={`/view/${id}`}>
+                <FontAwesomeIcon icon={faCircleUser} /> Profile
+              </Dropdown.Item>
+            }
+
             <Dropdown.Item onClick={handleLogout}>
               <FontAwesomeIcon icon={faGear} /> Log out
             </Dropdown.Item>

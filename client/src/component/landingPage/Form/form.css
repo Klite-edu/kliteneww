@@ -27,6 +27,7 @@
   color: #6c757d;
   margin: 5px 0 0;
 }
+
 .form-card {
   position: relative;
   background: white;
@@ -41,18 +42,54 @@
   position: absolute;
   top: 8px;
   right: 8px;
+  display: flex;
+  gap: 5px;
 }
 
+/* Delete button styling */
 .form-delete-button {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
   transition: transform 0.2s ease;
+  border-radius: 4px;
 }
 
 .form-delete-button:hover {
   transform: scale(1.1);
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Public/Private button styling */
+.form-copy-link-button {
+  background-color: #f0f2f5;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4e73df;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-copy-link-button:first-of-type {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.form-copy-link-button:last-of-type {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+}
+
+.form-copy-link-button:hover {
+  filter: brightness(0.95);
+  transform: translateY(-2px);
 }
 
 .form-create-button {
@@ -413,6 +450,11 @@
     margin-left: 0;
     padding-bottom: 80px;
   }
+  
+  .form-card-actions {
+    flex-direction: column;
+    gap: 3px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -424,5 +466,15 @@
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .form-card-actions {
+    top: 5px;
+    right: 5px;
+  }
+  
+  .form-copy-link-button {
+    padding: 3px 6px;
+    font-size: 10px;
   }
 }

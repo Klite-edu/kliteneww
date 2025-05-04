@@ -83,12 +83,12 @@ const PermissionManager = ({ onSave }) => {
   }, []);
 
   const fetchPermissions = async () => {
-    const response = await axios.get("http://localhost:5000/api/permission/get-permissions", { withCredentials: true });
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true });
     setPermissions(response.data.permissions || { ...sidebarConfig });
   };
 
   const fetchRole = async () => {
-    const response = await axios.get("http://localhost:5000/api/permission/get-role", { withCredentials: true });
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true });
     setUserRole(response.data.role);
   };
 
@@ -108,7 +108,7 @@ const PermissionManager = ({ onSave }) => {
 
   const handleSave = async () => {
     await axios.post(
-      "http://localhost:5000/api/permission/save-permissions",
+      `${process.env.REACT_APP_API_URL}/api/permission/save-permissions`,
       { permissions },
       { withCredentials: true }
     );

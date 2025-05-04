@@ -24,7 +24,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import axios from "axios"; 
+import axios from "axios";
 
 const ClientDashboard = () => {
   const [totalEmployee, setTotalEmployee] = useState(0);
@@ -42,8 +42,12 @@ const ClientDashboard = () => {
   const fetchUserData = async () => {
     try {
       const [emailRes, tokenRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/permission/get-email`, { withCredentials: true }),
-        axios.get(`http://localhost:5000/api/permission/get-token`, { withCredentials: true }),
+        axios.get(`http://localhost:5000/api/permission/get-email`, {
+          withCredentials: true,
+        }),
+        axios.get(`http://localhost:5000/api/permission/get-token`, {
+          withCredentials: true,
+        }),
       ]);
 
       setUserEmail(emailRes.data.email);
@@ -69,15 +73,24 @@ const ClientDashboard = () => {
         revenueRes,
         checklistRes,
         delegationRes,
-        issueRes
+        issueRes,
       ] = await Promise.all([
-        axios.get(`http://localhost:5000/api/clientdash/total-employee`, headers),
-        axios.get(`http://localhost:5000/api/clientdash/trigger-count`, headers),
-        axios.get(`http://localhost:5000/api/clientdash/pipeline-stage-count`, headers),
+        axios.get(
+          `http://localhost:5000/api/clientdash/total-employee`,
+          headers
+        ),
+        axios.get(
+          `http://localhost:5000/api/clientdash/trigger-count`,
+          headers
+        ),
+        axios.get(
+          `http://localhost:5000/api/clientdash/pipeline-stage-count`,
+          headers
+        ),
         axios.get(`http://localhost:5000/api/clients/monthlyrevenue`, headers),
         axios.get(`http://localhost:5000/api/tasks/list`, headers),
         axios.get(`http://localhost:5000/api/delegation/list`, headers),
-        axios.get(`http://localhost:5000/api/ticketRaise/list`, headers)
+        axios.get(`http://localhost:5000/api/ticketRaise/list`, headers),
       ]);
 
       setTotalEmployee(employeeRes.data.totalEmployee);
@@ -100,12 +113,26 @@ const ClientDashboard = () => {
     fetchUserData();
   }, []);
 
-
   const data = [
-    { label: "Total Employee", value: totalEmployee, icon: faUsers, color: "#0D6E6E" },
-    { label: "Active Employee", value: activeEmployee, icon: faUserCheck, color: "#4CAF50" },
+    {
+      label: "Total Employee",
+      value: totalEmployee,
+      icon: faUsers,
+      color: "#0D6E6E",
+    },
+    {
+      label: "Active Employee",
+      value: activeEmployee,
+      icon: faUserCheck,
+      color: "#4CAF50",
+    },
     { label: "Triggers", value: triggers, icon: faBolt, color: "#FF9800" },
-    { label: "FMS/Pipeline", value: `${totalPipelines} / ${totalStages}`, icon: faTasks, color: "#9C27B0" },
+    {
+      label: "FMS/Pipeline",
+      value: `${totalPipelines} / ${totalStages}`,
+      icon: faTasks,
+      color: "#9C27B0",
+    },
   ];
   const subscriptionData = [
     { month: "Jan", losses: 500, profit: 200 },
@@ -148,11 +175,11 @@ const ClientDashboard = () => {
     },
   ];
 
-
   const handleMarkIssueComplete = async (issueId) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/ticketRaise/resolve/${issueId}`,{},
+        `http://localhost:5000/api/ticketRaise/resolve/${issueId}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -167,7 +194,6 @@ const ClientDashboard = () => {
       alert("Failed to update issue. Please try again.");
     }
   };
-
 
   return (
     <div className="client-dashboard">
@@ -279,12 +305,16 @@ const ClientDashboard = () => {
 
                     <div className="client-trans-plan-price">
                       <p>{task.doer?.fullName || "Unassigned"}</p>
-                      <p className={`client-status-${task.status.toLowerCase()}`}>
+                      <p
+                        className={`client-status-${task.status.toLowerCase()}`}
+                      >
                         {task.status}
                       </p>
                     </div>
                   </div>
-                  {idx !== delegation.length - 1 && <hr className="client-hr" />}
+                  {idx !== delegation.length - 1 && (
+                    <hr className="client-hr" />
+                  )}
                 </div>
               ))
             ) : (
@@ -313,14 +343,14 @@ const ClientDashboard = () => {
                     <p>
                       {task.plannedDateTime
                         ? new Date(task.plannedDateTime).toLocaleString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )
                         : "No date set"}
                     </p>
                   </div>
@@ -329,14 +359,14 @@ const ClientDashboard = () => {
                     <p>
                       {task.nextDueDateTime
                         ? new Date(task.nextDueDateTime).toLocaleString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )
                         : "No due date"}
                     </p>
                   </div>
@@ -351,7 +381,9 @@ const ClientDashboard = () => {
       <div className="client-issue-container">
         <div className="client-issue-button-head">
           <h3>Employee Issue Tracker</h3>
-          <button onClick={() => (window.location.href = "/issue")}>View All</button>
+          <button onClick={() => (window.location.href = "/issue")}>
+            View All
+          </button>
         </div>
         <div className="client-issuetable-container">
           <table className="client-issue-table">
@@ -372,7 +404,9 @@ const ClientDashboard = () => {
                   <td>{issue?.title}</td>
                   <td>{issue?.employeeName}</td>
                   <td>{issue?.description}</td>
-                  <td className={`client-priority-${issue?.priority.toLowerCase()}`}>
+                  <td
+                    className={`client-priority-${issue?.priority.toLowerCase()}`}
+                  >
                     {issue.priority}
                   </td>
                   <td
@@ -382,15 +416,27 @@ const ClientDashboard = () => {
                   >
                     {issue.status}
                   </td>
-                  <td>{new Date(issue?.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>
+                    {new Date(issue?.createdAt).toLocaleString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
                   <td>
                     {issue?.date ? (
                       issue.date
                     ) : (
-                      <button className="complete-btn" onClick={() => handleMarkIssueComplete(issue._id)}>Complete</button>
+                      <button
+                        className="complete-btn"
+                        onClick={() => handleMarkIssueComplete(issue._id)}
+                      >
+                        Complete
+                      </button>
                     )}
                   </td>
-
                 </tr>
               ))}
             </tbody>

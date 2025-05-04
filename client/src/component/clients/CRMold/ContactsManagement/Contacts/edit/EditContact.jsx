@@ -420,22 +420,6 @@ const EditContact = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="form-employee-input">
-                    <label>Start Time</label>
-                    <input
-                      type="time"
-                      value={employee.shifts[0]?.startTime || ""}
-                      onChange={(e) => handleShiftChange("startTime", e.target.value)}
-                    />
-                  </div>
-                  <div className="form-employee-input">
-                    <label>End Time</label>
-                    <input
-                      type="time"
-                      value={employee.shifts[0]?.endTime || ""}
-                      onChange={(e) => handleShiftChange("endTime", e.target.value)}
-                    />
-                  </div>
                 </div>
               </div>
             </div>

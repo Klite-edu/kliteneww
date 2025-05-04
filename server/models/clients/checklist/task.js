@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { createClientDatabase } = require("../../../database/db");
-
 // Define Task Schema
 const TaskSchema = new mongoose.Schema({
   taskName: {
@@ -16,36 +15,13 @@ const TaskSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  proofDoc: {
-    fileId: String,
-    fileName: String,
-    viewLink: String,
-    uploadedAt: Date,
-    modificationReason: String, // ✨ New field for modification reason
-  },
-
-  validationStatus: {
-    type: String,
-    enum: ["Not Requested", "Requested", "Validated"],
-    default: "Not Requested",
-  },
-  validationRequestedAt: Date,
-  validatedAt: Date,
   frequency: {
     type: String,
     enum: [
-      "Daily",
-      "Alternate Days",
-      "Weekly",
-      "Monthly",
-      "Fortnightly",
-      "Quarterly",
-      "Half-yearly",
-      "Yearly",
-      "First of every month",
-      "Second of every month",
-      "Third of every month",
-      "Fourth of every month",
+      "Daily", "Alternate Days", "Weekly", "Monthly", "Fortnightly",
+      "Quarterly", "Half-yearly", "Yearly",
+      "First of every month", "Second of every month",
+      "Third of every month", "Fourth of every month"
     ],
     required: true,
   },
@@ -61,28 +37,37 @@ const TaskSchema = new mongoose.Schema({
     {
       date: {
         type: Date,
-        default: Date.now,
+        required: true
       },
       status: {
         type: String,
+        enum: ["Pending", "Completed"],
         default: "Pending",
       },
-      completedDateTime: Date,
+      completedDateTime: {
+        type: Date
+      },
+      url: {
+        type: String
+      },
+      validationStatus: {
+        type: String
+      },
+      validationRequestedAt: {
+        type: Date
+      }
     },
   ],
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
-
 TaskSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
-
 // Function to get the Task model from the dynamic database
 const getTaskModel = async (companyName) => {
   const clientDB = await createClientDatabase(companyName);
   return clientDB.model("Checklist", TaskSchema);
 };
-
 module.exports = { getTaskModel };

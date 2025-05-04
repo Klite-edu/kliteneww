@@ -5,6 +5,233 @@ const mongoose = require("mongoose");
 const { Types } = mongoose; // Import Types for ObjectId
 
 router.post("/submit/:formId", DBMiddleware, async (req, res) => {
+  const companyName = req.query.company || req.cookies.companyName;
+  if (!companyName) {
+    return res.status(400).json({ error: "Company name is missing" });
+  }
+
+  // Load Models
+  const {
+    getFormBuilderModel,
+  } = require("../../../models/clients/formBuilder/formBuilder-model");
+  const {
+    getSubmissionModel,
+  } = require("../../../models/clients/form/form-model");
+  const { getClientModel } = require("../../../models/Admin/client-modal");
+  const {
+    getPipelineModel,
+  } = require("../../../models/clients/pipeline/pipeline-model");
+  const {
+    getTriggerModel,
+  } = require("../../../models/clients/triggers/Trigger-model");
+
+  req.FormBuilder = await getFormBuilderModel(companyName);
+  req.Submission = await getSubmissionModel(companyName);
+  req.Client = await getClientModel(companyName);
+  req.pipeline = await getPipelineModel(companyName);
+  req.trigger = await getTriggerModel(companyName);
+
+  const { formId } = req.params;
+  const { submissions, user_email, data } = req.body; // ❌ clientId hata diya
+
+  console.log("\n========== New Form Submission ==========");
+  console.log({
+    formId,
+    user_email,
+    submissionCount: submissions?.length,
+  });
+
+  try {
+    if (!mongoose.Types.ObjectId.isValid(formId)) {
+      return res
+        .status(400)
+        .json({ error: "Invalid form ID format", details: { formId } });
+    }
+
+    const form = await req.FormBuilder.findById(formId);
+    if (!form) {
+      return res.status(404).json({
+        message: "Form not found",
+        formId,
+      });
+    }
+
+    console.log("✅ Form found:", {
+      id: form._id,
+      title: form.formInfo?.title || "Untitled Form",
+      fields: form.fields.length,
+      access: form.client.length ? "Restricted" : "Public",
+    });
+
+    // 🎯 Get clientId from Client collection
+    let clientRecord = await req.Client.findOne();
+    if (!clientRecord) {
+      return res.status(404).json({ error: "Client not found for company" });
+    }
+    const clientId = clientRecord._id; // ✅ Final clientId from DB
+
+    // 🔹 Step 3: Client Access Check
+    if (form.client?.length > 0) {
+      if (!form.client.includes(clientId)) {
+        return res.status(403).json({
+          error: "Unauthorized access",
+          details: { clientId, allowed: form.client },
+        });
+      }
+    }
+
+    // 🔹 Step 4 onwards -> Same jaise tumhara code hai
+    if (!Array.isArray(submissions) || !submissions.length) {
+      return res.status(400).json({ error: "Invalid or empty submissions" });
+    }
+
+    const processed = [];
+    const missingFields = [];
+    const invalidFields = [];
+
+    for (const { fieldLabel, value, fieldCategory } of submissions) {
+      const field = form.fields.find((f) => f.label === fieldLabel);
+      if (!field) {
+        missingFields.push(fieldLabel);
+        continue;
+      }
+
+      if (field.required && !value) {
+        invalidFields.push({
+          field: fieldLabel,
+          reason: "Required field empty",
+        });
+        continue;
+      }
+
+      if (field.type === "number" && isNaN(value)) {
+        invalidFields.push({ field: fieldLabel, reason: "Expected number" });
+        continue;
+      }
+
+      if (
+        field.type === "select" &&
+        field.options?.length &&
+        !field.options.includes(value)
+      ) {
+        invalidFields.push({
+          field: fieldLabel,
+          reason: "Invalid select option",
+        });
+        continue;
+      }
+
+      processed.push({
+        fieldLabel,
+        fieldType: field.type,
+        value,
+        fieldCategory: fieldCategory || field.fieldCategory || "other",
+      });
+    }
+
+    if (missingFields.length || invalidFields.length) {
+      return res.status(400).json({
+        error: "Submission validation failed",
+        details: { missingFields, invalidFields },
+      });
+    }
+
+    console.log("✅ Validated Submissions:", {
+      total: processed.length,
+    });
+
+    let initialStageId = null;
+    let initialStageName = "Default Stage";
+
+    try {
+      const trigger = await req.trigger.findOne({
+        event_source: "form_submission",
+        "conditions.form_id": formId,
+      });
+
+      if (trigger?.action?.move_to_stage) {
+        const pipeline = await req.pipeline.findOne({
+          "stages._id": trigger.action.move_to_stage,
+        });
+        const stage = pipeline?.stages.find(
+          (s) => s._id.toString() === trigger.action.move_to_stage.toString()
+        );
+        if (stage) {
+          initialStageId = stage._id;
+          initialStageName = stage.stageName;
+        }
+      }
+    } catch (e) {
+      console.warn("⚠️ Trigger evaluation failed:", e.message);
+    }
+
+    const submissionPayload = {
+      formId: form._id,
+      clientId,
+      userEmail: user_email,
+      form_name: form.formInfo?.title || "Untitled Form",
+      submissions: processed,
+      current_stage_id: initialStageId,
+      metadata: {
+        fieldCategories: Object.fromEntries(
+          processed.map((f) => [f.fieldLabel, f.fieldCategory])
+        ),
+      },
+    };
+
+    const created = await req.Submission.create(submissionPayload);
+
+    console.log("✅ Submission Saved:", {
+      id: created._id,
+      form: created.form_name,
+      stage: initialStageName,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Form submitted successfully",
+      submissionId: created._id,
+      formId: created.formId,
+      currentStage: initialStageName,
+      fieldCategories: submissionPayload.metadata.fieldCategories,
+    });
+  } catch (err) {
+    console.error("❌ Submission Error:", err);
+    return res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+      requestId: req.id,
+      timestamp: new Date().toISOString(),
+    });
+  } finally {
+    console.log("========== End of Submission ==========\n");
+  }
+});
+
+router.post("/public-submit/:formId", async (req, res) => {
+  const companyName = req.query.company || req.cookies.companyName;
+  if (companyName) {
+    const {
+      getFormBuilderModel,
+    } = require("../../../models/clients/formBuilder/formBuilder-model");
+    const {
+      getSubmissionModel,
+    } = require("../../../models/clients/form/form-model");
+    const { getClientModel } = require("../../../models/Admin/client-modal");
+    const {
+      getPipelineModel,
+    } = require("../../../models/clients/pipeline/pipeline-model");
+    const {
+      getTriggerModel,
+    } = require("../../../models/clients/triggers/Trigger-model");
+
+    req.FormBuilder = await getFormBuilderModel(companyName);
+    req.Submission = await getSubmissionModel(companyName);
+    req.pipeline = await getPipelineModel(companyName);
+    req.Client = await getClientModel(companyName);
+    req.trigger = await getTriggerModel(companyName);
+  }
+
   const { formId } = req.params;
   const { submissions, user_email, data, clientId } = req.body;
 
@@ -40,17 +267,16 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
       fields: form.fields.length,
       access: form.client.length ? "Restricted" : "Public",
     });
+    let finalClientId = clientId; // frontend se agar aaya hai to use kar lo
 
-    // 🔹 Step 3: Client Access Check
-    if (
-      form.client?.length > 0 &&
-      clientId &&
-      !form.client.includes(clientId)
-    ) {
-      return res.status(403).json({
-        error: "Unauthorized access",
-        details: { clientId, allowed: form.client },
-      });
+    if (!finalClientId && req.Client) {
+      const clientRecord = await req.Client.findOne();
+      if (clientRecord) {
+        finalClientId = clientRecord._id;
+        console.log("✅ Auto Fetched ClientID:", finalClientId);
+      } else {
+        console.warn("⚠️ No client found for company:", companyName);
+      }
     }
 
     // 🔹 Step 4: Validate Submissions
@@ -150,7 +376,7 @@ router.post("/submit/:formId", DBMiddleware, async (req, res) => {
     // 🔹 Step 7: Save Submission
     const submissionPayload = {
       formId: form._id,
-      clientId,
+      clientId: finalClientId,
       userEmail: user_email,
       form_name: form.formInfo?.title || "Untitled Form",
       submissions: processed,

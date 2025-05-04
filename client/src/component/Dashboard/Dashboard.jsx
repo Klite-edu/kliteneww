@@ -7,31 +7,31 @@ import ClientDashboard from "../clients/dashboard/ClientDashboard";
 import UserDashboard from "../User/dashboard/UserDashboard";
 import axios from "axios";
 import "./dashboard.css";
-
+import { jwtDecode } from "jwt-decode";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState(null);
+  const [id, setId] = useState("");
   const [customPermissions, setCustomPermissions] = useState({});
-
   useEffect(() => {
     const fetchRole = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/permission/get-role`,
+          `http://localhost:5000/api/permission/get-token`,
           { withCredentials: true }
         );
-        const userRole = response.data.role;
-        if (!userRole) {
+        const token = jwtDecode(response.data.token);
+        if (!token.role) {
           navigate("/");
           return;
         }
-        setRole(userRole);
+        setRole(token.role);
+        setId(token.id);
       } catch (error) {
         console.error("Error fetching role:", error);
         navigate("/");
       }
     };
-
     const fetchPermissions = async () => {
       try {
         const response = await axios.get(
@@ -44,11 +44,9 @@ const Dashboard = () => {
         setCustomPermissions({});
       }
     };
-
     fetchRole();
     fetchPermissions();
   }, [navigate]);
-
   const handlePermissionsSave = async (permissions) => {
     try {
       await axios.post(
@@ -61,16 +59,17 @@ const Dashboard = () => {
       console.error("Error saving permissions:", error);
     }
   };
-
   if (!role) return <div>Loading...</div>;
-
   return (
     <div className="main_dashboard">
       <Sidebar role={role} />
-      {role === "admin" && <Navbar pageTitle="Super Admin Dashboard" />}
-      {role === "client" && <Navbar pageTitle="Admin Dashboard" />}
-      {role === "user" && <Navbar pageTitle="Doer Dashboard" />}
- 
+      {role === "admin" && (
+        <Navbar pageTitle="Super Admin Dashboard" role={role} />
+      )}
+      {role === "client" && <Navbar pageTitle="Admin Dashboard" role={role} />}
+      {role === "user" && (
+        <Navbar pageTitle="Employee Dashboard" role={role} id={id} />
+      )}
       <div className="dashboardPanel ">
         {role === "admin" && <AdminDashboard />}
         {role === "client" && (
@@ -89,5 +88,4 @@ const Dashboard = () => {
     </div>
   );
 };
-
 export default Dashboard;

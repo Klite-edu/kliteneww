@@ -45,11 +45,11 @@ const UserDashboard = ({ onSave, permissions }) => {
         console.log("Fetching user data...");
         const [emailRes, tokenRes] = await Promise.all([
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
+            `http://localhost:5000/api/permission/get-email`,
             { withCredentials: true }
           ),
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            `http://localhost:5000/api/permission/get-token`,
             { withCredentials: true }
           ),
         ]);
@@ -77,11 +77,11 @@ const UserDashboard = ({ onSave, permissions }) => {
           checklistRes,
         ] = await Promise.all([
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/delegation/list`,
+            `http://localhost:5000/api/delegation/list`,
             headers
           ),
           axios.get(
-            `${process.env.REACT_APP_API_URL}/api/tasks/list`,
+            `http://localhost:5000/api/tasks/list`,
             headers
           ),
         ]);
@@ -139,14 +139,6 @@ const UserDashboard = ({ onSave, permissions }) => {
 
   return (
     <div className="user-dashboard">
-      <div className="user-dashboard-header">
-        <h2>Employee Dashboard</h2>
-        <div className="user-user-info">
-          <span className="user-username">{userName}</span>
-          <span className="user-user-email">{userEmail}</span>
-        </div>
-      </div>
-
       <div className="user-dashboard-graphs">
         {dataCards.map((item, index) => (
           <div
@@ -244,22 +236,23 @@ const UserDashboard = ({ onSave, permissions }) => {
         </div>
       </div>
 
-      <div className="user-client-sub-recent">
-        <div className="user-transaction-table">
-          <div className="user-recent-transHead">
+      <div className="client-sub-recent">
+        <div className="client-transaction-table">
+          <div className="client-recent-transHead">
             <h3>Task Delegated</h3>
             <button onClick={() => navigate("/delegation-tasklist")}>
               View All
             </button>
           </div>
-          <hr />
-          <div className="user-transaction-list">
+          <hr className="client-hr"/>
+
+          <div className="client-transaction-list">
             {dashboardData.delegation.length > 0 ? (
               dashboardData.delegation.map((task, idx) => (
-                <div key={task._id} className="user-transaction-item">
-                  <div className="user-recent-transaction">
-                    <p className="user-task-index">{idx + 1}</p>
-                    <div className="user-trans-name-date">
+                <div key={task._id} className="client-transaction-item">
+                  <div className="client-recent-transaction">
+                    <p className="client-task-index">{idx + 1}</p>
+                    <div className="client-trans-name-date">
                       <h5>{task.name || "Unnamed Task"}</h5>
                       <p>
                         {task.dueDate
@@ -272,40 +265,40 @@ const UserDashboard = ({ onSave, permissions }) => {
                           : "No date"}
                       </p>
                     </div>
-                    <div className="user-trans-plan-price">
+                    <div className="client-trans-plan-price">
                       <p>{task.doer?.fullName || "Unassigned"}</p>
                       <p
-                        className={`user-status-${task.status?.toLowerCase()}`}
+                        className={`client-status-${task.status?.toLowerCase()}`}
                       >
                         {task.status}
                       </p>
                     </div>
                   </div>
-                  {idx !== dashboardData.delegation.length - 1 && <hr />}
+                  {idx !== dashboardData.delegation.length - 1 && <hr className="client-hr"/>}
                 </div>
               ))
             ) : (
-              <div className="user-no-tasks">
+              <div className="client-no-tasks">
                 <p>No delegated tasks found</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="user-transaction-table">
-          <div className="user-recent-transHead">
+        <div className="client-transaction-table">
+          <div className="client-recent-transHead">
             <h3>Checklist</h3>
             <button onClick={() => navigate("/check-tasklist")}>
               View All
             </button>
           </div>
-          <hr />
-          <div className="user-transaction-list">
+          <hr className="client-hr" />
+          <div className="client-transaction-list">
             {dashboardData.checklist.map((task, idx) => (
-              <div key={task._id} className="user-transaction-item">
-                <div className="user-recent-transaction">
-                  <p className="user-task-index">{idx + 1}</p>
-                  <div className="user-trans-name-date">
+              <div key={task._id} className="client-transaction-item">
+                <div className="client-recent-transaction">
+                  <p className="client-task-index">{idx + 1}</p>
+                  <div className="client-trans-name-date">
                     <h5>{task.taskName || "Untitled Task"}</h5>
                     <p>
                       {task.plannedDateTime
@@ -321,7 +314,7 @@ const UserDashboard = ({ onSave, permissions }) => {
                         : "No date set"}
                     </p>
                   </div>
-                  <div className="user-trans-plan-price">
+                  <div className="client-trans-plan-price">
                     <p>{task.frequency}</p>
                     <p>
                       {task.nextDueDateTime
@@ -338,7 +331,7 @@ const UserDashboard = ({ onSave, permissions }) => {
                     </p>
                   </div>
                 </div>
-                {idx !== dashboardData.checklist.length - 1 && <hr />}
+                {idx !== dashboardData.checklist.length - 1 && <hr className="client-hr"/>}
               </div>
             ))}
           </div>
