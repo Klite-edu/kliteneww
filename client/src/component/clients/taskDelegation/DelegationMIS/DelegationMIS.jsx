@@ -62,38 +62,41 @@ const DelegationMis = () => {
   useEffect(() => {
     const fetchAuthData = async () => {
       try {
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            {
-              withCredentials: true,
-            }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            {
-              withCredentials: true,
-            }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            {
-              withCredentials: true,
-            }
-          ),
-        ]);
+        // Step 1: Fetch Token
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
 
         const userToken = tokenRes.data.token;
-        const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
         const decodedToken = jwtDecode(userToken);
+
         setToken(userToken);
-        setRole(userRole);
         setUserId(decodedToken.userId);
         setEmployeeId(decodedToken.id);
+
+        // Step 2: Fetch Role
+        const roleRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+          { withCredentials: true }
+        );
+        const userRole = roleRes.data.role;
+        setRole(userRole);
+
+        // Step 3: Fetch Permissions (after token available)
+        const permissionsRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+            withCredentials: true,
+          }
+        );
+        const userPermissions = permissionsRes.data.permissions || {};
         setCustomPermissions(userPermissions);
 
-        // Fetch employees
+        // Step 4: Fetch Employees
         fetchEmployees(userToken);
       } catch (error) {
         console.error("Error fetching authentication data:", error);

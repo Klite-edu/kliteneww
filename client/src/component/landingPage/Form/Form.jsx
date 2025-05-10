@@ -20,10 +20,7 @@ const Form = () => {
   const [userEmail, setUserEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const navigate = useNavigate();
-  const [formCategories, setFormCategories] = useState({
-    "Recent Forms": [],
-    "All Forms": [],
-  });
+
   const params = useParams();
   const directFormId = params.formId;
   const isPrivateForm = window.location.pathname.includes("/private-view/");
@@ -99,15 +96,30 @@ const Form = () => {
         const [roleRes, permissionsRes, emailRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+            }
           ),
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+            }
           ),
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+              },
+            }
           ),
         ]);
 
@@ -115,6 +127,13 @@ const Form = () => {
         const userPermissions = permissionsRes.data.permissions || {};
         const email = emailRes.data.email;
         const userId = decoded.userId;
+        if (
+          userRole !== "client" &&
+          !userPermissions["Form"]?.includes("read")
+        ) {
+          alert("Unauthorized: You don't have access to Form Builder.");
+          return;
+        }
 
         setRole(userRole);
         setCustomPermissions(userPermissions);
@@ -131,17 +150,9 @@ const Form = () => {
 
         const formsData = formsResponse.data.forms;
         setForms(formsData);
-
-        const categorized = {
-          "Recent Forms": formsData.slice(0, 4),
-          "All Forms": formsData,
-        };
-
-        setFormCategories(categorized);
       } catch (error) {
         console.error("Error in fetchInitialData:", error);
         setError("Failed to fetch data. Please try again.");
-        navigate("/");
       } finally {
         setLoading(false);
       }
@@ -176,17 +187,6 @@ const Form = () => {
 
       // Remove the deleted form from state
       setForms((prevForms) => prevForms.filter((form) => form._id !== formId));
-
-      // Update categorized form view also
-      setFormCategories((prevCategories) => {
-        const updatedCategories = {};
-        for (const [category, formsList] of Object.entries(prevCategories)) {
-          updatedCategories[category] = formsList.filter(
-            (form) => form._id !== formId
-          );
-        }
-        return updatedCategories;
-      });
     } catch (error) {
       console.error("Error deleting form:", error.message);
       alert("Failed to delete form. Please try again.");
@@ -252,20 +252,20 @@ const Form = () => {
         </div>
 
         <div className="form-dashboard-content">
-          {Object.entries(formCategories).map(([category, forms]) => (
-            <div key={category} className="form-category-section">
-              <div className="form-category-header">
-                <h2>{category}</h2>
-                {category === "Recent Forms" && forms.length > 4 && (
-                  <button className="view-all-button">View All</button>
-                )}
-              </div>
+          <div className="form-category-section">
+            <div className="form-category-header">
+              <h2>All Forms</h2>
+            </div>
 
-              <div className="form-grid">
-                {forms.map((form) => (
-                  <div key={form._id} className="form-card">
-                    {/* 🗑️ Trash Delete Button */}
-                    <div className="form-card-actions">
+            <div className="form-grid">
+              {forms.map((form) => (
+                <div key={form._id} className="form-card">
+                  {/* 🗑️ Trash Delete Button */}
+                  <div className="form-card-actions">
+                    {(role === "client" ||
+                      customPermissions["Form"]?.includes(
+                        "delete"
+                      )) && (
                       <button
                         className="form-delete-button"
                         onClick={(e) => {
@@ -281,118 +281,113 @@ const Form = () => {
                           />
                         </svg>
                       </button>
-                      <button
-                        className="form-copy-link-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                    )}
+                    <button
+                      className="form-copy-link-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
 
-                          if (!companyName) {
-                            alert(
-                              "Company name not found. Please login again."
-                            );
-                            return;
-                          }
+                        if (!companyName) {
+                          alert("Company name not found. Please login again.");
+                          return;
+                        }
 
-                          const encodedCompany = btoa(
-                            unescape(encodeURIComponent(companyName))
-                          );
-                          const url = `${window.location.origin}/forms/view/${form._id}?c=${encodedCompany}`;
-                          navigator.clipboard.writeText(url);
-                          alert("✅ Public form link copied!");
-                        }}
-                        title="Copy Public Link"
+                        const encodedCompany = btoa(
+                          unescape(encodeURIComponent(companyName))
+                        );
+                        const url = `${window.location.origin}/forms/view/${form._id}?c=${encodedCompany}`;
+                        navigator.clipboard.writeText(url);
+                        alert("✅ Public form link copied!");
+                      }}
+                      title="Copy Public Link"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="12"
+                        height="12"
+                        style={{ marginRight: "4px" }}
                       >
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="12"
-                          height="12"
-                          style={{ marginRight: "4px" }}
-                        >
-                          <path
-                            fill="#1890ff"
-                            d="M18,5V2H10V5H18M16,11H13V14H16V11M8,16H11V19H8V16M6,12A2,2 0 0,0 4,14V18A2,2 0 0,0 6,20H9V16H6V12M13,19V16H17V20H14A2,2 0 0,1 12,18V13A2,2 0 0,1 14,11H16V8H12V10H10V8H5V10H3V5A2,2 0 0,1 5,3H10V0H18V3H19A2,2 0 0,1 21,5V10H19V12H21V14H19V16H21V18A2,2 0 0,1 19,20H17V19H13Z"
-                          />
-                        </svg>
-                        Public
-                      </button>
-                      <button
-                        className="form-copy-link-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const encodedCompany = btoa(
-                            unescape(encodeURIComponent(companyName))
-                          );
-                          const privateUrl = `${window.location.origin}/forms/private-view/${form._id}?c=${encodedCompany}`;
+                        <path
+                          fill="#1890ff"
+                          d="M18,5V2H10V5H18M16,11H13V14H16V11M8,16H11V19H8V16M6,12A2,2 0 0,0 4,14V18A2,2 0 0,0 6,20H9V16H6V12M13,19V16H17V20H14A2,2 0 0,1 12,18V13A2,2 0 0,1 14,11H16V8H12V10H10V8H5V10H3V5A2,2 0 0,1 5,3H10V0H18V3H19A2,2 0 0,1 21,5V10H19V12H21V14H19V16H21V18A2,2 0 0,1 19,20H17V19H13Z"
+                        />
+                      </svg>
+                      Public
+                    </button>
+                    <button
+                      className="form-copy-link-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const encodedCompany = btoa(
+                          unescape(encodeURIComponent(companyName))
+                        );
+                        const privateUrl = `${window.location.origin}/forms/private-view/${form._id}?c=${encodedCompany}`;
 
-                          navigator.clipboard.writeText(privateUrl);
-                          alert("✅ Private form link copied!");
-                        }}
-                        title="Copy Private Link"
+                        navigator.clipboard.writeText(privateUrl);
+                        alert("✅ Private form link copied!");
+                      }}
+                      title="Copy Private Link"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="12"
+                        height="12"
+                        style={{ marginRight: "4px" }}
                       >
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="12"
-                          height="12"
-                          style={{ marginRight: "4px" }}
-                        >
-                          <path
-                            fill="#1890ff"
-                            d="M18,5V2H10V5H18M16,11H13V14H16V11M8,16H11V19H8V16M6,12A2,2 0 0,0 4,14V18A2,2 0 0,0 6,20H9V16H6V12M13,19V16H17V20H14A2,2 0 0,1 12,18V13A2,2 0 0,1 14,11H16V8H12V10H10V8H5V10H3V5A2,2 0 0,1 5,3H10V0H18V3H19A2,2 0 0,1 21,5V10H19V12H21V14H19V16H21V18A2,2 0 0,1 19,20H17V19H13Z"
-                          />
-                        </svg>
-                        Private
-                      </button>
+                        <path
+                          fill="#1890ff"
+                          d="M18,5V2H10V5H18M16,11H13V14H16V11M8,16H11V19H8V16M6,12A2,2 0 0,0 4,14V18A2,2 0 0,0 6,20H9V16H6V12M13,19V16H17V20H14A2,2 0 0,1 12,18V13A2,2 0 0,1 14,11H16V8H12V10H10V8H5V10H3V5A2,2 0 0,1 5,3H10V0H18V3H19A2,2 0 0,1 21,5V10H19V12H21V14H19V16H21V18A2,2 0 0,1 19,20H17V19H13Z"
+                        />
+                      </svg>
+                      Private
+                    </button>
+                  </div>
+
+                  {/* 📄 Clicking on this area will open Form */}
+                  <div onClick={() => handleFormClick(form)}>
+                    <div className="form-card-icon">
+                      <svg viewBox="0 0 24 24" width="28" height="28">
+                        <path
+                          fill="#4e73df"
+                          d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H14V17H7V15Z"
+                        />
+                      </svg>
                     </div>
-
-                    {/* 📄 Clicking on this area will open Form */}
-                    <div onClick={() => handleFormClick(form)}>
-                      <div className="form-card-icon">
-                        <svg viewBox="0 0 24 24" width="28" height="28">
-                          <path
-                            fill="#4e73df"
-                            d="M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H14V17H7V15Z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="form-card-content">
-                        <h3>{form.formInfo?.title || "Untitled Form"}</h3>
-                        {form.formInfo?.description && (
-                          <p className="form-description">
-                            {form.formInfo.description.length > 60
-                              ? `${form.formInfo.description.substring(
-                                  0,
-                                  60
-                                )}...`
-                              : form.formInfo.description}
-                          </p>
-                        )}
-                        <div className="form-meta-data">
-                          <span>
-                            <svg viewBox="0 0 24 24" width="14" height="14">
-                              <path
-                                fill="#6c757d"
-                                d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
-                              />
-                            </svg>
-                            {form.fields?.length || 0} fields
-                          </span>
-                          <span>
-                            <svg viewBox="0 0 24 24" width="14" height="14">
-                              <path
-                                fill="#6c757d"
-                                d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"
-                              />
-                            </svg>
-                            {new Date(form.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
+                    <div className="form-card-content">
+                      <h3>{form.formInfo?.title || "Untitled Form"}</h3>
+                      {form.formInfo?.description && (
+                        <p className="form-description">
+                          {form.formInfo.description.length > 60
+                            ? `${form.formInfo.description.substring(0, 60)}...`
+                            : form.formInfo.description}
+                        </p>
+                      )}
+                      <div className="form-meta-data">
+                        <span>
+                          <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path
+                              fill="#6c757d"
+                              d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
+                            />
+                          </svg>
+                          {form.fields?.length || 0} fields
+                        </span>
+                        <span>
+                          <svg viewBox="0 0 24 24" width="14" height="14">
+                            <path
+                              fill="#6c757d"
+                              d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"
+                            />
+                          </svg>
+                          {new Date(form.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </>
@@ -438,7 +433,7 @@ const FormFullView = ({
         })
         .catch((err) => {
           console.warn("⚠️ No token. Redirecting to login...");
-          window.location.href = "/"; // ya navigate("/login")
+          // window.location.href = "/";
         });
     }
   }, [isPrivateForm]);

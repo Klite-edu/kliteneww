@@ -4,6 +4,7 @@ import Sidebar from "../../../../../Sidebar/Sidebar";
 import Navbar from "../../../../../Navbar/Navbar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import sidebarConfig from "../../../../../configs/Sidebarconfig"; // ✅ Correct relative path lagana
 import { FiEye, FiEyeOff } from "react-icons/fi";
 const CreateEmployee = () => {
   console.log("🔄 Component rendering");
@@ -19,6 +20,7 @@ const CreateEmployee = () => {
     joiningDate: "",
     status: "Active",
     role: "user",
+    permissions: {},
     teamAssociation: "",
     shifts: [
       {
@@ -38,6 +40,8 @@ const CreateEmployee = () => {
   const [customPermissions, setCustomPermissions] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [tempPermissions, setTempPermissions] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
   const [requiredFields] = useState([
     "fullName",
@@ -61,7 +65,8 @@ const CreateEmployee = () => {
         console.log("⏳ Starting authentication data fetch");
         setLoading(true);
 
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
+        // ✅ Step 1: Get token and role
+        const [tokenRes, roleRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
             { withCredentials: true }
@@ -70,22 +75,33 @@ const CreateEmployee = () => {
             `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
             { withCredentials: true }
           ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
-          ),
         ]);
 
         console.log("🔑 Token response:", tokenRes.data);
         console.log("👤 Role response:", roleRes.data);
-        console.log("🔓 Permissions response:", permissionsRes.data);
 
         if (!tokenRes.data.token || !roleRes.data.role) {
           throw new Error("Authentication data missing");
         }
 
-        setToken(tokenRes.data.token);
-        setRole(roleRes.data.role);
+        const token = tokenRes.data.token;
+        const role = roleRes.data.role;
+
+        setToken(token);
+        setRole(role);
+
+        // ✅ Step 2: Now get permissions with Authorization Header
+        const permissionsRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          }
+        );
+
+        console.log("🔓 Permissions response:", permissionsRes.data);
         setCustomPermissions(permissionsRes.data.permissions || {});
 
         console.log("✅ Authentication data set in state");
@@ -149,6 +165,31 @@ const CreateEmployee = () => {
       setFieldErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+  const extractModulesFromSidebar = () => {
+    const modules = new Set();
+
+    Object.values(sidebarConfig).forEach((roleModules) => {
+      roleModules.forEach((item) => {
+        modules.add(item.name);
+        if (item.options) {
+          item.options.forEach((subItem) => {
+            modules.add(subItem.name);
+          });
+        }
+      });
+    });
+
+    // 🆕 Add manually the extra modules you want permissions for
+    modules.add("Form Builder");
+    modules.add("Form");
+    modules.add("Automation");
+    modules.add("Opportunities");
+    modules.add("Working Days");
+
+    return Array.from(modules);
+  };
+
+  const modulesList = extractModulesFromSidebar();
 
   const handleShiftChange = (field, value) => {
     console.log(`✏️ Shift field changed - ${field}:`, value);
@@ -368,13 +409,7 @@ const CreateEmployee = () => {
         {isPasswordField && (
           <span
             onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: "relative",
-              left: "-30px",
-              // top: "45px",
-              cursor: "pointer",
-              color: "#666",
-            }}
+            className="eye-create-employee"
           >
             {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
           </span>
@@ -589,6 +624,306 @@ const CreateEmployee = () => {
                   </div>
                 </div>
               </div>
+              <div className="form-section">
+                <h4 className="section-title">Set Permissions</h4>
+                <button
+                  type="button"
+                  className="create-btn"
+                  onClick={() => {
+                    setTempPermissions(employee.permissions || {});
+                    setShowPermissionModal(true);
+                  }}
+                >
+                  Set Permissions
+                </button>
+              </div>
+              {showPermissionModal && (
+                <div className="permissions-modal-overlay">
+                  <div className="permissions-modal-content">
+                    <h2>Set Permissions</h2>
+                    <div className="permissions-grid">
+                      {modulesList.map((module) => (
+                        <div key={module} className="permission-module">
+                          <h5>{module}</h5>
+
+                          {/* ✅ If module is Task List */}
+                          {module === "Task List" ? (
+                            <>
+                              {/* 🔹 Extra Tabs for Task List */}
+                              {[
+                                "Today",
+                                "Pending",
+                                "Completed",
+                                "Total Task Assigned",
+                              ].map((subTab) => (
+                                <label
+                                  key={subTab}
+                                  style={{ marginRight: "10px" }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      tempPermissions[module]?.includes(
+                                        subTab
+                                      ) || false
+                                    }
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setTempPermissions((prev) => {
+                                        const existing = prev[module] || [];
+                                        if (checked) {
+                                          return {
+                                            ...prev,
+                                            [module]: [...existing, subTab],
+                                          };
+                                        } else {
+                                          return {
+                                            ...prev,
+                                            [module]: existing.filter(
+                                              (a) => a !== subTab
+                                            ),
+                                          };
+                                        }
+                                      });
+                                    }}
+                                  />
+                                  {subTab}
+                                </label>
+                              ))}
+
+                              {/* 🔹 Show All Data & Show Self Data for Task List */}
+                              {["Show All Data", "Show Self Data"].map(
+                                (specialOption) => (
+                                  <label
+                                    key={specialOption}
+                                    style={{ marginRight: "10px" }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        tempPermissions[module]?.includes(
+                                          specialOption
+                                        ) || false
+                                      }
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setTempPermissions((prev) => {
+                                          const existing = prev[module] || [];
+                                          if (checked) {
+                                            return {
+                                              ...prev,
+                                              [module]: [
+                                                ...existing,
+                                                specialOption,
+                                              ],
+                                            };
+                                          } else {
+                                            return {
+                                              ...prev,
+                                              [module]: existing.filter(
+                                                (a) => a !== specialOption
+                                              ),
+                                            };
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    {specialOption}
+                                  </label>
+                                )
+                              )}
+
+                              {/* 🔹 Normal Read Create Edit Delete */}
+                              {["read", "create", "edit", "delete"].map(
+                                (action) => (
+                                  <label
+                                    key={action}
+                                    style={{ marginRight: "10px" }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        tempPermissions[module]?.includes(
+                                          action
+                                        ) || false
+                                      }
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setTempPermissions((prev) => {
+                                          const existing = prev[module] || [];
+                                          if (checked) {
+                                            return {
+                                              ...prev,
+                                              [module]: [...existing, action],
+                                            };
+                                          } else {
+                                            return {
+                                              ...prev,
+                                              [module]: existing.filter(
+                                                (a) => a !== action
+                                              ),
+                                            };
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    {action.toUpperCase()}
+                                  </label>
+                                )
+                              )}
+                            </>
+                          ) : module === "Delegation List" ? (
+                            <>
+                              {/* ✅ Only Delegation List ke liye Show All Data & Show Self Data */}
+                              {["Show All Data", "Show Self Data"].map(
+                                (specialOption) => (
+                                  <label
+                                    key={specialOption}
+                                    style={{ marginRight: "10px" }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        tempPermissions[module]?.includes(
+                                          specialOption
+                                        ) || false
+                                      }
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setTempPermissions((prev) => {
+                                          const existing = prev[module] || [];
+                                          if (checked) {
+                                            return {
+                                              ...prev,
+                                              [module]: [
+                                                ...existing,
+                                                specialOption,
+                                              ],
+                                            };
+                                          } else {
+                                            return {
+                                              ...prev,
+                                              [module]: existing.filter(
+                                                (a) => a !== specialOption
+                                              ),
+                                            };
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    {specialOption}
+                                  </label>
+                                )
+                              )}
+
+                              {/* 🔹 Normal Read Create Edit Delete */}
+                              {["read", "create", "edit", "delete"].map(
+                                (action) => (
+                                  <label
+                                    key={action}
+                                    style={{ marginRight: "10px" }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        tempPermissions[module]?.includes(
+                                          action
+                                        ) || false
+                                      }
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setTempPermissions((prev) => {
+                                          const existing = prev[module] || [];
+                                          if (checked) {
+                                            return {
+                                              ...prev,
+                                              [module]: [...existing, action],
+                                            };
+                                          } else {
+                                            return {
+                                              ...prev,
+                                              [module]: existing.filter(
+                                                (a) => a !== action
+                                              ),
+                                            };
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    {action.toUpperCase()}
+                                  </label>
+                                )
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {/* ✅ Baaki modules ke liye normal Read Create Edit Delete */}
+                              {["read", "create", "edit", "delete"].map(
+                                (action) => (
+                                  <label
+                                    key={action}
+                                    style={{ marginRight: "10px" }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        tempPermissions[module]?.includes(
+                                          action
+                                        ) || false
+                                      }
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setTempPermissions((prev) => {
+                                          const existing = prev[module] || [];
+                                          if (checked) {
+                                            return {
+                                              ...prev,
+                                              [module]: [...existing, action],
+                                            };
+                                          } else {
+                                            return {
+                                              ...prev,
+                                              [module]: existing.filter(
+                                                (a) => a !== action
+                                              ),
+                                            };
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    {action.toUpperCase()}
+                                  </label>
+                                )
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="create-modal-buttons">
+                      <button
+                        className="discard-btn"
+                        onClick={() => setShowPermissionModal(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="create-btn"
+                        onClick={() => {
+                          setEmployee((prev) => ({
+                            ...prev,
+                            permissions: tempPermissions,
+                          }));
+                          setShowPermissionModal(false);
+                        }}
+                      >
+                        Save Permissions
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="form-section">
                 <h4 className="section-title">Work Schedule</h4>

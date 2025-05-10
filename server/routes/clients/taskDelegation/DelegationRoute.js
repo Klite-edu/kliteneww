@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
-
 // ✅ Apply cookie-parser middleware BEFORE any route
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
-
 const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
 const verifyToken = require("../../../middlewares/auth");
 const axios = require("axios");
-const whatsappService = require("../../clients/WhatsappWeb/Whatsappservice");
 
-router.post("/add", dbDBMiddleware, async (req, res) => {
+const whatsappService = require("../../clients/WhatsappWeb/Whatsappservice");
+const checkPermission = require("../../../middlewares/PermissionAuth");
+
+router.post("/add", dbDBMiddleware, checkPermission("Delegate Task", "create"), async (req, res) => {
   try {
     const { name, description, dueDate, time, doer } = req.body;
 
@@ -79,7 +79,7 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
 });
 
 // Get All Delegated Tasks
-router.get("/list", dbDBMiddleware, async (req, res) => {
+router.get("/list", dbDBMiddleware, checkPermission("Delegation List", "read") , checkPermission("Delegation List", "read"),async (req, res) => {
   try {
     console.log("📥 Fetching Delegated Tasks...");
     const tasks = await req.delegation.find({}).populate("doer", "fullName");
@@ -95,7 +95,7 @@ router.get("/list", dbDBMiddleware, async (req, res) => {
 });
 
 // Edit a Delegated Task
-router.put("/edit/:id", dbDBMiddleware, async (req, res) => {
+router.put("/edit/:id", dbDBMiddleware, checkPermission("Delegation List", "edit"), async (req, res) => {
   try {
     console.log("📥 Edit Delegation Request:", req.params.id);
     const { name, description, dueDate, time, doer } = req.body;
@@ -126,7 +126,7 @@ router.put("/edit/:id", dbDBMiddleware, async (req, res) => {
 });
 
 // Delete a Delegated Task
-router.delete("/delete/:id", dbDBMiddleware, verifyToken, async (req, res) => {
+router.delete("/delete/:id", dbDBMiddleware, checkPermission("Delegation List", "edit"), verifyToken, async (req, res) => {
   try {
     console.log("🗑️ Delete Task Request:", req.params.id);
     const deletedTask = await req.delegation.findByIdAndDelete(req.params.id);

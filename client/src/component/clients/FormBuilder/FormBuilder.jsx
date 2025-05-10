@@ -23,22 +23,41 @@ const FormBuilder = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
-          ),
-        ]);
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
+
+        const roleRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+          { withCredentials: true }
+        );
 
         const userToken = tokenRes.data.token;
+        const userRole = roleRes.data.role;
+
+        if (!userToken || !userRole) {
+          alert("Token or Role missing. Please login again.");
+          return;
+        }
+
+        setToken(userToken);
+        setRole(userRole);
+
+        // Ab token mil gaya, tab get-permissions call karenge
+        const permissionsRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+            withCredentials: true,
+          }
+        );
+
+        const userPermissions = permissionsRes.data.permissions || {};
+        setCustomPermissions(userPermissions);
+
         let userId = tokenRes.data.userId;
 
         if (!userId) {
@@ -55,33 +74,28 @@ const FormBuilder = () => {
 
         if (!userToken || !userId) {
           alert("Client ID is missing. Please login as a client.");
-          navigate("/login");
           return;
         }
 
         setToken(userToken);
         setClientId(userId);
 
-        const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
-
         if (!userRole) {
-          navigate("/login");
           return;
         }
 
-        if (userRole !== "client") {
-          alert("Unauthorized: Only clients can access this section.");
-          navigate("/");
+        if (
+          userRole !== "client" &&
+          !userPermissions["Form Builder"]?.includes("create")
+        ) {
+          alert("Unauthorized: You don't have access to Form Builder.");
           return;
         }
 
         setRole(userRole);
         setCustomPermissions(userPermissions);
-
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/login");
       }
     };
 
@@ -144,9 +158,9 @@ const FormBuilder = () => {
 
     const formData = {
       clientId,
-      fields: fields.map(field => ({
+      fields: fields.map((field) => ({
         ...field,
-        fieldCategory: field.fieldCategory || "primary" // Include field category in saved data
+        fieldCategory: field.fieldCategory || "primary", // Include field category in saved data
       })),
       buttons: {
         BackgroundColor: buttonConfig.bgColor,
@@ -172,8 +186,7 @@ const FormBuilder = () => {
     };
 
     try {
-
-      console.log(`formData - `,formData);
+      console.log(`formData - `, formData);
 
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/builder/create`,
@@ -186,7 +199,7 @@ const FormBuilder = () => {
         }
       );
       alert(`Form saved successfully! Form ID: ${response.data.data._id}`);
-      
+
       setFormTitle("");
       setFields([]);
     } catch (error) {
@@ -580,7 +593,11 @@ const FormBuilder = () => {
                               className="form-select"
                               value={field.fieldCategory || "primary"}
                               onChange={(e) =>
-                                updateField(index, "fieldCategory", e.target.value)
+                                updateField(
+                                  index,
+                                  "fieldCategory",
+                                  e.target.value
+                                )
                               }
                               style={{ borderRadius: "var(--border-radius)" }}
                             >
@@ -730,7 +747,9 @@ const FormBuilder = () => {
                               <span className="text-danger ms-1">*</span>
                             )}
                             {field.fieldCategory === "primary" && (
-                              <span className="badge bg-primary ms-2">Primary</span>
+                              <span className="badge bg-primary ms-2">
+                                Primary
+                              </span>
                             )}
                           </label>
                           {renderFieldPreview(field)}

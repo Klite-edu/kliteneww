@@ -21,6 +21,7 @@ const {
 const {
   getMicrosoftUploadModel,
 } = require("../../../models/clients/Microsoft/Upload-model");
+const checkPermission = require("../../../middlewares/PermissionAuth");
 
 // Environment variables
 console.log("🔹 Loading environment variables");
@@ -322,47 +323,54 @@ router.get("/auth/callback", async (req, res) => {
 });
 
 // Logout
-router.get("/auth/logout", async (req, res) => {
-  const { _requestId } = req;
-  const { session_id } = req.cookies;
-  console.log(`[${_requestId}] Processing logout`);
+router.get(
+  "/auth/logout",
+  checkPermission("OneDrive Connect", "delete"),
+  async (req, res) => {
+    const { _requestId } = req;
+    const { session_id } = req.cookies;
+    console.log(`[${_requestId}] Processing logout`);
 
-  try {
-    if (session_id) {
-      const companyName = getCompanyNameFromCookie(req);
-      if (companyName) {
-        const MicrosoftSession = await getMicrosoftSessionModel(companyName);
-        await MicrosoftSession.deleteOne({ sessionId: session_id });
+    try {
+      if (session_id) {
+        const companyName = getCompanyNameFromCookie(req);
+        if (companyName) {
+          const MicrosoftSession = await getMicrosoftSessionModel(companyName);
+          await MicrosoftSession.deleteOne({ sessionId: session_id });
+        }
       }
+
+      // Clear cookies with proper options
+      const clearOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".yourdomain.com"
+            : "localhost",
+        path: "/",
+      };
+
+      res.clearCookie("session_id", clearOptions);
+      res.clearCookie("auth_state", clearOptions);
+      res.clearCookie("auth_nonce", clearOptions);
+
+      // Return JSON response instead of redirect
+      res.status(200).json({
+        success: true,
+        redirectUrl: `${FRONTEND_URL}/microsoft`, // Let frontend handle redirect
+      });
+    } catch (err) {
+      console.error(`[${_requestId}] Logout Error:`, err);
+      res.status(500).json({ success: false, error: "Logout failed" });
     }
-
-    // Clear cookies with proper options
-    const clearOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain:
-        process.env.NODE_ENV === "production" ? ".yourdomain.com" : "localhost",
-      path: "/",
-    };
-
-    res.clearCookie("session_id", clearOptions);
-    res.clearCookie("auth_state", clearOptions);
-    res.clearCookie("auth_nonce", clearOptions);
-
-    // Return JSON response instead of redirect
-    res.status(200).json({
-      success: true,
-      redirectUrl: `${FRONTEND_URL}/microsoft`, // Let frontend handle redirect
-    });
-  } catch (err) {
-    console.error(`[${_requestId}] Logout Error:`, err);
-    res.status(500).json({ success: false, error: "Logout failed" });
   }
-});
+);
 router.post(
   "/auth/upload",
   authMiddleware,
+  checkPermission("OneDrive Connect", "create"),
   upload.single("file"),
   async (req, res) => {
     const { _requestId, companyName, session } = req;

@@ -31,7 +31,7 @@ const googleSessionMiddleware = async (req, res, next) => {
   let email = null;
 
   try {
-    if (req.path === "/upload" || req.path === "/api/user/google-token") {
+    if (req.path === "/auth/upload" || req.path === "/api/user/google-token") {
       console.log(
         "🟡 [GoogleSession] Special flow for /upload or /api/user/google-token route"
       );
@@ -55,6 +55,13 @@ const googleSessionMiddleware = async (req, res, next) => {
       const token = req.cookies?.token;
       const decoded = jwt.decode(token);
       email = decoded?.email;
+      // ✅ Inject req.user so checkPermission() works properly
+      try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("✅ [GoogleSession] req.user injected:", req.user.role);
+      } catch (err) {
+        console.warn("⚠️ [GoogleSession] Failed to verify token:", err.message);
+      }
 
       if (!email) {
         console.warn("❌ [GoogleSession] No email found in token");

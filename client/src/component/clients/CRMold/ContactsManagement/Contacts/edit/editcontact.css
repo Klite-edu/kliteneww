@@ -130,15 +130,17 @@
 
 .password-toggle {
   position: absolute;
-  right: 10px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--text-light);
+  color: black;
   cursor: pointer;
-  padding: 5px;
+  padding: 4px;
+  font-size: 1.2rem;
 }
+
 
 .error-input {
   border-color: var(--danger-color) !important;

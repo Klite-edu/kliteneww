@@ -1,15 +1,14 @@
 const cron = require("node-cron");
-const moment = require('moment-timezone');
+const moment = require("moment-timezone");
 const { getTaskModel } = require("../models/clients/checklist/task");
-const { getTenantWorkConfigModel } = require("../models/clients/workingConfig/working-model");
+const {
+  getTenantWorkConfigModel,
+} = require("../models/clients/workingConfig/working-model");
 const { getAllClientDBNames } = require("../database/db");
 
 // Function to calculate the next due datetime based on frequency
 const calculateNextDueDateTime = (plannedDateTime, frequency, config) => {
-  console.log('\n\ncalculateNextDueDateTime - ', plannedDateTime, frequency);
-
   let nextDueDateTime = new Date(plannedDateTime);
-  console.log(`\n\nNext Due Date - `, nextDueDateTime);
 
   // Preserve original time
   const hours = nextDueDateTime.getUTCHours();
@@ -66,27 +65,32 @@ const calculateNextDueDateTime = (plannedDateTime, frequency, config) => {
   nextDueDateTime.setUTCMinutes(minutes);
   nextDueDateTime.setUTCSeconds(seconds);
 
-  console.log(`holiday day configuration - `, config)
-
-  const workingDays = config?.workingDays || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const holidays = (config?.holidays || []).map(h => new Date(h).toDateString());
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const workingDays = config?.workingDays || [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun",
+  ];
+  const holidays = (config?.holidays || []).map((h) =>
+    new Date(h).toDateString()
+  );
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   let attempts = 0;
   while (
     (!workingDays.includes(dayNames[nextDueDateTime.getUTCDay()]) ||
-      holidays.includes(new Date(nextDueDateTime).toDateString()))
-    && attempts < 10
+      holidays.includes(new Date(nextDueDateTime).toDateString())) &&
+    attempts < 10
   ) {
     nextDueDateTime.setUTCDate(nextDueDateTime.getUTCDate() + 1);
     attempts++;
   }
 
-  console.log("✅ Final Next Working Day (Excludes Holidays):", nextDueDateTime.toISOString());
-
   return nextDueDateTime;
 };
-
 
 // Function to update task frequency across all clients
 const updateTaskFrequency = async () => {
@@ -96,7 +100,6 @@ const updateTaskFrequency = async () => {
     const clientDBNames = await getAllClientDBNames();
 
     for (const dbName of clientDBNames) {
-
       try {
         const companyName = dbName.replace("client_db_", "");
 
@@ -104,14 +107,14 @@ const updateTaskFrequency = async () => {
         const WorkingDays = await getTenantWorkConfigModel(companyName);
 
         // 🔄 Use IST-based start and end of day
-        const startDate = moment.tz("Asia/Kolkata").startOf('day');
-        const endDate = startDate.clone().add(1, 'day');
+        const startDate = moment.tz("Asia/Kolkata").startOf("day");
+        const endDate = startDate.clone().add(1, "day");
 
         const tasks = await Task.find({
           nextDueDateTime: {
             $gte: startDate.toDate(),
-            $lt: endDate.toDate()
-          }
+            $lt: endDate.toDate(),
+          },
         });
 
         if (!tasks.length) {
@@ -122,39 +125,40 @@ const updateTaskFrequency = async () => {
           const fullTask = await Task.findById(task._id);
           if (!fullTask) continue;
 
-          const nextDate = calculateNextDueDateTime(fullTask.nextDueDateTime, fullTask.frequency, WorkingDays);
-          fullTask.nextDueDateTime = moment(nextDate).toISOString();
+          const nextDate = calculateNextDueDateTime(
+            fullTask.nextDueDateTime,
+            fullTask.frequency,
+            await WorkingDays.findOne()
+          );
+          const nextDueDateTime = moment(nextDate).toISOString();
 
           fullTask.statusHistory.push({
-            date: startDate.toISOString(),
-            status: "Pending"
+            date: fullTask.nextDueDateTime,
+            status: "Pending",
           });
+
+          fullTask.plannedDateTime = fullTask.nextDueDateTime;
+          fullTask.nextDueDateTime = nextDueDateTime;
 
           await fullTask.save();
         }
-
       } catch (companyError) {
-        console.error(`❌ Error processing tasks for ${dbName}:`, companyError.message);
+        console.error(
+          `❌ Error processing tasks for ${dbName}:`,
+          companyError.message
+        );
       }
     }
-
   } catch (error) {
     console.error("Stack trace:", error.stack);
   }
 };
 
-
-
-
-// Function to start the daily scheduler (to be called in server.js)
 const startTaskScheduler = () => {
-
   const cronExpression = "0 0 * * *";
-
   cron.schedule(cronExpression, () => {
     updateTaskFrequency();
   });
-
 };
 
 module.exports = {

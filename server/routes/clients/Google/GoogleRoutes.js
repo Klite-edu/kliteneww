@@ -14,6 +14,7 @@ const {
 const router = express.Router();
 const { refreshAccessToken } = require("../../../utils/googleHelper");
 const googleSessionMiddleware = require("../../../middlewares/googleMiddleware");
+const checkPermission = require("../../../middlewares/PermissionAuth");
 console.log("🔵 [Google Drive] Initializing Google Drive integration module");
 
 // Initialize OAuth2 client
@@ -22,6 +23,7 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   "https://api.autopilotmybusiness.com/auth/google/callback"
+  // "http://localhost:5000/auth/google/callback"
 );
 
 const SCOPES = [
@@ -204,30 +206,35 @@ router.get("/auth/google/callback", async (req, res) => {
     );
     console.log(`🔄 [Google Auth] Redirecting to dashboard`);
     res.redirect("https://app.autopilotmybusiness.com/dashboard");
+    // res.redirect("http://localhost:3000/dashboard");
   } catch (err) {
     console.error("❌ [Google Auth] Callback Error:", err);
     res.status(500).send("Google login failed");
   }
 });
-router.get("/auth/disconnect-google", googleSessionMiddleware, async (req, res) => {
-  const { companyName, googleUser } = req;
+router.get(
+  "/auth/disconnect-google",
+  googleSessionMiddleware,
+  async (req, res) => {
+    const { companyName, googleUser } = req;
 
-  try {
-    const GoogleUser = await getGoogleUserModel(companyName);
-    await GoogleUser.findOneAndUpdate(
-      { email: googleUser.email },
-      { accessToken: null, refreshToken: null } // ❌ Only tokens null karo
-    );
+    try {
+      const GoogleUser = await getGoogleUserModel(companyName);
+      await GoogleUser.findOneAndUpdate(
+        { email: googleUser.email },
+        { accessToken: null, refreshToken: null } // ❌ Only tokens null karo
+      );
 
-    res.json({
-      success: true,
-      message: "Google Drive disconnected successfully",
-    });
-  } catch (error) {
-    console.error("Disconnect Error:", error);
-    res.status(500).json({ error: "Failed to disconnect Google Drive" });
+      res.json({
+        success: true,
+        message: "Google Drive disconnected successfully",
+      });
+    } catch (error) {
+      console.error("Disconnect Error:", error);
+      res.status(500).json({ error: "Failed to disconnect Google Drive" });
+    }
   }
-});
+);
 
 // Upload Route
 router.post("/auth/upload", googleSessionMiddleware, async (req, res) => {
@@ -424,329 +431,345 @@ router.post("/auth/upload", googleSessionMiddleware, async (req, res) => {
     });
   }
 });
-router.post("/auth/admin/upload", googleSessionMiddleware, async (req, res) => {
-  console.log("⬆️ [Google Upload] Starting file upload process");
-  const { fileName, mimeType, fileData } = req.body;
-  const { companyName, googleUser } = req;
-  console.log(
-    `🔄 [Google Upload] Received request from user: ${
-      googleUser?.email || "unknown"
-    }`
-  );
+router.post(
+  "/auth/admin/upload",
+  googleSessionMiddleware,
+  checkPermission("GoogleDrive Connect", "create"),
+  async (req, res) => {
+    console.log("⬆️ [Google Upload] Starting file upload process");
+    const { fileName, mimeType, fileData } = req.body;
+    const { companyName, googleUser } = req;
+    console.log(
+      `🔄 [Google Upload] Received request from user: ${
+        googleUser?.email || "unknown"
+      }`
+    );
 
-  if (!fileName || !mimeType || !fileData) {
-    console.error("❌ [Google Upload] Missing required fields", {
-      fileName: !!fileName,
-      mimeType: !!mimeType,
-      fileData: !!fileData,
-    });
-    return res.status(400).json({ error: "Missing required fields" });
-  }
+    if (!fileName || !mimeType || !fileData) {
+      console.error("❌ [Google Upload] Missing required fields", {
+        fileName: !!fileName,
+        mimeType: !!mimeType,
+        fileData: !!fileData,
+      });
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-  console.log(`🔵 [Google Upload] Processing file:
+    console.log(`🔵 [Google Upload] Processing file:
     Name: ${fileName}
     Type: ${mimeType}
     Size: ${Math.round(Buffer.byteLength(fileData, "base64") / 1024)} KB
     Company: ${companyName}`);
 
-  try {
-    console.log("🔄 [Google Upload] Initializing Google Drive client");
-    const auth = new google.auth.OAuth2();
-    console.log(
-      `🔄 [Google Upload] Setting credentials with token: ${
-        googleUser.accessToken ? "present" : "missing"
-      }`
-    );
-    auth.setCredentials({ access_token: googleUser.accessToken });
-
-    console.log("🔄 [Google Upload] Creating Drive client instance");
-    let drive = google.drive({ version: "v3", auth });
-
     try {
-      console.log("🔄 [Google Upload] Getting company name from token");
-      const companyName = getCompanyNameFromToken(req);
-      console.log(`🔄 [Google Upload] Getting client model for ${companyName}`);
-      const Client = await getClientModel(companyName);
-      console.log(`🔄 [Google Upload] Finding admin user in ${companyName}`);
-      const admin = await Client.findOne({ role: "client" });
-      console.log(`🔄 [Google Upload] Found admin: ${admin?.email || "none"}`);
-
-      // Use admin's email to get their Google token
+      console.log("🔄 [Google Upload] Initializing Google Drive client");
+      const auth = new google.auth.OAuth2();
       console.log(
-        `🔄 [Google Upload] Getting Google user model for ${companyName}`
-      );
-      const GoogleUser = await getGoogleUserModel(companyName);
-      console.log(
-        `🔄 [Google Upload] Finding Google user record for admin ${admin?.email}`
-      );
-      const googleUser = await GoogleUser.findOne({ email: admin.email });
-      console.log(
-        `🔄 [Google Upload] Admin Google connection: ${
-          googleUser ? "found" : "not found"
+        `🔄 [Google Upload] Setting credentials with token: ${
+          googleUser.accessToken ? "present" : "missing"
         }`
       );
+      auth.setCredentials({ access_token: googleUser.accessToken });
 
-      if (!googleUser) {
-        console.error(
-          `❌ [Google Upload] Admin Google account not connected for ${admin.email}`
-        );
-        return res
-          .status(403)
-          .json({ error: "Admin Google account not connected" });
-      }
+      console.log("🔄 [Google Upload] Creating Drive client instance");
+      let drive = google.drive({ version: "v3", auth });
 
-      console.log(
-        "🔄 [Google Upload] Testing Drive API connection with light call"
-      );
-      // try first call (dummy/light)
-      await drive.about.get({ fields: "user" });
-      console.log("🟢 [Google Upload] Drive API connection successful");
-    } catch (err) {
-      console.log(
-        `🔄 [Google Upload] Error with Drive API: ${err.code} - ${err.message}`
-      );
-      if (err.code === 401) {
-        console.log("🔁 [Google Upload] Access token expired, refreshing...");
+      try {
+        console.log("🔄 [Google Upload] Getting company name from token");
+        const companyName = getCompanyNameFromToken(req);
         console.log(
-          `🔄 [Google Upload] Using refresh token: ${
-            googleUser.refreshToken ? "present" : "missing"
-          }`
+          `🔄 [Google Upload] Getting client model for ${companyName}`
         );
-        const newTokens = await refreshAccessToken(googleUser.refreshToken);
+        const Client = await getClientModel(companyName);
+        console.log(`🔄 [Google Upload] Finding admin user in ${companyName}`);
+        const admin = await Client.findOne({ role: "client" });
         console.log(
-          `🔄 [Google Upload] Refresh response: ${
-            newTokens?.access_token ? "token received" : "failed"
-          }`
+          `🔄 [Google Upload] Found admin: ${admin?.email || "none"}`
         );
 
-        if (!newTokens?.access_token) {
-          console.error("❌ [Google Upload] Token refresh failed");
-          return res
-            .status(401)
-            .json({ error: "Unable to refresh access token" });
-        }
-
-        // ✅ Save new accessToken in DB
+        // Use admin's email to get their Google token
         console.log(
-          `🔄 [Google Upload] Saving new access token for ${googleUser.email}`
+          `🔄 [Google Upload] Getting Google user model for ${companyName}`
         );
         const GoogleUser = await getGoogleUserModel(companyName);
-        await GoogleUser.findOneAndUpdate(
-          { email: googleUser.email },
-          { accessToken: newTokens.access_token }
+        console.log(
+          `🔄 [Google Upload] Finding Google user record for admin ${admin?.email}`
         );
-        console.log("🟢 [Google Upload] New access token saved to database");
+        const googleUser = await GoogleUser.findOne({ email: admin.email });
+        console.log(
+          `🔄 [Google Upload] Admin Google connection: ${
+            googleUser ? "found" : "not found"
+          }`
+        );
 
-        // ✅ Re-initialize auth and drive
-        console.log("🔄 [Google Upload] Re-initializing auth with new token");
-        auth.setCredentials({ access_token: newTokens.access_token });
-        drive = google.drive({ version: "v3", auth });
+        if (!googleUser) {
+          console.error(
+            `❌ [Google Upload] Admin Google account not connected for ${admin.email}`
+          );
+          return res
+            .status(403)
+            .json({ error: "Admin Google account not connected" });
+        }
 
         console.log(
-          "✅ [Google Upload] Token refreshed and Drive client re-initialized"
+          "🔄 [Google Upload] Testing Drive API connection with light call"
         );
-      } else {
-        console.error(`❌ [Google Upload] Unhandled error: ${err.message}`);
-        throw err;
+        // try first call (dummy/light)
+        await drive.about.get({ fields: "user" });
+        console.log("🟢 [Google Upload] Drive API connection successful");
+      } catch (err) {
+        console.log(
+          `🔄 [Google Upload] Error with Drive API: ${err.code} - ${err.message}`
+        );
+        if (err.code === 401) {
+          console.log("🔁 [Google Upload] Access token expired, refreshing...");
+          console.log(
+            `🔄 [Google Upload] Using refresh token: ${
+              googleUser.refreshToken ? "present" : "missing"
+            }`
+          );
+          const newTokens = await refreshAccessToken(googleUser.refreshToken);
+          console.log(
+            `🔄 [Google Upload] Refresh response: ${
+              newTokens?.access_token ? "token received" : "failed"
+            }`
+          );
+
+          if (!newTokens?.access_token) {
+            console.error("❌ [Google Upload] Token refresh failed");
+            return res
+              .status(401)
+              .json({ error: "Unable to refresh access token" });
+          }
+
+          // ✅ Save new accessToken in DB
+          console.log(
+            `🔄 [Google Upload] Saving new access token for ${googleUser.email}`
+          );
+          const GoogleUser = await getGoogleUserModel(companyName);
+          await GoogleUser.findOneAndUpdate(
+            { email: googleUser.email },
+            { accessToken: newTokens.access_token }
+          );
+          console.log("🟢 [Google Upload] New access token saved to database");
+
+          // ✅ Re-initialize auth and drive
+          console.log("🔄 [Google Upload] Re-initializing auth with new token");
+          auth.setCredentials({ access_token: newTokens.access_token });
+          drive = google.drive({ version: "v3", auth });
+
+          console.log(
+            "✅ [Google Upload] Token refreshed and Drive client re-initialized"
+          );
+        } else {
+          console.error(`❌ [Google Upload] Unhandled error: ${err.message}`);
+          throw err;
+        }
       }
-    }
 
-    console.log("🔄 [Google Upload] Preparing file buffer and stream");
-    const buffer = Buffer.from(fileData, "base64");
-    console.log(
-      `🔄 [Google Upload] Buffer created, size: ${buffer.length} bytes`
-    );
-    const stream = new Readable();
-    stream.push(buffer);
-    stream.push(null);
-    console.log("🔄 [Google Upload] Readable stream created");
+      console.log("🔄 [Google Upload] Preparing file buffer and stream");
+      const buffer = Buffer.from(fileData, "base64");
+      console.log(
+        `🔄 [Google Upload] Buffer created, size: ${buffer.length} bytes`
+      );
+      const stream = new Readable();
+      stream.push(buffer);
+      stream.push(null);
+      console.log("🔄 [Google Upload] Readable stream created");
 
-    console.log(
-      `🔄 [Google Upload] Uploading file "${fileName}" to Google Drive`
-    );
-    const response = await drive.files.create({
-      requestBody: { name: fileName },
-      media: { mimeType, body: stream },
-      fields: "id, webViewLink",
-    });
-    console.log(`🟢 [Google Upload] File upload API call successful`);
+      console.log(
+        `🔄 [Google Upload] Uploading file "${fileName}" to Google Drive`
+      );
+      const response = await drive.files.create({
+        requestBody: { name: fileName },
+        media: { mimeType, body: stream },
+        fields: "id, webViewLink",
+      });
+      console.log(`🟢 [Google Upload] File upload API call successful`);
 
-    console.log(`🟢 [Google Upload] File uploaded successfully:
+      console.log(`🟢 [Google Upload] File uploaded successfully:
       ID: ${response.data.id}
       Link: ${response.data.webViewLink}`);
 
-    console.log(
-      `🔄 [Google Upload] Setting public permissions for file ${response.data.id}`
-    );
-    await drive.permissions.create({
-      fileId: response.data.id,
-      requestBody: { role: "reader", type: "anyone" },
-    });
-    console.log(`🟢 [Google Upload] File permissions set to public`);
+      console.log(
+        `🔄 [Google Upload] Setting public permissions for file ${response.data.id}`
+      );
+      await drive.permissions.create({
+        fileId: response.data.id,
+        requestBody: { role: "reader", type: "anyone" },
+      });
+      console.log(`🟢 [Google Upload] File permissions set to public`);
 
-    console.log(
-      `🔄 [Google Upload] Updating user record with file metadata for ${googleUser.email}`
-    );
-    const GoogleUser = await getGoogleUserModel(companyName);
-    await GoogleUser.findOneAndUpdate(
-      { email: googleUser.email },
-      {
-        $push: {
-          files: {
-            fileId: response.data.id,
-            fileName,
-            mimeType,
-            viewLink: response.data.webViewLink,
-            uploadedAt: new Date(),
+      console.log(
+        `🔄 [Google Upload] Updating user record with file metadata for ${googleUser.email}`
+      );
+      const GoogleUser = await getGoogleUserModel(companyName);
+      await GoogleUser.findOneAndUpdate(
+        { email: googleUser.email },
+        {
+          $push: {
+            files: {
+              fileId: response.data.id,
+              fileName,
+              mimeType,
+              viewLink: response.data.webViewLink,
+              uploadedAt: new Date(),
+            },
           },
-        },
-      }
-    );
-    console.log(`🟢 [Google Upload] User record updated with new file`);
+        }
+      );
+      console.log(`🟢 [Google Upload] User record updated with new file`);
 
-    console.log("✅ [Google Upload] File upload completed successfully");
-    res.json({
-      success: true,
-      fileId: response.data.id,
-      viewLink: response.data.webViewLink,
-    });
-  } catch (err) {
-    console.error(`❌ [Google Upload] Error: ${err.message}`, err);
-    res.status(500).json({
-      error: "Upload failed",
-      details: err.message,
-    });
+      console.log("✅ [Google Upload] File upload completed successfully");
+      res.json({
+        success: true,
+        fileId: response.data.id,
+        viewLink: response.data.webViewLink,
+      });
+    } catch (err) {
+      console.error(`❌ [Google Upload] Error: ${err.message}`, err);
+      res.status(500).json({
+        error: "Upload failed",
+        details: err.message,
+      });
+    }
   }
-});
+);
 
 // Delete File Route
-router.delete("/auth/file/:fileId", googleSessionMiddleware, async (req, res) => {
-  const { fileId } = req.params;
-  const { companyName, googleUser } = req;
+router.delete(
+  "/auth/file/:fileId",
+  googleSessionMiddleware,
+  checkPermission("GoogleDrive Connect", "delete"),
+  async (req, res) => {
+    const { fileId } = req.params;
+    const { companyName, googleUser } = req;
 
-  console.log(
-    `🗑️ [Google Delete] Starting deletion for file ${fileId} in ${companyName}`
-  );
-  console.log(`🔄 [Google Delete] User: ${googleUser?.email || "unknown"}`);
-
-  try {
-    console.log("🔄 [Google Delete] Initializing Google Drive client");
-    const auth = new google.auth.OAuth2();
     console.log(
-      `🔄 [Google Delete] Setting credentials with token: ${
-        googleUser.accessToken ? "present" : "missing"
-      }`
+      `🗑️ [Google Delete] Starting deletion for file ${fileId} in ${companyName}`
     );
-    auth.setCredentials({ access_token: googleUser.accessToken });
-
-    console.log("🔄 [Google Delete] Creating Drive client instance");
-    let drive = google.drive({ version: "v3", auth });
+    console.log(`🔄 [Google Delete] User: ${googleUser?.email || "unknown"}`);
 
     try {
+      console.log("🔄 [Google Delete] Initializing Google Drive client");
+      const auth = new google.auth.OAuth2();
       console.log(
-        "🔄 [Google Delete] Testing Drive API connection with light call"
+        `🔄 [Google Delete] Setting credentials with token: ${
+          googleUser.accessToken ? "present" : "missing"
+        }`
       );
-      // try first call (dummy/light)
-      await drive.about.get({ fields: "user" });
-      console.log("🟢 [Google Delete] Drive API connection successful");
-    } catch (err) {
-      console.log(
-        `🔄 [Google Delete] Error with Drive API: ${err.code} - ${err.message}`
-      );
-      if (err.code === 401) {
-        console.log("🔁 [Google Delete] Access token expired, refreshing...");
-        console.log(
-          `🔄 [Google Delete] Using refresh token: ${
-            googleUser.refreshToken ? "present" : "missing"
-          }`
-        );
-        const newTokens = await refreshAccessToken(googleUser.refreshToken);
-        console.log(
-          `🔄 [Google Delete] Refresh response: ${
-            newTokens?.access_token ? "token received" : "failed"
-          }`
-        );
+      auth.setCredentials({ access_token: googleUser.accessToken });
 
-        if (!newTokens?.access_token) {
-          console.error("❌ [Google Delete] Token refresh failed");
-          return res
-            .status(401)
-            .json({ error: "Unable to refresh access token" });
+      console.log("🔄 [Google Delete] Creating Drive client instance");
+      let drive = google.drive({ version: "v3", auth });
+
+      try {
+        console.log(
+          "🔄 [Google Delete] Testing Drive API connection with light call"
+        );
+        // try first call (dummy/light)
+        await drive.about.get({ fields: "user" });
+        console.log("🟢 [Google Delete] Drive API connection successful");
+      } catch (err) {
+        console.log(
+          `🔄 [Google Delete] Error with Drive API: ${err.code} - ${err.message}`
+        );
+        if (err.code === 401) {
+          console.log("🔁 [Google Delete] Access token expired, refreshing...");
+          console.log(
+            `🔄 [Google Delete] Using refresh token: ${
+              googleUser.refreshToken ? "present" : "missing"
+            }`
+          );
+          const newTokens = await refreshAccessToken(googleUser.refreshToken);
+          console.log(
+            `🔄 [Google Delete] Refresh response: ${
+              newTokens?.access_token ? "token received" : "failed"
+            }`
+          );
+
+          if (!newTokens?.access_token) {
+            console.error("❌ [Google Delete] Token refresh failed");
+            return res
+              .status(401)
+              .json({ error: "Unable to refresh access token" });
+          }
+
+          // ✅ Save new accessToken in DB
+          console.log(
+            `🔄 [Google Delete] Saving new access token for ${googleUser.email}`
+          );
+          const GoogleUser = await getGoogleUserModel(companyName);
+          await GoogleUser.findOneAndUpdate(
+            { email: googleUser.email },
+            { accessToken: newTokens.access_token }
+          );
+          console.log("🟢 [Google Delete] New access token saved to database");
+
+          // ✅ Re-initialize auth and drive
+          console.log("🔄 [Google Delete] Re-initializing auth with new token");
+          auth.setCredentials({ access_token: newTokens.access_token });
+          drive = google.drive({ version: "v3", auth });
+
+          console.log(
+            "✅ [Google Delete] Token refreshed and Drive client re-initialized"
+          );
+        } else {
+          console.error(`❌ [Google Delete] Unhandled error: ${err.message}`);
+          throw err;
         }
-
-        // ✅ Save new accessToken in DB
-        console.log(
-          `🔄 [Google Delete] Saving new access token for ${googleUser.email}`
-        );
-        const GoogleUser = await getGoogleUserModel(companyName);
-        await GoogleUser.findOneAndUpdate(
-          { email: googleUser.email },
-          { accessToken: newTokens.access_token }
-        );
-        console.log("🟢 [Google Delete] New access token saved to database");
-
-        // ✅ Re-initialize auth and drive
-        console.log("🔄 [Google Delete] Re-initializing auth with new token");
-        auth.setCredentials({ access_token: newTokens.access_token });
-        drive = google.drive({ version: "v3", auth });
-
-        console.log(
-          "✅ [Google Delete] Token refreshed and Drive client re-initialized"
-        );
-      } else {
-        console.error(`❌ [Google Delete] Unhandled error: ${err.message}`);
-        throw err;
       }
+
+      console.log(`🔍 [Google Delete] Verifying ownership of file ${fileId}`);
+      const GoogleUser = await getGoogleUserModel(companyName);
+      console.log(
+        `🔄 [Google Delete] Finding user record for ${googleUser.email}`
+      );
+      const user = await GoogleUser.findOne({ email: googleUser.email });
+
+      if (!user) {
+        console.error("❌ [Google Delete] User not found in database");
+        return res.status(403).json({ error: "User not found" });
+      }
+
+      console.log(`🔄 [Google Delete] Checking file ownership for ${fileId}`);
+      const fileMeta = user.files.find((f) => f.fileId === fileId);
+      console.log(
+        `🔄 [Google Delete] File ownership check: ${
+          fileMeta ? "found" : "not found"
+        }`
+      );
+      if (!fileMeta) {
+        console.error("❌ [Google Delete] File not owned by user");
+        return res.status(403).json({ error: "Access denied: not your file" });
+      }
+
+      console.log(`🔄 [Google Delete] Deleting file ${fileId} from Drive API`);
+      await drive.files.delete({ fileId });
+      console.log(`🟢 [Google Delete] File deleted from Google Drive`);
+
+      console.log(
+        `🔄 [Google Delete] Removing file ${fileId} from user record`
+      );
+      await GoogleUser.findOneAndUpdate(
+        { email: googleUser.email },
+        { $pull: { files: { fileId } } }
+      );
+      console.log(`🟢 [Google Delete] File removed from user record`);
+
+      console.log(`✅ [Google Delete] File ${fileId} deleted successfully`);
+      res.json({
+        success: true,
+        message: "File deleted successfully",
+      });
+    } catch (error) {
+      console.error(`❌ [Google Delete] Error: ${error.message}`, error);
+      res.status(500).json({
+        error: "Delete failed",
+        details: error.message,
+      });
     }
-
-    console.log(`🔍 [Google Delete] Verifying ownership of file ${fileId}`);
-    const GoogleUser = await getGoogleUserModel(companyName);
-    console.log(
-      `🔄 [Google Delete] Finding user record for ${googleUser.email}`
-    );
-    const user = await GoogleUser.findOne({ email: googleUser.email });
-
-    if (!user) {
-      console.error("❌ [Google Delete] User not found in database");
-      return res.status(403).json({ error: "User not found" });
-    }
-
-    console.log(`🔄 [Google Delete] Checking file ownership for ${fileId}`);
-    const fileMeta = user.files.find((f) => f.fileId === fileId);
-    console.log(
-      `🔄 [Google Delete] File ownership check: ${
-        fileMeta ? "found" : "not found"
-      }`
-    );
-    if (!fileMeta) {
-      console.error("❌ [Google Delete] File not owned by user");
-      return res.status(403).json({ error: "Access denied: not your file" });
-    }
-
-    console.log(`🔄 [Google Delete] Deleting file ${fileId} from Drive API`);
-    await drive.files.delete({ fileId });
-    console.log(`🟢 [Google Delete] File deleted from Google Drive`);
-
-    console.log(`🔄 [Google Delete] Removing file ${fileId} from user record`);
-    await GoogleUser.findOneAndUpdate(
-      { email: googleUser.email },
-      { $pull: { files: { fileId } } }
-    );
-    console.log(`🟢 [Google Delete] File removed from user record`);
-
-    console.log(`✅ [Google Delete] File ${fileId} deleted successfully`);
-    res.json({
-      success: true,
-      message: "File deleted successfully",
-    });
-  } catch (error) {
-    console.error(`❌ [Google Delete] Error: ${error.message}`, error);
-    res.status(500).json({
-      error: "Delete failed",
-      details: error.message,
-    });
   }
-});
+);
 
 // Get Google Token Route
 router.get(
@@ -806,6 +829,7 @@ router.get(
 router.get(
   "/api/admin/google-token",
   googleSessionMiddleware,
+  checkPermission("GoogleDrive Connect", "read"),
   async (req, res) => {
     const { companyName, googleUser } = req;
     console.log(`🔵 [Google Token] Request for access token in ${companyName}`);

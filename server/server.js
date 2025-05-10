@@ -58,7 +58,7 @@ const server = http.createServer(app);
 // ✅ CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
-  : ["https://app.autopilotmybusiness.com"];
+  : ["http://app.autopilotmybusiness.com"];
 
 // Initialize Socket.IO after defining allowedOrigins
 const io = socketIo(server, {

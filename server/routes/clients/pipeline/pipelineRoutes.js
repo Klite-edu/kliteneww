@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const dbDBMiddleware = require("../../../middlewares/dbMiddleware");
+const checkPermission = require("../../../middlewares/PermissionAuth");
 
 // Get all pipelines
-router.get("/list", dbDBMiddleware, async (req, res) => {
+router.get("/list", dbDBMiddleware, checkPermission("FMS", "read"), async (req, res) => {
   try {
     console.log("📥 Fetching all pipelines...");
     const pipelines = await req.pipeline.find().populate({
@@ -107,7 +108,7 @@ router.post("/pipeline/checklist", dbDBMiddleware, async (req, res) => {
 });
 
 // Add a new pipeline with multiple stages
-router.post("/add", dbDBMiddleware, async (req, res) => {
+router.post("/add", dbDBMiddleware, checkPermission("FMS", "create"), async (req, res) => {
   try {
     console.log("📥 Adding new pipeline:", req.body);
     const { pipelineName, stages } = req.body;
@@ -134,7 +135,7 @@ router.post("/add", dbDBMiddleware, async (req, res) => {
 });
 
 // Delete a pipeline
-router.delete("/:id", dbDBMiddleware, async (req, res) => {
+router.delete("/:id", dbDBMiddleware, checkPermission("FMS", "delete"), async (req, res) => {
   try {
     console.log(`🗑️ Deleting pipeline with ID: ${req.params.id}`);
     const deletedPipeline = await req.pipeline.findByIdAndDelete(req.params.id);
@@ -155,7 +156,7 @@ router.delete("/:id", dbDBMiddleware, async (req, res) => {
 });
 
 // Update stage status
-router.put("/:id", dbDBMiddleware, async (req, res) => {
+router.put("/:id", dbDBMiddleware, checkPermission("FMS", "edit"), async (req, res) => {
   try {
     console.log(`🔄 Updating pipeline with ID: ${req.params.id}`);
     const updatedPipeline = await req.pipeline.findByIdAndUpdate(

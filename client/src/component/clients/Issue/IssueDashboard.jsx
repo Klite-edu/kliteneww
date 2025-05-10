@@ -94,26 +94,31 @@ const IssueDashboard = () => {
 
   const fetchInitialData = useCallback(async () => {
     try {
-      const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, {
-          withCredentials: true,
-        }),
+      const tokenRes = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+        { withCredentials: true }
+      );
+
+      const userToken = tokenRes.data.token;
+
+      const [roleRes, permissionsRes] = await Promise.all([
         axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
           withCredentials: true,
+          headers: { Authorization: `Bearer ${userToken}` },
         }),
         axios.get(
           `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-          { withCredentials: true }
+          {
+            withCredentials: true,
+            headers: { Authorization: `Bearer ${userToken}` },
+          }
         ),
       ]);
-      const userToken = tokenRes.data.token;
+
       const userRole = roleRes.data.role;
       const userPermissions = permissionsRes.data.permissions || {};
 
-      if (!userToken || !userRole) {
-        navigate("/login");
-        return;
-      }
+      if (!userToken || !userRole) return;
 
       setToken(userToken);
       setRole(userRole);
@@ -122,7 +127,6 @@ const IssueDashboard = () => {
       await fetchIssues(userToken);
     } catch (error) {
       console.error("Error fetching initial data:", error);
-      navigate("/login");
     }
   }, [navigate, fetchIssues]);
 
@@ -262,7 +266,9 @@ const IssueDashboard = () => {
       <Navbar />
       <div className="ticket-dashboard-container">
         {alert && (
-          <div className={`ticket-alert ticket-alert-${alert.type}`}>{alert.message}</div>
+          <div className={`ticket-alert ticket-alert-${alert.type}`}>
+            {alert.message}
+          </div>
         )}
 
         <header className="ticket-dashboard-header">
@@ -321,14 +327,20 @@ const IssueDashboard = () => {
             ) : (
               <div className={`ticket-issues-container ${viewMode}`}>
                 {filteredIssues.map((issue) => (
-                  <div key={issue.id} className={`ticket-issue-item ${viewMode}`}>
+                  <div
+                    key={issue.id}
+                    className={`ticket-issue-item ${viewMode}`}
+                  >
                     <div className="ticket-issue-header">
                       <span className={`ticket-priority ${issue.priority}`}>
                         {issue.priority}
                       </span>
                       <h3 className="ticket-issue-title">{issue.title}</h3>
                       <span
-                        className={`ticket-status ${issue.status.replace("-", "")}`}
+                        className={`ticket-status ${issue.status.replace(
+                          "-",
+                          ""
+                        )}`}
                       >
                         {issue.status.replace("-", " ")}
                       </span>
@@ -344,26 +356,37 @@ const IssueDashboard = () => {
                         {issue.category}
                       </span>
                     </div>
-                    {issue.status === "pending" && (
-                      <div className="ticket-issue-actions">
-                        <button
-                          className="ticket-complete-btn"
-                          onClick={() => completeTask(issue.id)}
-                        >
-                          Complete Task
-                        </button>
-                      </div>
-                    )}
+                    {issue.status === "pending" &&
+                      (role === "client" ||
+                        customPermissions["Raised Ticket"]?.includes(
+                          "create"
+                        )) && (
+                        <div className="ticket-issue-actions">
+                          <button
+                            className="ticket-complete-btn"
+                            onClick={() => completeTask(issue.id)}
+                          >
+                            Complete Task
+                          </button>
+                        </div>
+                      )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className={`ticket-filter-panel ${isMobileFilterOpen ? "ticket-open" : ""}`}>
+          <div
+            className={`ticket-filter-panel ${
+              isMobileFilterOpen ? "ticket-open" : ""
+            }`}
+          >
             <div className="ticket-filter-header">
               <h2>Filters</h2>
-              <button className="ticket-close-filters" onClick={toggleMobileFilter}>
+              <button
+                className="ticket-close-filters"
+                onClick={toggleMobileFilter}
+              >
                 ✕
               </button>
             </div>

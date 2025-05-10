@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const dbMiddleware = require("../../../middlewares/dbMiddleware");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 // router.get("/mis-report", dbMiddleware, async (req, res) => {
 //   try {
 //     let { startDate, endDate, userId, departmentId } = req.query;
@@ -147,50 +147,50 @@ const mongoose = require("mongoose")
 //       const workNotDone = userData.tasks.filter(
 //         (t) => !t.isCompletedOnTime && !t.matchingCompletionLate
 //       ).length;
-    //   userData.workNotDone = workNotDone;
-    //   userData.completedLate = completedLate;
-    //   userData.completedOnTime = completedOnTime;
-    //   userData.workDone = completedOnTime + completedLate; // Total work done (both on time and late)
+//   userData.workNotDone = workNotDone;
+//   userData.completedLate = completedLate;
+//   userData.completedOnTime = completedOnTime;
+//   userData.workDone = completedOnTime + completedLate; // Total work done (both on time and late)
 
-    //   // Calculate performance scores
-    //   userData.workNotDoneScore =
-    //     userData.totalTasks > 0
-    //       ? -(workNotDone / userData.totalTasks) * 100
-    //       : 0;
+//   // Calculate performance scores
+//   userData.workNotDoneScore =
+//     userData.totalTasks > 0
+//       ? -(workNotDone / userData.totalTasks) * 100
+//       : 0;
 
-    //   userData.lateSubmissionScore =
-    //     userData.workDone > 0 ? -(completedLate / userData.workDone) * 100 : 0;
+//   userData.lateSubmissionScore =
+//     userData.workDone > 0 ? -(completedLate / userData.workDone) * 100 : 0;
 
-    //   userData.performanceGap =
-    //     userData.workNotDoneScore + userData.lateSubmissionScore;
+//   userData.performanceGap =
+//     userData.workNotDoneScore + userData.lateSubmissionScore;
 
-    //   // Calculate average lateness only for late tasks
-    //   const lateTasks = userData.tasks.filter((t) => t.matchingCompletionLate);
-    //   userData.minutesLate = lateTasks.reduce((sum, t) => {
-    //     return (
-    //       sum +
-    //       Math.round(
-    //         (new Date(t.completedDate) - new Date(t.dueDate)) / (1000 * 60)
-    //       )
-    //     );
-    //   }, 0);
+//   // Calculate average lateness only for late tasks
+//   const lateTasks = userData.tasks.filter((t) => t.matchingCompletionLate);
+//   userData.minutesLate = lateTasks.reduce((sum, t) => {
+//     return (
+//       sum +
+//       Math.round(
+//         (new Date(t.completedDate) - new Date(t.dueDate)) / (1000 * 60)
+//       )
+//     );
+//   }, 0);
 
-    //   userData.averageLateMinutes =
-    //     completedLate > 0
-    //       ? Math.round(userData.minutesLate / completedLate)
-    //       : 0;
+//   userData.averageLateMinutes =
+//     completedLate > 0
+//       ? Math.round(userData.minutesLate / completedLate)
+//       : 0;
 
-    //   return userData;
-    // });
+//   return userData;
+// });
 
-    // misReport.sort((a, b) => b.performanceGap - a.performanceGap);
-    // const finalReport = {
-    //   startDate,
-    //   endDate,
-    //   reportGeneratedAt: new Date(),
-    //   totalEmployees: misReport.length,
-    //   employees: misReport,
-    // };
+// misReport.sort((a, b) => b.performanceGap - a.performanceGap);
+// const finalReport = {
+//   startDate,
+//   endDate,
+//   reportGeneratedAt: new Date(),
+//   totalEmployees: misReport.length,
+//   employees: misReport,
+// };
 //     res.json(finalReport);
 //   } catch (error) {
 //     console.error("\n[MIS Report] ❌ Critical error occurred:");
@@ -226,16 +226,21 @@ router.post("/save-manifestation", dbMiddleware, async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid employee ID",
-        message: "Please provide a valid employee ID"
+        message: "Please provide a valid employee ID",
       });
     }
 
     // Rest of your validation
-    if (!startDate || !endDate || workNotDoneTarget === undefined || lateSubmissionTarget === undefined) {
+    if (
+      !startDate ||
+      !endDate ||
+      workNotDoneTarget === undefined ||
+      lateSubmissionTarget === undefined
+    ) {
       return res.status(400).json({
         success: false,
         error: "Missing required fields",
-        message: "All fields are required"
+        message: "All fields are required",
       });
     }
 
@@ -270,14 +275,14 @@ router.post("/save-manifestation", dbMiddleware, async (req, res) => {
     res.json({
       success: true,
       manifestation,
-      message: "Manifestation saved successfully"
+      message: "Manifestation saved successfully",
     });
   } catch (error) {
     console.error("Error saving manifestation:", error);
     res.status(500).json({
       success: false,
       error: "Failed to save manifestation",
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -306,135 +311,176 @@ router.get("/get-manifestation", dbMiddleware, async (req, res) => {
   }
 });
 router.get("/list-mis", dbMiddleware, async (req, res) => {
-  console.log('\n[LIST-MIS] ===== Starting Request Processing =====');
-  console.log('[LIST-MIS] Request query parameters:', req.query);
-  
+  console.log("\n[LIST-MIS] ===== Starting Request Processing =====");
+  console.log("[LIST-MIS] Request query parameters:", req.query);
+
   try {
     const { startDate, endDate, userId, sort } = req.query;
-    console.log('[LIST-MIS] Parsed parameters:', {
+    console.log("[LIST-MIS] Parsed parameters:", {
       startDate,
       endDate,
       userId,
-      sort
+      sort,
     });
 
     const filter = {};
-    console.log('[LIST-MIS] Initial empty filter:', filter);
+    console.log("[LIST-MIS] Initial empty filter:", filter);
 
     // Date range filtering
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
-      console.log('[LIST-MIS] Adding date range filter:', {
+      end.setUTCHours(23, 59, 59, 999);
+      console.log("[LIST-MIS] Adding date range filter:", {
         startDate: start,
-        endDate: end
+        endDate: end,
       });
-      
-      filter["statusHistory.0.date"] = {
-        $gte: start,
-        $lte: end,
+
+      filter["statusHistory"] = {
+        $elemMatch: {
+          date: {
+            $gte: start,
+            $lte: end,
+          },
+        },
       };
     } else {
-      console.log('[LIST-MIS] No date range filter applied (missing startDate or endDate)');
+      console.log(
+        "[LIST-MIS] No date range filter applied (missing startDate or endDate)"
+      );
     }
-
     // User filtering
     if (userId) {
-      console.log('[LIST-MIS] Adding user filter:', userId);
+      console.log("[LIST-MIS] Adding user filter:", userId);
       filter.doer = userId;
     } else {
-      console.log('[LIST-MIS] No user filter applied');
+      console.log("[LIST-MIS] No user filter applied");
     }
 
-    console.log('[LIST-MIS] Final query filter:', filter);
-    console.log('[LIST-MIS] Sort order:', sort === "desc" ? 'Descending' : 'Ascending');
+    console.log("[LIST-MIS] Final query filter:", filter);
+    console.log(
+      "[LIST-MIS] Sort order:",
+      sort === "desc" ? "Descending" : "Ascending"
+    );
 
     const queryStart = Date.now();
-    console.log('[LIST-MIS] Executing database query...');
-    
-    const tasks = await req.Task.find(filter)
-      .sort({ "statusHistory.0.date": sort === "desc" ? -1 : 1 })
-      .populate("doer", "fullName");
-    
+    console.log("[LIST-MIS] Executing database query...");
+    // Move start and end outside for global scope
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setUTCHours(23, 59, 59, 999);
+    const sortDirection = sort === "desc" ? -1 : 1;
+
+    const tasksWithSortDate = await req.Task.aggregate([
+      { $match: userId ? { doer: new mongoose.Types.ObjectId(userId) } : {} },
+      {
+        $addFields: {
+          matchedStatusDates: {
+            $filter: {
+              input: "$statusHistory",
+              as: "s",
+              cond: {
+                $and: [
+                  { $gte: ["$$s.date", start] },
+                  { $lte: ["$$s.date", end] },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          sortDate: { $max: "$matchedStatusDates.date" },
+        },
+      },
+      {
+        $match: {
+          sortDate: { $ne: null }, // only keep tasks that have matched dates
+        },
+      },
+      { $sort: { sortDate: sortDirection } },
+    ]);
+
+    const taskIds = tasksWithSortDate.map((t) => t._id);
+    const tasks = await req.Task.find({ _id: { $in: taskIds } }).populate(
+      "doer",
+      "fullName"
+    );
+
     const queryTime = Date.now() - queryStart;
     console.log(`[LIST-MIS] Database query completed in ${queryTime}ms`);
     console.log(`[LIST-MIS] Found ${tasks.length} tasks matching criteria`);
 
-    console.log('[LIST-MIS] Starting task mapping...');
+    console.log("[LIST-MIS] Starting task mapping...");
     const mappedTasks = tasks.map((task, index) => {
-      console.log(`\n[LIST-MIS] Processing task ${index + 1}/${tasks.length}: ${task._id}`);
-      console.log('[LIST-MIS] Task raw data:', {
+      console.log(
+        `\n[LIST-MIS] Processing task ${index + 1}/${tasks.length}: ${task._id}`
+      );
+      console.log("[LIST-MIS] Task raw data:", {
         taskName: task.taskName,
-        statusHistoryLength: task.statusHistory?.length || 0,
-        doer: task.doer ? task.doer._id : null
+        statusHistory: task.statusHistory, // 👈 this will show the full array
+        doer: task.doer ? task.doer._id : null,
       });
 
-      const firstStatus = task.statusHistory?.[0] || {};
-      console.log('[LIST-MIS] First status entry:', firstStatus);
-
-      const dueDate = firstStatus.date || null;
-      const validationRequestedAt = firstStatus.validationRequestedAt || null;
-      const taskStatus = firstStatus.status || "Pending";
-      
-      console.log('[LIST-MIS] Extracted values:', {
-        dueDate,
-        validationRequestedAt,
-        taskStatus
+      // Filter statusHistory entries within the date range
+      const filteredStatuses = task.statusHistory.filter((s) => {
+        return s.date >= start && s.date <= end;
       });
+      console.log("filteredStatuses", filteredStatuses);
 
-      // Determine final status
-      let finalStatus = "Not Done";
-      if (taskStatus === "Complete" && validationRequestedAt) {
-        finalStatus = "Complete";
-      } else if (taskStatus === "Pending" && validationRequestedAt) {
-        finalStatus = "Pending";
-      }
-      console.log('[LIST-MIS] Determined final status:', finalStatus);
+      const mappedEntries = filteredStatuses.map((statusEntry) => {
+        const dueDate = statusEntry.date || null;
+        const validationRequestedAt = statusEntry.validationRequestedAt || null;
+        const taskStatus = statusEntry.status || "Pending";
 
-      // Check if late
-      let isLate = false;
-      if (finalStatus === "Complete" && dueDate && validationRequestedAt) {
-        isLate = new Date(validationRequestedAt) > new Date(dueDate);
-        if (isLate) {
-          const lateBy = (new Date(validationRequestedAt) - new Date(dueDate)) / (1000 * 60 * 60 * 24);
-          console.log(`[LIST-MIS] Task is late by ${lateBy.toFixed(2)} days`);
+        // Determine final status
+        let finalStatus = "Not Done";
+        if (taskStatus === "Complete" && validationRequestedAt) {
+          finalStatus = "Complete";
+        } else if (taskStatus === "Pending" && validationRequestedAt) {
+          finalStatus = "Pending";
         }
-      }
-      console.log('[LIST-MIS] Late status:', isLate);
 
-      const mappedTask = {
-        taskId: task._id,
-        taskName: task.taskName,
-        doerName: task.doer?.fullName || "Unknown",
-        dueDate,
-        completedDate: validationRequestedAt,
-        status: finalStatus,
-        isLate,
-      };
-      
-      console.log('[LIST-MIS] Mapped task:', mappedTask);
-      return mappedTask;
+        // Check if late
+        let isLate = false;
+        if (finalStatus === "Complete" && dueDate && validationRequestedAt) {
+          isLate = new Date(validationRequestedAt) > new Date(dueDate);
+        }
+
+        return {
+          taskId: task._id,
+          taskName: task.taskName,
+          doerName: task.doer?.fullName || "Unknown",
+          dueDate,
+          completedDate: validationRequestedAt,
+          status: finalStatus,
+          isLate,
+        };
+      });
+
+      return mappedEntries;
     });
 
-    console.log('\n[LIST-MIS] ===== Request Processing Complete =====');
+    console.log("\n[LIST-MIS] ===== Request Processing Complete =====");
     console.log(`[LIST-MIS] Returning ${mappedTasks.length} mapped tasks`);
     res.json(mappedTasks);
   } catch (error) {
-    console.error('\n[LIST-MIS] ❌ Error processing request:');
-    console.error('[LIST-MIS] Error details:', {
+    console.error("\n[LIST-MIS] ❌ Error processing request:");
+    console.error("[LIST-MIS] Error details:", {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
-    console.error('[LIST-MIS] Request context:', {
+    console.error("[LIST-MIS] Request context:", {
       method: req.method,
       url: req.originalUrl,
-      query: req.query
+      query: req.query,
     });
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to process request",
       details: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });

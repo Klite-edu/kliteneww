@@ -55,7 +55,7 @@ const DelegationList = () => {
   const navigate = useNavigate();
 
   const fetchTasks = useCallback(
-    async (token) => {
+    async (token, role, userId, customPermissions) => {
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/delegation/list`,
@@ -69,14 +69,29 @@ const DelegationList = () => {
 
         let taskList = response.data;
 
-        if (role === "user" && userId) {
-          taskList = taskList.filter((task) => {
-            return (
-              task.doer &&
-              (String(task.doer._id) === String(userId) ||
-                String(task.doer) === String(userId))
+        if (role === "user") {
+          if (
+            customPermissions["Delegation List"]?.includes("Show Self Data")
+          ) {
+            taskList = taskList.filter(
+              (task) =>
+                task.doer &&
+                (String(task.doer._id) === String(userId) ||
+                  String(task.doer) === String(userId))
             );
-          });
+          } else if (
+            customPermissions["Delegation List"]?.includes("Show All Data")
+          ) {
+            // Show sab data (no filter)
+          } else {
+            // Default: Apne hi dikhao agar kuch permission nahi hai
+            taskList = taskList.filter(
+              (task) =>
+                task.doer &&
+                (String(task.doer._id) === String(userId) ||
+                  String(task.doer) === String(userId))
+            );
+          }
         }
 
         setTasks(taskList);
@@ -85,7 +100,7 @@ const DelegationList = () => {
         console.error("Error fetching tasks:", error);
       }
     },
-    [role, userId]
+    []
   );
 
   const fetchEmployees = useCallback(async (token) => {
@@ -108,40 +123,64 @@ const DelegationList = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
-          ),
-        ]);
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
 
         const userToken = tokenRes.data.token;
-        const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
-
-        if (!userToken || !userRole) {
+        if (!userToken) {
           navigate("/");
           return;
         }
 
         setToken(userToken);
-        setRole(userRole);
         setUserId(tokenRes.data.userId);
+
+        const [roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            {
+              headers: { Authorization: `Bearer ${userToken}` },
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            {
+              headers: { Authorization: `Bearer ${userToken}` },
+              withCredentials: true,
+            }
+          ),
+        ]);
+
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+
+        setRole(userRole);
         setCustomPermissions(userPermissions);
 
+        // ✅ Fetch employees first
         await fetchEmployees(userToken);
-        await fetchTasks(userToken);
+
+        // ✅ Permission check here BEFORE fetching tasks
+        if (
+          userRole !== "client" &&
+          !userPermissions["Delegation List"]?.includes("read")
+        ) {
+          alert("You do not have permission to see the delegation list.");
+          return;
+        }
+
+        // ✅ Only if allowed, fetch tasks
+        await fetchTasks(
+          userToken,
+          userRole,
+          tokenRes.data.userId,
+          userPermissions
+        );
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/");
       }
     };
 
@@ -184,7 +223,10 @@ const DelegationList = () => {
     const calculateDisplayedTasks = () => {
       const indexOfLastTask = currentPage * tasksPerPage;
       const indexOfFirstTask = indexOfLastTask - tasksPerPage;
-      const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+      const currentTasks = filteredTasks.slice(
+        indexOfFirstTask,
+        indexOfLastTask
+      );
       setDisplayedTasks(currentTasks);
       setTotalPages(Math.ceil(filteredTasks.length / tasksPerPage));
     };
@@ -426,7 +468,7 @@ const DelegationList = () => {
       if (startPage > 1) {
         pageNumbers.push(1);
         if (startPage > 2) {
-          pageNumbers.push('...');
+          pageNumbers.push("...");
         }
       }
 
@@ -438,14 +480,14 @@ const DelegationList = () => {
       // Add last page and ellipsis if needed
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
-          pageNumbers.push('...');
+          pageNumbers.push("...");
         }
         pageNumbers.push(totalPages);
       }
     }
 
     return pageNumbers.map((number, index) => {
-      if (number === '...') {
+      if (number === "...") {
         return (
           <span key={index} className="page-item disabled">
             {number}
@@ -455,7 +497,7 @@ const DelegationList = () => {
       return (
         <button
           key={index}
-          className={`page-item ${currentPage === number ? 'active' : ''}`}
+          className={`page-item ${currentPage === number ? "active" : ""}`}
           onClick={() => handlePageChange(number)}
         >
           {number}
@@ -513,10 +555,7 @@ const DelegationList = () => {
         <div className="dele-pagination-controls-top">
           <div className="dele-items-per-page">
             <label>Items per page:</label>
-            <select
-              value={tasksPerPage}
-              onChange={handleTasksPerPageChange}
-            >
+            <select value={tasksPerPage} onChange={handleTasksPerPageChange}>
               <option value={5}>5</option>
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -702,70 +741,76 @@ const DelegationList = () => {
                           </>
                         ) : (
                           <>
-                            {role === "user" && (
-                              <>
-                                {isCompleted ? (
-                                  <span className="completed-icon">
-                                    <FaCheck
-                                      style={{
-                                        color: "green",
-                                        fontSize: "20px",
-                                      }}
-                                    />
-                                  </span>
-                                ) : (
-                                  <div className="d-flex">
-                                    <button
-                                      className="btn green"
-                                      onClick={() =>
-                                        handleCompleteConfirmation(task._id)
-                                      }
-                                    >
-                                      <GrCompliance className="fw-bold fs-3" />
-                                    </button>
-                                    <button
-                                      className="btn blue"
-                                      onClick={() =>
-                                        handleReviseConfirmation(task)
-                                      }
-                                    >
-                                      <PiNotePencilFill className="fw-bold fs-3" />
-                                    </button>
-                                    <button
-                                      className="btn btn-warning"
-                                      onClick={() =>
-                                        handleTicketConfirmation(task)
-                                      }
-                                      aria-label="Create ticket"
-                                      title="Create Ticket"
-                                    >
-                                      <IoTicketOutline className="fw-bold fs-3" />
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                            )}
+                            <>
+                              {isCompleted ? (
+                                <span className="completed-icon">
+                                  <FaCheck
+                                    style={{
+                                      color: "green",
+                                      fontSize: "20px",
+                                    }}
+                                  />
+                                </span>
+                              ) : (
+                                <div className="d-flex">
+                                  <button
+                                    className="btn green"
+                                    onClick={() =>
+                                      handleCompleteConfirmation(task._id)
+                                    }
+                                  >
+                                    <GrCompliance className="fw-bold fs-3" />
+                                  </button>
+                                  <button
+                                    className="btn blue"
+                                    onClick={() =>
+                                      handleReviseConfirmation(task)
+                                    }
+                                  >
+                                    <PiNotePencilFill className="fw-bold fs-3" />
+                                  </button>
+                                  <button
+                                    className="btn btn-warning"
+                                    onClick={() =>
+                                      handleTicketConfirmation(task)
+                                    }
+                                    aria-label="Create ticket"
+                                    title="Create Ticket"
+                                  >
+                                    <IoTicketOutline className="fw-bold fs-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </>
                             {role === "client" && (
                               <div className="d-flex">
-                                <button
-                                  className="btn green me-2"
-                                  onClick={() => handleEditConfirmation(task)}
-                                  aria-label="Edit task"
-                                  title="Edit"
-                                  disabled={task.status === "Completed"}
-                                >
-                                  <CiEdit className="fw-bold fs-3" />
-                                </button>
-                                <button
-                                  className="btn red"
-                                  onClick={() =>
-                                    handleDeleteConfirmation(task._id)
-                                  }
-                                  aria-label="Delete task"
-                                  title="Delete"
-                                >
-                                  <MdDelete className="fw-bold fs-3" />
-                                </button>
+                                {customPermissions["Delegation List"]?.includes(
+                                  "edit"
+                                ) && (
+                                  <button
+                                    className="btn green me-2"
+                                    onClick={() => handleEditConfirmation(task)}
+                                    aria-label="Edit task"
+                                    title="Edit"
+                                    disabled={task.status === "Completed"}
+                                  >
+                                    <CiEdit className="fw-bold fs-3" />
+                                  </button>
+                                )}
+                                {customPermissions["Delegation List"]?.includes(
+                                  "edit"
+                                ) && (
+                                  <button
+                                    className="btn red"
+                                    onClick={() =>
+                                      handleDeleteConfirmation(task._id)
+                                    }
+                                    aria-label="Delete task"
+                                    title="Delete"
+                                  >
+                                    <MdDelete className="fw-bold fs-3" />
+                                  </button>
+                                )}
                               </div>
                             )}
                           </>

@@ -13,8 +13,10 @@ function Microsoft() {
   const [error, setError] = useState("");
   const [hasValidSession, setHasValidSession] = useState(false);
   const [role, setRole] = useState("");
+  const [id, setId] = useState("");
   const [customPermissions, setCustomPermissions] = useState({});
   const navigate = useNavigate();
+  const [token, setToken] = useState("");
 
   // Check session status
   const checkSession = async () => {
@@ -44,30 +46,45 @@ function Microsoft() {
   };
 
   useEffect(() => {
-    const fetchRoleAndPermissions = async () => {
+    const init = async () => {
       try {
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
+
+        const token = tokenRes.data.token;
+        setToken(token); // 👈 save it for reuse
+        const decoded = jwtDecode(token);
+        setId(decoded.userId);
+
         const [roleRes, permissionsRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: { Authorization: `Bearer ${token}` },
+            }
           ),
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: { Authorization: `Bearer ${token}` },
+            }
           ),
         ]);
 
         setRole(roleRes.data.role);
         setCustomPermissions(permissionsRes.data.permissions || {});
-      } catch (error) {
-        console.error("Failed to fetch role or permissions:", error);
-        setRole("");
-        setCustomPermissions({});
+      } catch (err) {
+        console.error("Failed to fetch role or permissions:", err);
       }
     };
 
-    fetchRoleAndPermissions();
+    init();
   }, []);
+
   useEffect(() => {
     const initialize = async () => {
       const sessionValid = await checkSession();
@@ -94,25 +111,6 @@ function Microsoft() {
   const handleLogin = () => {
     window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/login`;
   };
-  const handleDisconnectMicrosoft = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/auth/disconnect-microsoft`,
-        { withCredentials: true }
-      );
-      if (response.data.success) {
-        alert("Disconnected from OneDrive successfully");
-        setHasValidSession(false); // sirf session hata, login active rahe
-        await fetchUploads(); // uploads ko refresh karo
-      }
-    } catch (error) {
-      console.error("Error disconnecting from OneDrive:", error);
-      alert("Error disconnecting from OneDrive");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -121,7 +119,10 @@ function Microsoft() {
         `${process.env.REACT_APP_API_URL}/api/auth/logout`,
         {
           withCredentials: true,
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`, // 👈 use the saved one
+          },
         }
       );
       if (response.data.success) {
@@ -162,10 +163,14 @@ function Microsoft() {
         `${process.env.REACT_APP_API_URL}/api/auth/upload`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // ✅ ADD TOKEN HERE
+          },
           withCredentials: true,
         }
       );
+
       await fetchUploads();
       setFile(null);
       document.getElementById("file-input").value = "";
@@ -197,7 +202,8 @@ function Microsoft() {
               <h1 className="ms-title">OneDrive</h1>
             </div>
             {hasValidSession ? (
-              <>
+              role === "client" ||
+              customPermissions["OneDrive Connect"]?.includes("delete") ? (
                 <button
                   onClick={handleLogout}
                   disabled={isLoading}
@@ -205,16 +211,9 @@ function Microsoft() {
                 >
                   {isLoading ? "Signing out..." : "Sign out"}
                 </button>
-                <button
-                  onClick={handleDisconnectMicrosoft}
-                  disabled={isLoading}
-                  className="ms-button ms-button-secondary"
-                  style={{ marginLeft: "10px" }}
-                >
-                  {isLoading ? "Disconnecting..." : "Disconnect OneDrive"}
-                </button>
-              </>
-            ) : (
+              ) : null
+            ) : role === "client" ||
+              customPermissions["OneDrive Connect"]?.includes("create") ? (
               <button
                 onClick={handleLogin}
                 disabled={isLoading}
@@ -222,7 +221,7 @@ function Microsoft() {
               >
                 {isLoading ? "Connecting..." : "Sign in"}
               </button>
-            )}
+            ) : null}
           </div>
         </header>
 
@@ -233,33 +232,36 @@ function Microsoft() {
                 <div className="ms-section-header">
                   <h2 className="ms-section-title">Upload files</h2>
                 </div>
-                <form onSubmit={handleFileUpload} className="ms-upload-form">
-                  <div className="ms-file-upload">
-                    <input
-                      id="file-input"
-                      type="file"
-                      className="ms-file-input"
-                      onChange={(e) => setFile(e.target.files[0])}
-                    />
-                    <label htmlFor="file-input" className="ms-file-label">
-                      <svg className="ms-upload-icon" viewBox="0 0 24 24">
-                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"></path>
-                      </svg>
-                      <span>{file ? file.name : "Choose a file"}</span>
-                    </label>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={!file || isLoading}
-                    className="ms-button ms-button-primary"
-                  >
-                    {isLoading ? (
-                      <span className="ms-spinner"></span>
-                    ) : (
-                      "Upload"
-                    )}
-                  </button>
-                </form>
+                {role === "client" ||
+                customPermissions["OneDrive Connect"]?.includes("create") ? (
+                  <form onSubmit={handleFileUpload} className="ms-upload-form">
+                    <div className="ms-file-upload">
+                      <input
+                        id="file-input"
+                        type="file"
+                        className="ms-file-input"
+                        onChange={(e) => setFile(e.target.files[0])}
+                      />
+                      <label htmlFor="file-input" className="ms-file-label">
+                        <svg className="ms-upload-icon" viewBox="0 0 24 24">
+                          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"></path>
+                        </svg>
+                        <span>{file ? file.name : "Choose a file"}</span>
+                      </label>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={!file || isLoading}
+                      className="ms-button ms-button-primary"
+                    >
+                      {isLoading ? (
+                        <span className="ms-spinner"></span>
+                      ) : (
+                        "Upload"
+                      )}
+                    </button>
+                  </form>
+                ) : null}
               </section>
 
               <section className="ms-files-section">

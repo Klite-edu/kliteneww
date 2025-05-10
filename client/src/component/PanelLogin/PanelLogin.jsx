@@ -95,8 +95,8 @@ const PanelLogin = () => {
                 position: "absolute", 
                 left: "16px", 
                 top: "50%", 
-                transform: "translateY(-50%)",
-                color: "var(--text-light)" 
+                transform: "translateY(-50%)"
+                 
               }} 
             />
             <input
@@ -114,8 +114,8 @@ const PanelLogin = () => {
                 position: "absolute", 
                 left: "16px", 
                 top: "50%", 
-                transform: "translateY(-50%)",
-                color: "var(--text-light)" 
+                transform: "translateY(-50%)"
+               
               }} 
             />
             <input

@@ -32,6 +32,7 @@ const TriggerBuilder = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [token, setToken] = useState("");
   const [role, setRole] = useState("");
+  const [id, setId] = useState("");
   const [customPermissions, setCustomPermissions] = useState({});
   const [clientId, setClientId] = useState(null);
   const navigate = useNavigate();
@@ -40,65 +41,57 @@ const TriggerBuilder = () => {
     const fetchInitialData = async () => {
       try {
         // Fetch token, role, and permissions in parallel
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
-          ),
-        ]);
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
+
+        const roleRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+          { withCredentials: true }
+        );
 
         const userToken = tokenRes.data.token;
         let userId = tokenRes.data.userId;
 
-        // If userId is not obtained from token response, try fetching via email endpoint
-        if (!userId) {
-          try {
-            const userIdRes = await axios.get(
-              `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
-              { withCredentials: true }
-            );
-            userId = userIdRes.data.email;
-          } catch (error) {
-            console.error("Error fetching user email:", error);
-          }
-        }
-
-        // Check if both token and userId are present
         if (!userToken || !userId) {
           alert("Client ID is missing. Please login as a client.");
-          navigate("/login");
           return;
         }
 
         setToken(userToken);
         setClientId(userId);
-
+        setId(userToken.id);
         const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
 
-        if (!userRole) {
-          navigate("/login");
-          return;
-        }
-
-        if (userRole !== "client") {
-          alert("Unauthorized: Only clients can access this section.");
-          navigate("/");
-          return;
-        }
-
+        if (!userRole) return;
         setRole(userRole);
-        setCustomPermissions(userPermissions);
 
-        // Now fetch the trigger-related data
+        // 2. Ab jab token mil gaya to permissions lo Authorization header ke sath
+        const permissionsRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+            withCredentials: true,
+          }
+        );
+
+        const userPermissions = permissionsRes.data.permissions || {};
+        setCustomPermissions(userPermissions);
+        if (
+          userRole !== "client" &&
+          !(
+            userPermissions["Automation"]?.includes("create") ||
+            userPermissions["Automation"]?.includes("read")
+          )
+        ) {
+          alert("Unauthorized: You don't have access to Automation module.");
+          return;
+        }
+
+        // 3. Phir saare triggers/forms/stages etc. fetch karo
         setIsLoading(true);
         const [
           formsResponse,
@@ -150,7 +143,6 @@ const TriggerBuilder = () => {
         setTriggers(triggersResponse.data);
       } catch (error) {
         console.error("❌ Error fetching data:", error);
-        navigate("/login");
       } finally {
         setIsLoading(false);
       }
@@ -285,8 +277,7 @@ const TriggerBuilder = () => {
   return (
     <div className="trigger-builder-container">
       <Sidebar role={role} customPermissions={customPermissions} />
-      <Navbar />
-
+      <Navbar id={id} role={role} />
       <div className="trigger-builder-content">
         <h1 className="trigger-builder-title">Automation Trigger Builder</h1>
         <p className="trigger-builder-subtitle">
@@ -422,28 +413,32 @@ const TriggerBuilder = () => {
                   >
                     <option value="">Select a stage...</option>
                     {stages.map((pipeline) => (
-                      <div key={pipeline._id}>
-                        <optgroup label={pipeline.pipelineName}>
-                          {pipeline.stages.map((stage) => (
-                            <option key={stage._id} value={stage._id}>
-                              {stage.stageName}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </div>
+                      <optgroup
+                        key={pipeline._id}
+                        label={pipeline.pipelineName}
+                      >
+                        {pipeline.stages.map((stage) => (
+                          <option key={stage._id} value={stage._id}>
+                            {stage.stageName}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div className="form-actions">
-                <button
-                  type="submit"
-                  className="save-button"
-                  disabled={isLoading}
-                >
-                  <FiSave /> {isLoading ? "Saving..." : "Save Trigger"}
-                </button>
+                {(role === "client" ||
+                  customPermissions["Automation"]?.includes("create")) && (
+                  <button
+                    type="submit"
+                    className="save-button"
+                    disabled={isLoading}
+                  >
+                    <FiSave /> {isLoading ? "Saving..." : "Save Trigger"}
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -510,14 +505,21 @@ const TriggerBuilder = () => {
                                   </span>
                                 </div>
                               </div>
-                              <button
-                                className="delete-trigger-button"
-                                onClick={() => handleDeleteTrigger(trigger._id)}
-                                disabled={isDeleting}
-                                title="Delete trigger"
-                              >
-                                <FiTrash2 />
-                              </button>
+                              {(role === "client" ||
+                                customPermissions["Automation"]?.includes(
+                                  "delete"
+                                )) && (
+                                <button
+                                  className="delete-trigger-button"
+                                  onClick={() =>
+                                    handleDeleteTrigger(trigger._id)
+                                  }
+                                  disabled={isDeleting}
+                                  title="Delete trigger"
+                                >
+                                  <FiTrash2 />
+                                </button>
+                              )}
                             </div>
                           )
                       )

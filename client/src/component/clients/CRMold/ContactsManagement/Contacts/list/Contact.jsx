@@ -39,30 +39,44 @@ const Contact = () => {
     const fetchAuthData = async () => {
       try {
         setLoading(true);
-        
-        // Fetch token, role and permissions in parallel
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { 
-            withCredentials: true 
-          }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { 
-            withCredentials: true 
-          }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { 
-            withCredentials: true 
-          })
+
+        // Pehle token and role alag se le lo
+        const [tokenRes, roleRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+            { withCredentials: true }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            { withCredentials: true }
+          ),
         ]);
 
         if (!tokenRes.data.token || !roleRes.data.role) {
           throw new Error("Authentication data missing");
         }
 
-        setToken(tokenRes.data.token);
-        setRole(roleRes.data.role);
+        const token = tokenRes.data.token;
+        const role = roleRes.data.role;
+
+        setToken(token);
+        setRole(role);
+
+        // ✅ Ab token ke sath proper Authorization header ke sath permissions fetch karo
+        const permissionsRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          }
+        );
+
         setCustomPermissions(permissionsRes.data.permissions || {});
 
-        // Fetch contacts after successful auth
-        await fetchContacts(tokenRes.data.token);
+        // ✅ Ab contacts bhi token ke sath fetch karo
+        await fetchContacts(token);
       } catch (error) {
         console.error("Authentication error:", error);
         navigate("/");
@@ -276,16 +290,10 @@ const Contact = () => {
                         <FontAwesomeIcon icon={faEllipsisV} />
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item
-                          as={Link}
-                          to={`/view/${contact._id}`}
-                        >
+                        <Dropdown.Item as={Link} to={`/view/${contact._id}`}>
                           View
                         </Dropdown.Item>
-                        <Dropdown.Item
-                          as={Link}
-                          to={`/edit/${contact._id}`}
-                        >
+                        <Dropdown.Item as={Link} to={`/edit/${contact._id}`}>
                           Edit
                         </Dropdown.Item>
                         <Dropdown.Item

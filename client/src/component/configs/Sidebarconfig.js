@@ -33,32 +33,32 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const sidebarConfig = {
-  admin: [
-    { name: "Dashboard", path: "/dashboard", icon: faTachometerAlt },
-    {
-      name: "Manage Users",
-      path: "/users",
-      icon: faUserGear,
-      options: [
-        { name: "Clients", path: "/clients", icon: faUserTie },
-        { name: "Users", path: "/users", icon: faUsers },
-      ],
-    },
-    {
-      name: "Subscriptions",
-      path: "/subscriptions",
-      icon: faFileInvoiceDollar,
-    },
-    { name: "Chats", path: "/chats", icon: faComments },
-    { name: "Billings", path: "/billings", icon: faMoneyBillWave },
-    { name: "System Analytics", path: "/systemanalytics", icon: faChartPie },
-    { name: "Support Tickets", path: "/supporttickets", icon: faHeadset },
-    { name: "Security", path: "/landing", icon: faShieldHalved },
-    { name: "Permissions", path: "/permissions", icon: faUserGear },
-    { name: "Settings", path: "/", icon: faCog },
-    { name: "System Health", path: "/performance", icon: faGaugeHigh },
-    { name: "Notification", path: "/chatbox", icon: faBell },
-  ],
+  // admin: [
+  //   { name: "Dashboard", path: "/dashboard", icon: faTachometerAlt },
+  //   {
+  //     name: "Manage Users",
+  //     path: "/users",
+  //     icon: faUserGear,
+  //     options: [
+  //       { name: "Clients", path: "/clients", icon: faUserTie },
+  //       { name: "Users", path: "/users", icon: faUsers },
+  //     ],
+  //   },
+  //   {
+  //     name: "Subscriptions",
+  //     path: "/subscriptions",
+  //     icon: faFileInvoiceDollar,
+  //   },
+  //   { name: "Chats", path: "/chats", icon: faComments },
+  //   { name: "Billings", path: "/billings", icon: faMoneyBillWave },
+  //   { name: "System Analytics", path: "/systemanalytics", icon: faChartPie },
+  //   { name: "Support Tickets", path: "/supporttickets", icon: faHeadset },
+  //   { name: "Security", path: "/landing", icon: faShieldHalved },
+  //   { name: "Permissions", path: "/permissions", icon: faUserGear },
+  //   { name: "Settings", path: "/", icon: faCog },
+  //   { name: "System Health", path: "/performance", icon: faGaugeHigh },
+  //   { name: "Notification", path: "/chatbox", icon: faBell },
+  // ],
   client: [
     { name: "Dashboard", path: "/dashboard", icon: faTachometerAlt },
     {
@@ -67,7 +67,11 @@ const sidebarConfig = {
       icon: faListCheck,
       options: [
         { name: "Task List", path: "/check-tasklist", icon: faCheckDouble },
-        { name: "Add Checklist Task", path: "/check-addtask", icon: faCircleCheck },
+        {
+          name: "Add Checklist Task",
+          path: "/check-addtask",
+          icon: faCircleCheck,
+        },
         { name: "Checklist MIS", path: "/check-mis", icon: faProjectDiagram },
       ],
     },
@@ -76,7 +80,11 @@ const sidebarConfig = {
       path: "/task-delegation",
       icon: faListCheck,
       options: [
-        { name: "Delegate Task", path: "/delegation-taskadd", icon: faCircleCheck },
+        {
+          name: "Delegate Task",
+          path: "/delegation-taskadd",
+          icon: faCircleCheck,
+        },
         {
           name: "Delegation List",
           path: "/delegation-tasklist",
@@ -91,7 +99,11 @@ const sidebarConfig = {
     },
     { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
     { name: "OneDrive Connect", path: "/microsoft", icon: faProjectDiagram },
-    { name: "GoogleDrive Connect", path: "/googledrive", icon: faProjectDiagram },
+    {
+      name: "GoogleDrive Connect",
+      path: "/googledrive",
+      icon: faProjectDiagram,
+    },
     { name: "Whatsapp Web", path: "/whatsapp-web", icon: faComments },
     { name: "Raised Ticket", path: "/issue", icon: faProjectDiagram },
     { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
@@ -173,50 +185,115 @@ const sidebarConfig = {
       icon: faListCheck,
       options: [
         { name: "Task List", path: "/check-tasklist", icon: faCheckDouble },
+        {
+          name: "Add Checklist Task",
+          path: "/check-addtask",
+          icon: faCircleCheck,
+        },
+        { name: "Checklist MIS", path: "/check-mis", icon: faProjectDiagram },
       ],
     },
     {
-      name: "Task Delegation (UD)",
+      name: "Task Delegation",
       path: "/task-delegation",
       icon: faListCheck,
       options: [
         {
-          name: "Task List",
+          name: "Delegate Task",
+          path: "/delegation-taskadd",
+          icon: faCircleCheck,
+        },
+        {
+          name: "Delegation List",
           path: "/delegation-tasklist",
           icon: faCheckDouble,
         },
+        {
+          name: "Delegation MIS",
+          path: "/delegation-mis",
+          icon: faProjectDiagram,
+        },
       ],
     },
+    { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
+    { name: "OneDrive Connect", path: "/microsoft", icon: faProjectDiagram },
     {
-      name: "Opportunities",
-      path: "/opportunities",
+      name: "GoogleDrive Connect",
+      path: "/googledrive",
+      icon: faProjectDiagram,
+    },
+    { name: "Whatsapp Web", path: "/whatsapp-web", icon: faComments },
+    { name: "Raised Ticket", path: "/issue", icon: faProjectDiagram },
+    { name: "AppStore", path: "/appstore", icon: faProjectDiagram },
+    {
+      name: "Settings",
+      path: "/dashboard",
+      icon: faUserTie,
+      options: [
+        { name: "Permissions", path: "/permissions", icon: faUserGear },
+        {
+          name: "Contact Management",
+          path: "/employee",
+          icon: faIdCard,
+          options: [
+            { name: "Employees", path: "/employee", icon: faUsers },
+            {
+              name: "Companies",
+              path: "/contactmgmt/clients",
+              icon: faUserTie,
+            },
+          ],
+        },
+        // { name: "Leads", path: "/crm/leads", icon: faMagnifyingGlassDollar },
+        // { name: "FMS", path: "/pipeline", icon: faProjectDiagram },
+      ],
+    },
+    // { name: "Form", path: "/form", icon: faClipboardList },
+    {
+      name: "Create Variables",
+      path: "/variables",
       icon: faMagnifyingGlassDollar,
     },
-    {
-      name: "NBD-Sales WA-Bot(UD)",
-      path: "/chatbotform",
-      icon: faRobot,
-      options: [
-        { name: "ChatbotForm", path: "/chatbotform", icon: faMessage },
-        { name: "Chats", path: "/chatbox", icon: faComments },
-      ],
-    },
-    {
-      name: "Meta Verification",
-      path: "/metasignup",
-      icon: faShieldHalved,
-      options: [
-        { name: "Client", path: "/metasignup", icon: faUserTie },
-        { name: "Template", path: "/metatemplate", icon: faClipboardList },
-        { name: "Message", path: "/metamessage", icon: faMessage },
-      ],
-    },
-    { name: "Attendance", path: "/attendance", icon: faCalendar },
-    { name: "Support", path: "/support", icon: faHeadset },
-    { name: "Reports", path: "/reports", icon: faChartPie },
-    { name: "Calendar", path: "/calendar", icon: faCalendar },
-    { name: "Payment", path: "/payment", icon: faShoppingCart },
-    { name: "Analytics", path: "/analytics", icon: faChartBar },
+    // {
+    //   name: "NBD-Sales WA-Bot(UD)",
+    //   path: "/chatbotform",
+    //   icon: faRobot,
+    //   options: [
+    //     { name: "ChatbotForm", path: "/chatbotform", icon: faMessage },
+    //     { name: "Chats", path: "/chatbox", icon: faComments },
+    //     { name: "Whatsapp Web", path: "/seleniumweb", icon: faComments },
+    //   ],
+    // },
+    // {
+    //   name: "Meta Verification",
+    //   path: "/metasignup",
+    //   icon: faShieldHalved,
+    //   options: [
+    //     { name: "Client", path: "/metasignup", icon: faUserTie },
+    //     { name: "Template", path: "/metatemplate", icon: faClipboardList },
+    //     { name: "Message", path: "/metamessage", icon: faMessage },
+    //   ],
+    // },
+    // {
+    //   name: "Automation",
+    //   path: "/",
+    //   icon: faShieldHalved,
+    //   options: [
+    //     { name: "BotTrigger", path: "/bot-trigger", icon: faUserTie },
+    //     { name: "Template", path: "/metatemplate", icon: faClipboardList },
+    //     { name: "Message", path: "/metamessage", icon: faMessage },
+    //   ],
+    // },
+    // { name: "HRM", path: "/sites", icon: faUserTie },
+    // { name: "Calendar", path: "/calendar", icon: faCalendar },
+    // {
+    //   name: "Manage User",
+    //   icon: faUserGear,
+    //   options: [{ name: "Users", path: "/users", icon: faUsers }],
+    // },
+    // { name: "Email Connect (UD)", path: "/email", icon: faEnvelope },
+    // { name: "Support", path: "/ticketraise", icon: faChartPie },
+    // { name: "Analytics", path: "/analytics", icon: faChartBar },
   ],
 };
 

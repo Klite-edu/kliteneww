@@ -42,10 +42,10 @@ const ClientDashboard = () => {
   const fetchUserData = async () => {
     try {
       const [emailRes, tokenRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/permission/get-email`, {
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-email`, {
           withCredentials: true,
         }),
-        axios.get(`http://localhost:5000/api/permission/get-token`, {
+        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, {
           withCredentials: true,
         }),
       ]);
@@ -76,21 +76,21 @@ const ClientDashboard = () => {
         issueRes,
       ] = await Promise.all([
         axios.get(
-          `http://localhost:5000/api/clientdash/total-employee`,
+          `${process.env.REACT_APP_API_URL}/api/clientdash/total-employee`,
           headers
         ),
         axios.get(
-          `http://localhost:5000/api/clientdash/trigger-count`,
+          `${process.env.REACT_APP_API_URL}/api/clientdash/trigger-count`,
           headers
         ),
         axios.get(
-          `http://localhost:5000/api/clientdash/pipeline-stage-count`,
+          `${process.env.REACT_APP_API_URL}/api/clientdash/pipeline-stage-count`,
           headers
         ),
-        axios.get(`http://localhost:5000/api/clients/monthlyrevenue`, headers),
-        axios.get(`http://localhost:5000/api/tasks/list`, headers),
-        axios.get(`http://localhost:5000/api/delegation/list`, headers),
-        axios.get(`http://localhost:5000/api/ticketRaise/list`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/clients/monthlyrevenue`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/tasks/list`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/delegation/list`, headers),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/ticketRaise/list`, headers),
       ]);
 
       setTotalEmployee(employeeRes.data.totalEmployee);
@@ -178,7 +178,7 @@ const ClientDashboard = () => {
   const handleMarkIssueComplete = async (issueId) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/ticketRaise/resolve/${issueId}`,
+        `${process.env.REACT_APP_API_URL}/api/ticketRaise/resolve/${issueId}`,
         {},
         {
           headers: {

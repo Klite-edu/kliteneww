@@ -31,22 +31,30 @@ const WorkingDay = () => {
     const fetchInitialData = async () => {
       try {
         // Fetch authentication data
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            { withCredentials: true }
-          ),
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
+
+        const userToken = tokenRes.data.token;
+
+        const [roleRes, permissionsRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: { Authorization: `Bearer ${userToken}` },
+            }
           ),
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: { Authorization: `Bearer ${userToken}` },
+            }
           ),
         ]);
 
-        const userToken = tokenRes.data.token;
         const userRole = roleRes.data.role;
         const userPermissions = permissionsRes.data.permissions || {};
 
@@ -54,7 +62,14 @@ const WorkingDay = () => {
         setRole(userRole);
         setCustomPermissions(userPermissions);
 
-        // Fetch saved configuration data
+        if (
+          userRole !== "client" &&
+          !userPermissions["Working Days"]?.includes("read")
+        ) {
+          alert("Unauthorized: You don't have access to Working Days module.");
+          return;
+        }
+
         const configRes = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/workingdays/get`,
           {
@@ -385,74 +400,94 @@ const WorkingDay = () => {
           <form onSubmit={handleSubmit} className="working-day-form">
             <div className="working-day-section">
               <h3 className="working-day-section-title">Working Days</h3>
-              <div className="working-day-checkbox-group">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                  (day) => (
-                    <label key={day} className="working-day-checkbox-label">
-                      <input
-                        type="checkbox"
-                        className="working-day-checkbox"
-                        value={day}
-                        checked={workingDays.includes(day)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setWorkingDays([...workingDays, day]);
-                          } else {
-                            setWorkingDays(
-                              workingDays.filter((d) => d !== day)
-                            );
-                          }
-                        }}
-                      />
-                      <span className="working-day-checkbox-custom">{day}</span>
-                    </label>
-                  )
-                )}
-              </div>
+             {(role === "client" ||
+                customPermissions["Working Days"]?.includes("create")) && (
+                <div className="working-day-checkbox-group">
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
+                    (day) => (
+                      <label key={day} className="working-day-checkbox-label">
+                        <input
+                          type="checkbox"
+                          className="working-day-checkbox"
+                          value={day}
+                          checked={workingDays.includes(day)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setWorkingDays([...workingDays, day]);
+                            } else {
+                              setWorkingDays(
+                                workingDays.filter((d) => d !== day)
+                              );
+                            }
+                          }}
+                        />
+                        <span className="working-day-checkbox-custom">
+                          {day}
+                        </span>
+                      </label>
+                    )
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="working-day-section">
               <h3 className="working-day-section-title">Timezone</h3>
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="working-day-select"
-              >
-                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                <option value="America/New_York">America/New_York (EST)</option>
-                <option value="Europe/London">Europe/London (GMT)</option>
-                <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
-              </select>
+              {(role === "client" ||
+                customPermissions["Working Days"]?.includes("create")) && (
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="working-day-select"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="America/New_York">
+                    America/New_York (EST)
+                  </option>
+                  <option value="Europe/London">Europe/London (GMT)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                </select>
+              )}
             </div>
 
             <div className="working-day-section">
               <h3 className="working-day-section-title">Shifts</h3>
               {shifts.map((shift, index) => (
                 <div key={index} className="working-day-shift-row">
-                  <input
-                    placeholder="Shift Name"
-                    className="working-day-input"
-                    value={shift.name}
-                    onChange={(e) =>
-                      handleShiftChange(index, "name", e.target.value)
-                    }
-                  />
-                  <input
-                    type="time"
-                    className="working-day-input"
-                    value={shift.startTime}
-                    onChange={(e) =>
-                      handleShiftChange(index, "startTime", e.target.value)
-                    }
-                  />
-                  <input
-                    type="time"
-                    className="working-day-input"
-                    value={shift.endTime}
-                    onChange={(e) =>
-                      handleShiftChange(index, "endTime", e.target.value)
-                    }
-                  />
+                  {(role === "client" ||
+                    customPermissions["Working Days"]?.includes("create")) && (
+                    <input
+                      placeholder="Shift Name"
+                      className="working-day-input"
+                      value={shift.name}
+                      onChange={(e) =>
+                        handleShiftChange(index, "name", e.target.value)
+                      }
+                    />
+                  )}
+                  {(role === "client" ||
+                    customPermissions["Working Days"]?.includes("create")) && (
+                    <input
+                      type="time"
+                      className="working-day-input"
+                      value={shift.startTime}
+                      onChange={(e) =>
+                        handleShiftChange(index, "startTime", e.target.value)
+                      }
+                    />
+                  )}
+                  {(role === "client" ||
+                    customPermissions["Working Days"]?.includes("create")) && (
+                    <input
+                      type="time"
+                      className="working-day-input"
+                      value={shift.endTime}
+                      onChange={(e) =>
+                        handleShiftChange(index, "endTime", e.target.value)
+                      }
+                    />
+                  )}
+
                   <label className="working-day-checkbox-label">
                     <input
                       type="checkbox"
@@ -463,22 +498,28 @@ const WorkingDay = () => {
                     />
                     <span>Active</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => removeShift(index)}
-                    className="working-day-remove-button"
-                  >
-                    Remove
-                  </button>
+                  {(role === "client" ||
+                    customPermissions["Working Days"]?.includes("delete")) && (
+                    <button
+                      type="button"
+                      onClick={() => removeShift(index)}
+                      className="working-day-remove-button"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={addShift}
-                className="working-day-add-button"
-              >
-                + Add Shift
-              </button>
+              {(role === "client" ||
+                customPermissions["Working Days"]?.includes("create")) && (
+                <button
+                  type="button"
+                  onClick={addShift}
+                  className="working-day-add-button"
+                >
+                  + Add Shift
+                </button>
+              )}
             </div>
 
             <div className="working-day-section">
@@ -486,34 +527,37 @@ const WorkingDay = () => {
 
               <div className="working-day-import-section">
                 <h4>Import Holidays</h4>
-                <div className="working-day-import-controls">
-                  <select
-                    value={fileImportType}
-                    onChange={(e) => setFileImportType(e.target.value)}
-                    className="working-day-select"
-                  >
-                    <option value="excel">Excel</option>
-                    <option value="csv">CSV</option>
-                  </select>
-                  <label className="working-day-file-input-label">
-                    Choose File
-                    <input
-                      type="file"
-                      accept={
-                        fileImportType === "excel" ? ".xlsx,.xls" : ".csv"
-                      }
-                      onChange={handleFileImport}
-                      style={{ display: "none" }}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={downloadTemplate}
-                    className="working-day-template-button"
-                  >
-                    Download Template
-                  </button>
-                </div>
+                {(role === "client" ||
+                  customPermissions["Working Days"]?.includes("create")) && (
+                  <div className="working-day-import-controls">
+                    <select
+                      value={fileImportType}
+                      onChange={(e) => setFileImportType(e.target.value)}
+                      className="working-day-select"
+                    >
+                      <option value="excel">Excel</option>
+                      <option value="csv">CSV</option>
+                    </select>
+                    <label className="working-day-file-input-label">
+                      Choose File
+                      <input
+                        type="file"
+                        accept={
+                          fileImportType === "excel" ? ".xlsx,.xls" : ".csv"
+                        }
+                        onChange={handleFileImport}
+                        style={{ display: "none" }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={downloadTemplate}
+                      className="working-day-template-button"
+                    >
+                      Download Template
+                    </button>
+                  </div>
+                )}
                 {importProgress && (
                   <div
                     className={`working-day-import-status ${importProgress.status}`}
@@ -527,30 +571,40 @@ const WorkingDay = () => {
                 <h4>Add Holidays Manually</h4>
                 {holidays.map((holiday, index) => (
                   <div key={index} className="working-day-holiday-row">
-                    <input
-                      type="date"
-                      className="working-day-input"
-                      value={
-                        holiday.date
-                          ? moment(holiday.date).format("YYYY-MM-DD")
-                          : ""
-                      }
-                      onChange={(e) => {
-                        const newHolidays = [...holidays];
-                        newHolidays[index].date = e.target.value;
-                        setHolidays(newHolidays);
-                      }}
-                    />
-                    <input
-                      placeholder="Holiday Description"
-                      className="working-day-input"
-                      value={holiday.description}
-                      onChange={(e) => {
-                        const newHolidays = [...holidays];
-                        newHolidays[index].description = e.target.value;
-                        setHolidays(newHolidays);
-                      }}
-                    />
+                    {(role === "client" ||
+                      customPermissions["Working Days"]?.includes(
+                        "create"
+                      )) && (
+                      <input
+                        type="date"
+                        className="working-day-input"
+                        value={
+                          holiday.date
+                            ? moment(holiday.date).format("YYYY-MM-DD")
+                            : ""
+                        }
+                        onChange={(e) => {
+                          const newHolidays = [...holidays];
+                          newHolidays[index].date = e.target.value;
+                          setHolidays(newHolidays);
+                        }}
+                      />
+                    )}
+                    {(role === "client" ||
+                      customPermissions["Working Days"]?.includes(
+                        "create"
+                      )) && (
+                      <input
+                        placeholder="Holiday Description"
+                        className="working-day-input"
+                        value={holiday.description}
+                        onChange={(e) => {
+                          const newHolidays = [...holidays];
+                          newHolidays[index].description = e.target.value;
+                          setHolidays(newHolidays);
+                        }}
+                      />
+                    )}
                     <label className="working-day-checkbox-label">
                       <input
                         type="checkbox"
@@ -563,36 +617,50 @@ const WorkingDay = () => {
                       />
                       <span>Repeats Annually</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => removeHoliday(index)}
-                      className="working-day-remove-button"
-                    >
-                      Remove
-                    </button>
+                    {(role === "client" ||
+                      customPermissions["Working Days"]?.includes(
+                        "delete"
+                      )) && (
+                      <button
+                        type="button"
+                        onClick={() => removeHoliday(index)}
+                        className="working-day-remove-button"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addHoliday}
-                  className="working-day-add-button"
-                >
-                  + Add Holiday
-                </button>
+                {(role === "client" ||
+                  customPermissions["Working Days"]?.includes("create")) && (
+                  <button
+                    type="button"
+                    onClick={addHoliday}
+                    className="working-day-add-button"
+                  >
+                    + Add Holiday
+                  </button>
+                )}
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "10px" }}>
-              <button type="submit" className="working-day-submit-button">
-                Save Configuration
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfig}
-                className="working-day-delete-button"
-              >
-                Delete Configuration
-              </button>
+              {(role === "client" ||
+                customPermissions["Working Days"]?.includes("create")) && (
+                <button type="submit" className="working-day-submit-button">
+                  Save Configuration
+                </button>
+              )}
+              {(role === "client" ||
+                customPermissions["Working Days"]?.includes("delete")) && (
+                <button
+                  type="button"
+                  onClick={handleDeleteConfig}
+                  className="working-day-delete-button"
+                >
+                  Delete Configuration
+                </button>
+              )}
             </div>
           </form>
         ) : (

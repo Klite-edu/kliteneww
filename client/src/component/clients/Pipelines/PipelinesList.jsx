@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import AddPipelineOnly from "./AddPipelineOnly";
@@ -29,13 +28,15 @@ const Alert = ({ message, type, onClose }) => {
     <div className={`custom-alert custom-alert-${type} show`}>
       <div className="custom-alert-content">
         <div className="custom-alert-icon">
-          <i className={`bi ${
-            type === "error"
-              ? "bi-exclamation-octagon-fill"
-              : type === "success"
-              ? "bi-check-circle-fill"
-              : "bi-info-circle-fill"
-          }`} />
+          <i
+            className={`bi ${
+              type === "error"
+                ? "bi-exclamation-octagon-fill"
+                : type === "success"
+                ? "bi-check-circle-fill"
+                : "bi-info-circle-fill"
+            }`}
+          />
         </div>
         <div className="custom-alert-message">{message}</div>
         <button className="custom-alert-close" onClick={onClose}>
@@ -55,10 +56,16 @@ const Confirmation = ({ message, onConfirm, onCancel }) => {
           <h5 className="custom-confirm-title">Are you sure?</h5>
           <p className="custom-confirm-message">{message}</p>
           <div className="custom-confirm-buttons">
-            <button className="btn btn-outline-secondary btn-sm custom-confirm-cancel" onClick={onCancel}>
+            <button
+              className="btn btn-outline-secondary btn-sm custom-confirm-cancel"
+              onClick={onCancel}
+            >
               Cancel
             </button>
-            <button className="btn btn-danger btn-sm custom-confirm-confirm" onClick={onConfirm}>
+            <button
+              className="btn btn-danger btn-sm custom-confirm-confirm"
+              onClick={onConfirm}
+            >
               Delete
             </button>
           </div>
@@ -92,7 +99,7 @@ export default function PipelineList() {
         onConfirm();
         setConfirmation(null);
       },
-      onCancel: () => setConfirmation(null)
+      onCancel: () => setConfirmation(null),
     });
   }, []);
 
@@ -107,51 +114,71 @@ export default function PipelineList() {
     }
   }, []);
 
-  const fetchPipelines = useCallback(async (token) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/stages/list`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          withCredentials: true,
-        }
-      );
-      setPipelines(response.data || []);
-    } catch (error) {
-      console.error("Failed to fetch pipelines:", error);
-      setPipelines([]);
-      showAlert("Failed to fetch pipelines", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [showAlert]);
+  const fetchPipelines = useCallback(
+    async (token) => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/stages/list`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            withCredentials: true,
+          }
+        );
+        setPipelines(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch pipelines:", error);
+        setPipelines([]);
+        showAlert("Failed to fetch pipelines", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [showAlert]
+  );
 
   const fetchInitialData = useCallback(async () => {
     try {
-      const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true })
-      ]);
-
+      // Step 1: Get token
+      const tokenRes = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+        { withCredentials: true }
+      );
       const userToken = tokenRes.data.token;
-      const userRole = roleRes.data.role;
-      const userPermissions = permissionsRes.data.permissions || {};
-
-      if (!userToken || !userRole) {
-        navigate("/login");
+      if (!userToken) {
+        console.error("Token not found");
         return;
       }
-
       setToken(userToken);
-      setRole(userRole);
-      setCustomPermissions(userPermissions);
 
+      // Step 2: Get role
+      const roleRes = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+        { withCredentials: true }
+      );
+      const userRole = roleRes.data.role;
+      setRole(userRole);
+
+      // Step 3: Get permissions (after token is available)
+      const permissionsRes = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+          withCredentials: true,
+        }
+      );
+      const userPermissions = permissionsRes.data.permissions || {};
+      setCustomPermissions(userPermissions);
+      if (userRole !== "client" && !userPermissions["FMS"]?.includes("read")) {
+        alert("You do not have permission to see the delegation list.");
+        return;
+      }
+      // Step 4: Now fetch pipelines
       await fetchPipelines(userToken);
     } catch (error) {
       console.error("Error fetching initial data:", error);
-      navigate("/login");
     }
   }, [navigate, fetchPipelines]);
 
@@ -188,7 +215,7 @@ export default function PipelineList() {
             `${process.env.REACT_APP_API_URL}/api/stages/${pipelineId}`,
             {
               withCredentials: true,
-              headers: token ? { Authorization: `Bearer ${token}` } : {}
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
             }
           );
           setPipelines((prev) => prev.filter((p) => p._id !== pipelineId));
@@ -196,7 +223,9 @@ export default function PipelineList() {
         } catch (error) {
           console.error("Error deleting pipeline:", error);
           showAlert(
-            `Failed to delete pipeline: ${error.response?.data?.message || "Unknown error"}`,
+            `Failed to delete pipeline: ${
+              error.response?.data?.message || "Unknown error"
+            }`,
             "error"
           );
         }
@@ -228,15 +257,24 @@ export default function PipelineList() {
         />
       )}
       <div className="pipline-dash-buttons">
-        <Link to="/FormBuilder">
-          <button>Form Builder</button>
-        </Link>
-        <Link to="/automation">
-          <button>Automation</button>
-        </Link>
-        <Link to="/form">
-          <button>Forms</button>
-        </Link>
+        {(role === "client" ||
+          customPermissions["Form Builder"]?.includes("create")) && (
+          <Link to="/FormBuilder">
+            <button>Form Builder</button>
+          </Link>
+        )}
+        {(role === "client" ||
+          customPermissions["Automation"]?.includes("read")) && (
+          <Link to="/automation">
+            <button>Automation</button>
+          </Link>
+        )}
+        {(role === "client" ||
+          customPermissions["Form"]?.includes("read")) && (
+          <Link to="/form">
+            <button>Forms</button>
+          </Link>
+        )}
         <Link to="/opportunities">
           <button>Opportunitities</button>
         </Link>
@@ -252,7 +290,11 @@ export default function PipelineList() {
               Organize and manage your business workflows
             </p>
           </div>
-          <AddPipelineOnly refreshList={() => fetchPipelines(token)} />
+          <AddPipelineOnly
+            refreshList={() => fetchPipelines(token)}
+            customPermissions={customPermissions}
+            role={role} // ✅ Yeh line add karo
+          />
         </div>
 
         <div className="PipelinesList-pipeline-card">
@@ -318,26 +360,32 @@ export default function PipelineList() {
                           </td>
 
                           <td className="text-end pe-4">
-                            <button
-                              className="btn btn-outline-primary btn-sm me-2 PipelinesList-pipeline-action-btn"
-                              title="Edit"
-                              onClick={() => handleEdit(pipeline)}
-                            >
-                              <BiEdit />
-                            </button>
+                            {(role === "client" ||
+                              customPermissions["FMS"]?.includes("edit")) && (
+                              <button
+                                className="btn btn-outline-primary btn-sm me-2 PipelinesList-pipeline-action-btn"
+                                title="Edit"
+                                onClick={() => handleEdit(pipeline)}
+                              >
+                                <BiEdit />
+                              </button>
+                            )}
 
-                            <button
-                              className="btn btn-danger btn-sm PipelinesList-pipeline-action-btn"
-                              title="Delete"
-                              onClick={() =>
-                                handleDelete(
-                                  pipeline._id,
-                                  pipeline.pipelineName
-                                )
-                              }
-                            >
-                              <BiTrash />
-                            </button>
+                            {(role === "client" ||
+                              customPermissions["FMS"]?.includes("delete")) && (
+                              <button
+                                className="btn btn-danger btn-sm PipelinesList-pipeline-action-btn"
+                                title="Delete"
+                                onClick={() =>
+                                  handleDelete(
+                                    pipeline._id,
+                                    pipeline.pipelineName
+                                  )
+                                }
+                              >
+                                <BiTrash />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -354,6 +402,8 @@ export default function PipelineList() {
             pipelineData={editPipeline}
             onClose={() => setEditPipeline(null)}
             refreshList={() => fetchPipelines(token)}
+            customPermissions={customPermissions}
+            role={role} // ✅ Yeh bhi yaha pass karna hai
           />
         )}
       </div>

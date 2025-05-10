@@ -5,8 +5,10 @@ import "./AddPipelineOnly.css";
 
 const AddPipelineOnly = ({
   pipelineData = null,
-  onClose = () => { },
+  onClose = () => {},
   refreshList,
+  customPermissions = {},
+  role = "",   // ✅ Yeh line add karo
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -40,7 +42,6 @@ const AddPipelineOnly = ({
 
         const userToken = tokenRes.data.token;
         if (!userToken) {
-          navigate("/login");
           return;
         }
 
@@ -51,7 +52,6 @@ const AddPipelineOnly = ({
         ]);
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/login");
       }
     };
 
@@ -94,15 +94,16 @@ const AddPipelineOnly = ({
           whenMinutes,
           who: stage.who,
           how: {
-            message: stage.how?.message || (isValidUrl(stage.how) ? "" : stage.how),
-            url: stage.how?.url || (isValidUrl(stage.how) ? stage.how : "")
+            message:
+              stage.how?.message || (isValidUrl(stage.how) ? "" : stage.how),
+            url: stage.how?.url || (isValidUrl(stage.how) ? stage.how : ""),
           },
           checklist: stage.checklist || [],
           priority: stage.priority || "Medium",
           status: stage.status || "Pending",
           dependencies: stage.dependencies || "",
           approvalsRequired: stage.approvalsRequired || false,
-          notes: stage.notes || ""
+          notes: stage.notes || "",
         };
       });
 
@@ -127,14 +128,14 @@ const AddPipelineOnly = ({
     who: "",
     how: {
       message: "",
-      url: ""
+      url: "",
     },
     checklist: [],
     priority: "Medium",
     status: "Pending",
     dependencies: "",
     approvalsRequired: false,
-    notes: ""
+    notes: "",
   });
 
   const handleStageChange = (index, field, value) => {
@@ -146,20 +147,19 @@ const AddPipelineOnly = ({
         updatedStages[index].approvalsRequired = false;
       }
       updatedStages[index].checklist = value;
-    }
-    else if (field === "howMessage" || field === "howUrl") {
+    } else if (field === "howMessage" || field === "howUrl") {
       updatedStages[index].how = {
         ...updatedStages[index].how,
-        message: field === "howMessage" ? value : updatedStages[index].how.message,
-        url: field === "howUrl" ? value : updatedStages[index].how.url
+        message:
+          field === "howMessage" ? value : updatedStages[index].how.message,
+        url: field === "howUrl" ? value : updatedStages[index].how.url,
       };
 
       if (field === "howUrl") {
         const isValid = value === "" || isValidUrl(value);
-        setUrlValid(prev => ({ ...prev, [index]: isValid }));
+        setUrlValid((prev) => ({ ...prev, [index]: isValid }));
       }
-    }
-    else {
+    } else {
       updatedStages[index][field] = value;
     }
 
@@ -176,9 +176,9 @@ const AddPipelineOnly = ({
     if (!url) return;
 
     if (isValidUrl(url)) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, "_blank", "noopener,noreferrer");
     } else {
-      setUrlValid(prev => ({ ...prev, [index]: false }));
+      setUrlValid((prev) => ({ ...prev, [index]: false }));
     }
   };
 
@@ -215,7 +215,7 @@ const AddPipelineOnly = ({
     updatedStages[currentStageIndex].checklist.push({
       id: Date.now().toString(),
       task: newChecklistItem,
-      completedTime: null
+      completedTime: null,
     });
 
     setNewPipeline({ ...newPipeline, stages: updatedStages });
@@ -238,7 +238,9 @@ const AddPipelineOnly = ({
 
     if (itemIndex !== -1) {
       const isCompleted = !checklistItems[itemIndex].completedTime;
-      checklistItems[itemIndex].completedTime = isCompleted ? new Date().toISOString() : null;
+      checklistItems[itemIndex].completedTime = isCompleted
+        ? new Date().toISOString()
+        : null;
       setNewPipeline({ ...newPipeline, stages: updatedStages });
     }
   };
@@ -248,7 +250,7 @@ const AddPipelineOnly = ({
       alert("Please enter a pipeline name");
       return;
     }
-  
+
     const invalidStages = newPipeline.stages.some(
       (stage) => !stage.stageName.trim()
     );
@@ -256,17 +258,17 @@ const AddPipelineOnly = ({
       alert("Please fill in all stage names");
       return;
     }
-  
+
     // Validate URLs before saving
     const hasInvalidUrls = newPipeline.stages.some(
       (stage, index) => stage.how.url && urlValid[index] === false
     );
-  
+
     if (hasInvalidUrls) {
       alert("Please correct invalid URLs before saving");
       return;
     }
-  
+
     const dataToSave = {
       pipelineName: newPipeline.pipelineName,
       stages: newPipeline.stages.map((stage) => {
@@ -274,7 +276,7 @@ const AddPipelineOnly = ({
           stage.whenHours && stage.whenMinutes
             ? `${stage.whenHours}:${stage.whenMinutes}`
             : "";
-  
+
         return {
           stageName: stage.stageName,
           what: stage.what,
@@ -288,14 +290,14 @@ const AddPipelineOnly = ({
         };
       }),
     };
-  
+
     console.log("Data being sent:", dataToSave);
-  
+
     try {
       const url = pipelineData
         ? `${process.env.REACT_APP_API_URL}/api/stages/${pipelineData._id}`
         : `${process.env.REACT_APP_API_URL}/api/stages/add`;
-  
+
       const response = await fetch(url, {
         method: pipelineData ? "PUT" : "POST",
         credentials: "include",
@@ -305,14 +307,14 @@ const AddPipelineOnly = ({
         },
         body: JSON.stringify(dataToSave),
       });
-  
+
       const result = await response.json();
       console.log("Response:", result);
-  
+
       if (!response.ok) {
         throw new Error(result.message || "Unknown error");
       }
-  
+
       alert(
         pipelineData
           ? "Pipeline updated successfully!"
@@ -326,19 +328,19 @@ const AddPipelineOnly = ({
       alert(`Operation failed: ${error.message}`);
     }
   };
-  
 
   return (
     <>
-      {!pipelineData && (
-        <button
-          onClick={() => setShowModal(true)}
-          className="abhi-create-pipeline-btn"
-        >
-          <i className="bi bi-plus-lg abhi-me-2"></i>
-          Create FMS/Pipeline
-        </button>
-      )}
+      {!pipelineData &&
+        (role === "client" || customPermissions["FMS"]?.includes("create")) && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="abhi-create-pipeline-btn"
+          >
+            <i className="bi bi-plus-lg abhi-me-2"></i>
+            Create FMS/Pipeline
+          </button>
+        )}
 
       {showModal && (
         <div className="abhi-modal-overlay">
@@ -514,7 +516,11 @@ const AddPipelineOnly = ({
                               className="abhi-form-control abhi-pipeline-input"
                               value={stage.how.message}
                               onChange={(e) =>
-                                handleStageChange(index, "howMessage", e.target.value)
+                                handleStageChange(
+                                  index,
+                                  "howMessage",
+                                  e.target.value
+                                )
                               }
                             />
                           </div>
@@ -524,11 +530,16 @@ const AddPipelineOnly = ({
                               <input
                                 type="url"
                                 placeholder="Enter URL (https://example.com)"
-                                className={`abhi-form-control abhi-pipeline-input ${urlValid[index] === false ? 'is-invalid' : ''
-                                  }`}
+                                className={`abhi-form-control abhi-pipeline-input ${
+                                  urlValid[index] === false ? "is-invalid" : ""
+                                }`}
                                 value={stage.how.url}
                                 onChange={(e) =>
-                                  handleStageChange(index, "howUrl", e.target.value)
+                                  handleStageChange(
+                                    index,
+                                    "howUrl",
+                                    e.target.value
+                                  )
                                 }
                               />
                               <button
@@ -545,14 +556,14 @@ const AddPipelineOnly = ({
                             {urlValid[index] === false && (
                               <div className="abhi-invalid-feedback d-flex align-items-center mt-1">
                                 <i className="bi bi-exclamation-circle-fill me-2"></i>
-                                Please enter a valid URL (include http:// or https://)
+                                Please enter a valid URL (include http:// or
+                                https://)
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
                     </div>
-
 
                     <div className="abhi-form-check abhi-mb-3">
                       <input
@@ -587,7 +598,10 @@ const AddPipelineOnly = ({
                               className="abhi-btn abhi-btn-sm abhi-btn-outline-primary"
                               onClick={() => openChecklistModal(index)}
                             >
-                              <i className="bi bi-plus-lg me-1"></i> {stage.checklist.length > 0 ? 'Add More' : 'Add Items'}
+                              <i className="bi bi-plus-lg me-1"></i>{" "}
+                              {stage.checklist.length > 0
+                                ? "Add More"
+                                : "Add Items"}
                             </button>
                           </div>
                           {stage.checklist.length > 0 ? (
@@ -720,8 +734,7 @@ const AddPipelineOnly = ({
 
               <div className="abhi-checklist-preview">
                 <h6 className="abhi-checklist-title">Current Items</h6>
-                {newPipeline.stages[currentStageIndex].checklist.length >
-                  0 ? (
+                {newPipeline.stages[currentStageIndex].checklist.length > 0 ? (
                   <ul className="abhi-checklist-items list-group">
                     {newPipeline.stages[currentStageIndex].checklist.map(
                       (item) => (

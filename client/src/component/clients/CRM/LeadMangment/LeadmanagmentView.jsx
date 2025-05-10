@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import './LeadManagment.css'
-import ContactPopup from "./ConatactPopup"
-const LeadManagementView = ({ filters }) => {
+import "./LeadManagment.css";
+import ContactPopup from "./ConatactPopup";
+const LeadManagementView = ({ filters, token, role, customPermissions }) => {
   const navigate = useNavigate();
   // Main component state
   const containerRef = useRef(null);
@@ -17,93 +17,61 @@ const LeadManagementView = ({ filters }) => {
   const [error, setError] = useState(null);
   const [selectedContact, setSelectedContact] = useState(null);
   const [selectedStageDetails, setSelectedStageDetails] = useState(null);
-  const [token, setToken] = useState("");
-  const [role, setRole] = useState("");
-  const [customPermissions, setCustomPermissions] = useState({});
   const [clientId, setClientId] = useState(null);
 
   // Styles for TopActionBar
   const styles1 = {
     container: {
-      backgroundColor: '#f8f9fa',
-      padding: '12px 20px',
-      borderBottom: '1px solid #e0e0e0',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      backgroundColor: "#f8f9fa",
+      padding: "12px 20px",
+      borderBottom: "1px solid #e0e0e0",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
     },
     actionGroup: {
-      display: 'flex',
-      alignItems: 'center',
-      maxWidth: '1200px',
-      margin: '0 auto',
+      display: "flex",
+      alignItems: "center",
+      maxWidth: "1200px",
+      margin: "0 auto",
     },
     pipelineSelector: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
+      display: "flex",
+      alignItems: "center",
+      gap: "12px",
     },
     label: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      fontSize: '14px',
-      fontWeight: '500',
-      color: '#495057',
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      fontSize: "14px",
+      fontWeight: "500",
+      color: "#495057",
     },
     icon: {
-      fontSize: '16px',
-      color: '#6c757d',
+      fontSize: "16px",
+      color: "#6c757d",
     },
     labelText: {
-      whiteSpace: 'nowrap',
+      whiteSpace: "nowrap",
     },
     select: {
-      padding: '8px 12px',
-      borderRadius: '6px',
-      border: '1px solid #ced4da',
-      backgroundColor: '#fff',
-      fontSize: '14px',
-      color: '#212529',
-      minWidth: '200px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
+      padding: "8px 12px",
+      borderRadius: "6px",
+      border: "1px solid #ced4da",
+      backgroundColor: "#fff",
+      fontSize: "14px",
+      color: "#212529",
+      minWidth: "200px",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
     },
   };
 
   // Fetch authentication data
   useEffect(() => {
-    const fetchAuthData = async () => {
-      try {
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, { withCredentials: true }),
-          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, { withCredentials: true })
-        ]);
-
-        const userToken = tokenRes.data.token;
-        const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
-        const userId = tokenRes.data.userId;
-
-        if (!userToken || !userId) {
-          navigate("/login");
-          return;
-        }
-
-        setToken(userToken);
-        setRole(userRole);
-        setCustomPermissions(userPermissions);
-        setClientId(userId);
-
-        // Now fetch pipelines
-        await fetchPipelines(userToken);
-      } catch (error) {
-        console.error("Error fetching auth data:", error);
-        navigate("/login");
-      }
-    };
-
-    fetchAuthData();
-  }, [navigate]);
+    if (token) {
+      fetchPipelines(token);
+    }
+  }, [token]);
 
   // Top Action Bar Component
   const TopActionBar = ({ onPipelineChange, pipelines, selectedPipeline }) => {
@@ -121,7 +89,9 @@ const LeadManagementView = ({ filters }) => {
               onChange={(e) => onPipelineChange(e.target.value)}
               value={selectedPipeline?._id || ""}
             >
-              <option value="" disabled>Select a Pipeline</option>
+              <option value="" disabled>
+                Select a Pipeline
+              </option>
               {pipelines.map((pipeline) => (
                 <option key={pipeline._id} value={pipeline._id}>
                   {pipeline.pipelineName}
@@ -217,17 +187,17 @@ const LeadManagementView = ({ filters }) => {
             Object.entries(lead.data).forEach(([fieldName, fieldValue]) => {
               fieldData[fieldName] = {
                 value: fieldValue,
-                category: 'primary' // Assuming these are primary fields
+                category: "primary", // Assuming these are primary fields
               };
             });
           }
 
           // Add submission data if available
           if (lead.submissions) {
-            lead.submissions.forEach(sub => {
+            lead.submissions.forEach((sub) => {
               fieldData[sub.fieldLabel] = {
                 value: sub.value,
-                category: sub.fieldCategory || 'other'
+                category: sub.fieldCategory || "other",
               };
             });
           }
@@ -242,7 +212,7 @@ const LeadManagementView = ({ filters }) => {
             stageName: stage.stageName,
             when: lead.submittedAt || "N/A",
             fieldData: fieldData,
-            submissions: lead.submissions || []
+            submissions: lead.submissions || [],
           };
         });
 
@@ -256,13 +226,12 @@ const LeadManagementView = ({ filters }) => {
             when: stage.when,
             how: stage.how,
             who: stage.who,
-            checklist: stage.checklist
-          }
+            checklist: stage.checklist,
+          },
         };
       });
 
       setColumns(formattedColumns);
-
     } catch (error) {
       console.error("Error fetching leads:", error);
       setError(error.response?.data?.message || "Failed to fetch leads");
@@ -341,7 +310,9 @@ const LeadManagementView = ({ filters }) => {
       >
         <div className="abhi-contacts-container">
           {columns.map((column, index) => {
-            const stageData = selectedPipeline?.stages?.find(stage => stage._id === column.id);
+            const stageData = selectedPipeline?.stages?.find(
+              (stage) => stage._id === column.id
+            );
 
             return (
               <div key={column.id} className="card-container">
@@ -369,34 +340,36 @@ const LeadManagementView = ({ filters }) => {
                       {stageData && (
                         <div className="stage-details">
                           <div>
-                            <strong>What:</strong> {stageData.what || 'Not specified'}
+                            <strong>What:</strong>{" "}
+                            {stageData.what || "Not specified"}
                           </div>
                           <div>
-                            <strong>When:</strong> {stageData.when || 'Not specified'}
+                            <strong>When:</strong>{" "}
+                            {stageData.when || "Not specified"}
                           </div>
                           <div className="d-flex justify-content-between">
                             <p>
-                              <strong>How:</strong> {stageData.how?.message || 'Not specified'}
+                              <strong>How:</strong>{" "}
+                              {stageData.how?.message || "Not specified"}
                             </p>
                             {stageData.how?.url && (
-                              <a href={stageData.how.url} target="_blank" rel="noopener noreferrer">
+                              <a
+                                href={stageData.how.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
                                 <i className="bi bi-box-arrow-up-right"></i>
                               </a>
                             )}
                           </div>
                           <div>
-                            <strong>Who:</strong> {stageData.who?.fullName || 'Not assigned'}
+                            <strong>Who:</strong>{" "}
+                            {stageData.who?.fullName || "Not assigned"}
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
-
-
-
-
-
-
 
                   <div className="contacts-list">
                     {column.contacts.length > 0 ? (
@@ -410,15 +383,19 @@ const LeadManagementView = ({ filters }) => {
                             {/* ✅ Updated block: Primary category fields as "Name: sdf" format */}
                             <div className="field-data-container mb-2">
                               {Object.entries(contact.fieldData || {})
-                                .filter(([_, fieldInfo]) => fieldInfo?.value?.category === 'primary')
+                                .filter(
+                                  ([_, fieldInfo]) =>
+                                    fieldInfo?.value?.category === "primary"
+                                )
                                 .map(([fieldName, fieldInfo], i) => (
                                   <div key={i} className="field-data-item">
-                                    <span className=" fw-bold">{fieldInfo.value.fieldLabel} :</span> 
+                                    <span className=" fw-bold">
+                                      {fieldInfo.value.fieldLabel} :
+                                    </span>
                                     <span> {fieldInfo.value.value}</span>
                                   </div>
                                 ))}
                             </div>
-
 
                             <p className="submission-date">
                               <i className="bi bi-clock"></i>{" "}
@@ -430,7 +407,10 @@ const LeadManagementView = ({ filters }) => {
                             className="btn-next-stage"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleMoveToNextStage(contact.id, contact.currentStage);
+                              handleMoveToNextStage(
+                                contact.id,
+                                contact.currentStage
+                              );
                             }}
                           >
                             <i className="bi bi-arrow-right"></i> Next Stage
@@ -438,18 +418,11 @@ const LeadManagementView = ({ filters }) => {
                         </div>
                       ))
                     ) : (
-                      <div className="empty-state">No contacts in this stage</div>
+                      <div className="empty-state">
+                        No contacts in this stage
+                      </div>
                     )}
                   </div>
-
-
-
-
-
-
-
-
-
                 </div>
               </div>
             );

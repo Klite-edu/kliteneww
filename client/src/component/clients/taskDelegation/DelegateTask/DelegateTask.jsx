@@ -25,38 +25,44 @@ const DelegateTask = () => {
 
   const [customPermissions, setCustomPermissions] = useState({});
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchTokenAndUserData = async () => {
       try {
-        // Fetch token, role, and permissions in parallel
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
-          ),
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
-          ),
-        ]);
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
 
         const userToken = tokenRes.data.token;
-        const userRole = roleRes.data.role;
-        const userPermissions = permissionsRes.data.permissions || {};
-
-        if (!userToken || !userRole) {
-          navigate("/login");
+        if (!userToken) {
+          navigate("/"); // Redirect to login if no token
           return;
         }
 
         setToken(userToken);
+
+        const [roleRes, permissionsRes] = await Promise.all([
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
+            {
+              headers: { Authorization: `Bearer ${userToken}` },
+              withCredentials: true,
+            }
+          ),
+          axios.get(
+            `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+            {
+              headers: { Authorization: `Bearer ${userToken}` },
+              withCredentials: true,
+            }
+          ),
+        ]);
+
+        const userRole = roleRes.data.role;
+        const userPermissions = permissionsRes.data.permissions || {};
+
         setRole(userRole);
         setCustomPermissions(userPermissions);
 
-        // Fetch employees
         const employeesRes = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/employee/contactinfo`,
           {
@@ -67,11 +73,10 @@ const DelegateTask = () => {
         setDoers(employeesRes.data);
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/login");
       }
     };
 
-    fetchInitialData();
+    fetchTokenAndUserData();
   }, [navigate]);
 
   const highlightWithRanges = {
@@ -88,7 +93,7 @@ const DelegateTask = () => {
     }),
     holiday: calendarConfig.holidays.map((h) => new Date(h.date)),
   };
-  
+
   useEffect(() => {
     if (!selectedDoer || !doers.length || !calendarConfig.shifts.length) return;
 
@@ -125,7 +130,7 @@ const DelegateTask = () => {
 
     fetchCalendarConfig();
   }, [token]);
-  
+
   const handleDateChange = (date) => {
     if (!date) return;
 

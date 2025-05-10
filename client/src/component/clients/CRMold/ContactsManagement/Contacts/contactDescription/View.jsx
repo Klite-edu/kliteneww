@@ -24,13 +24,13 @@ const View = () => {
 
         // Fetch token, role and permissions in parallel
         const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/permission/get-token`, {
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-token`, {
             withCredentials: true
           }),
-          axios.get(`http://localhost:5000/api/permission/get-role`, {
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
             withCredentials: true
           }),
-          axios.get(`http://localhost:5000/api/permission/get-permissions`, {
+          axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-permissions`, {
             withCredentials: true
           })
         ]);
@@ -57,7 +57,7 @@ const View = () => {
     const fetchEmployee = async (authToken) => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/employee/${id}`,
+          `${process.env.REACT_APP_API_URL}/api/employee/${id}`,
           {
             withCredentials: true,
             headers: {
@@ -82,7 +82,7 @@ const View = () => {
     try {
       if (window.confirm("Are you sure you want to delete this employee? This action cannot be undone.")) {
         await axios.delete(
-          `http://localhost:5000/api/employee/delete/${id}`,
+          `${process.env.REACT_APP_API_URL}/api/employee/delete/${id}`,
           {
             withCredentials: true,
             headers: {

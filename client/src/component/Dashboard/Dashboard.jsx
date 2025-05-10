@@ -17,7 +17,7 @@ const Dashboard = () => {
     const fetchRole = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/permission/get-token`,
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
           { withCredentials: true }
         );
         const token = jwtDecode(response.data.token);
@@ -35,22 +35,37 @@ const Dashboard = () => {
     const fetchPermissions = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/permission/get-permissions`,
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
           { withCredentials: true }
         );
-        setCustomPermissions(response.data.permissions || {});
+        const token = response.data.token;
+
+        const headers = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        };
+
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
+          headers
+        );
+
+        setCustomPermissions(res.data.permissions || {});
       } catch (error) {
         console.error("Error fetching permissions:", error);
         setCustomPermissions({});
       }
     };
+
     fetchRole();
     fetchPermissions();
   }, [navigate]);
   const handlePermissionsSave = async (permissions) => {
     try {
       await axios.post(
-        `http://localhost:5000/api/permission/save-permissions`,
+        `${process.env.REACT_APP_API_URL}/api/permission/save-permissions`,
         { permissions },
         { withCredentials: true }
       );
@@ -62,7 +77,7 @@ const Dashboard = () => {
   if (!role) return <div>Loading...</div>;
   return (
     <div className="main_dashboard">
-      <Sidebar role={role} />
+      <Sidebar role={role} customPermissions={customPermissions} />
       {role === "admin" && (
         <Navbar pageTitle="Super Admin Dashboard" role={role} />
       )}
@@ -70,7 +85,7 @@ const Dashboard = () => {
       {role === "user" && (
         <Navbar pageTitle="Employee Dashboard" role={role} id={id} />
       )}
-      <div className="dashboardPanel ">
+      <div className="dashboardPanel">
         {role === "admin" && <AdminDashboard />}
         {role === "client" && (
           <ClientDashboard

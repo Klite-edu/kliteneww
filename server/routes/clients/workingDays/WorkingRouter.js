@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const dbMiddleware = require("../../../middlewares/dbMiddleware");
+const checkPermission = require("../../../middlewares/PermissionAuth");
 
 // ✅ Get Work Config for a Company
-router.get("/get", dbMiddleware, async (req, res) => {
+router.get("/get", dbMiddleware, checkPermission("Working Days", "read"), async (req, res) => {
   console.log("GET /config/work - Request received");
 
   try {
@@ -33,7 +34,7 @@ router.get("/get", dbMiddleware, async (req, res) => {
 });
 
 // ✅ Save or Update Work Config for a Company
-router.post("/save", dbMiddleware, async (req, res) => {
+router.post("/save", dbMiddleware, checkPermission("Working Days", "create"), async (req, res) => {
   try {
     const { workingDays, shifts, holidays, timezone } = req.body;
 
@@ -70,7 +71,7 @@ router.post("/save", dbMiddleware, async (req, res) => {
   }
 });
 // ✅ Delete Work Config for a Company
-router.delete("/delete", dbMiddleware, async (req, res) => {
+router.delete("/delete", dbMiddleware, checkPermission("Working Days", "delete"), async (req, res) => {
   try {
     console.log("DELETE /config/work - Request received");
     const result = await req.WorkingDays.deleteOne({});

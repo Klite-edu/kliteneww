@@ -45,11 +45,11 @@ const UserDashboard = ({ onSave, permissions }) => {
         console.log("Fetching user data...");
         const [emailRes, tokenRes] = await Promise.all([
           axios.get(
-            `http://localhost:5000/api/permission/get-email`,
+            `${process.env.REACT_APP_API_URL}/api/permission/get-email`,
             { withCredentials: true }
           ),
           axios.get(
-            `http://localhost:5000/api/permission/get-token`,
+            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
             { withCredentials: true }
           ),
         ]);
@@ -77,11 +77,11 @@ const UserDashboard = ({ onSave, permissions }) => {
           checklistRes,
         ] = await Promise.all([
           axios.get(
-            `http://localhost:5000/api/delegation/list`,
+           `${process.env.REACT_APP_API_URL}/api/delegation/list`,
             headers
           ),
           axios.get(
-            `http://localhost:5000/api/tasks/list`,
+            `${process.env.REACT_APP_API_URL}/api/tasks/list`,
             headers
           ),
         ]);

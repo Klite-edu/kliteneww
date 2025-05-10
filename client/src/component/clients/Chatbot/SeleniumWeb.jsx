@@ -21,7 +21,7 @@ const SeleniumWeb = () => {
   );
   const [socket, setSocket] = useState(null);
   const [companyName, setCompanyName] = useState(null);
-
+  const [id, setId] = useState("");
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ const SeleniumWeb = () => {
           window.companyName = payload.companyName;
           return;
         }
-
+        setId(res.data.id);
         console.warn(
           "⚠️ Token missing in /api/get-token response. Trying cookie fallback..."
         );
@@ -84,17 +84,26 @@ const SeleniumWeb = () => {
 
   const fetchInitialData = useCallback(async () => {
     try {
+      const tokenRes = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+        { withCredentials: true }
+      );
+      const userToken = tokenRes.data.token;
+
       const [roleRes, permissionsRes] = await Promise.all([
         axios.get(`${process.env.REACT_APP_API_URL}/api/permission/get-role`, {
           withCredentials: true,
+          headers: { Authorization: `Bearer ${userToken}` },
         }),
         axios.get(
           `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
           {
             withCredentials: true,
+            headers: { Authorization: `Bearer ${userToken}` },
           }
         ),
       ]);
+
       setRole(roleRes.data.role);
       setCustomPermissions(permissionsRes.data.permissions || {});
     } catch (error) {
@@ -273,7 +282,7 @@ const SeleniumWeb = () => {
   return (
     <>
       <Sidebar role={role} customPermissions={customPermissions} />
-      <Navbar />
+      <Navbar id={id} role={role} />
       <div className="whatsapp-connection-container">
         <h1>WhatsApp Web Connection</h1>
         <div className="status-indicator">

@@ -18,28 +18,34 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       enum: ["Active", "Inactive", "Suspended"],
       default: "Active",
-      required: true
+      required: true,
     },
     role: {
       type: String,
       default: "user",
-      required: true
+      required: true,
     },
-    shifts: [{
-      name: String,
-      startTime: String, // Format: "HH:MM" (24-hour)
-      endTime: String,
-      isDefault: Boolean
-    }],
+    permissions: {
+      type: Object,
+      default: {},
+    },
+    shifts: [
+      {
+        name: String,
+        startTime: String, // Format: "HH:MM" (24-hour)
+        endTime: String,
+        isDefault: Boolean,
+      },
+    ],
     teamAssociation: { type: String, trim: true },
   },
   { timestamps: true }
 );
 
 // Password hashing middleware
-employeeSchema.pre("save", async function(next) {
+employeeSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -50,26 +56,28 @@ employeeSchema.pre("save", async function(next) {
 });
 
 // Availability check method
-employeeSchema.methods.isAvailableAt = function(dateTime) {
+employeeSchema.methods.isAvailableAt = function (dateTime) {
   const zonedDate = utcToZonedTime(dateTime, this.timezone);
-  const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][zonedDate.getDay()];
+  const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+    zonedDate.getDay()
+  ];
 
-  const workDay = this.workingDays.find(d => d.day === dayOfWeek);
+  const workDay = this.workingDays.find((d) => d.day === dayOfWeek);
   if (!workDay?.isWorking) return false;
 
   if (this.shifts.length > 0) {
-    const activeShift = this.shifts.find(s => s.isDefault);
+    const activeShift = this.shifts.find((s) => s.isDefault);
     if (activeShift) {
       const [startH, startM] = activeShift.startTime.split(":").map(Number);
       const [endH, endM] = activeShift.endTime.split(":").map(Number);
-      
+
       const shiftStart = setMinutes(setHours(zonedDate, startH), startM);
       const shiftEnd = setMinutes(setHours(zonedDate, endH), endM);
-      
+
       return isWithinInterval(zonedDate, { start: shiftStart, end: shiftEnd });
     }
   }
-  
+
   return true;
 };
 

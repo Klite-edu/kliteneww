@@ -6,6 +6,7 @@ const router = express.Router();
 const {
   getFormBuilderModel,
 } = require("../../../models/clients/formBuilder/formBuilder-model");
+const checkPermission = require("../../../middlewares/PermissionAuth");
 
 router.get("/public/:id", async (req, res) => {
   const { id } = req.params;
@@ -56,7 +57,7 @@ router.get("/private-view/:id", DBMiddleware, async (req, res) => {
 });
 
 // Create a form
-router.post("/create", DBMiddleware, async (req, res) => {
+router.post("/create", DBMiddleware, checkPermission("Form Builder", "create"), async (req, res) => {
   try {
     const { body } = req;
 
@@ -118,7 +119,7 @@ router.post("/create", DBMiddleware, async (req, res) => {
   }
 });
 
-router.get("/forms", DBMiddleware, async (req, res) => {
+router.get("/forms", DBMiddleware, checkPermission("Form", "read"), async (req, res) => {
   try {
     const forms = await req.FormBuilder.find({})
       .sort({ _id: -1 }) // Sort by most recent first

@@ -2,11 +2,12 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { Types } = mongoose;
 const dbMiddleware = require("../../../middlewares/dbMiddleware");
+const checkPermission = require("../../../middlewares/PermissionAuth");
 
 const router = express.Router();
 
 // Create a trigger
-router.post("/create", dbMiddleware, async (req, res) => {
+router.post("/create", dbMiddleware, checkPermission("Automation", "create"),  async (req, res) => {
   const { name, description, event_source, conditions, action } = req.body;
 
   try {
@@ -38,7 +39,7 @@ router.post("/create", dbMiddleware, async (req, res) => {
 });
 
 // Get all triggers
-router.get("/list", dbMiddleware, async (req, res) => {
+router.get("/list", dbMiddleware, checkPermission("Automation", "read"), async (req, res) => {
   try {
     const triggers = await req.trigger.find();
     res.status(200).json(triggers);
@@ -48,7 +49,7 @@ router.get("/list", dbMiddleware, async (req, res) => {
 });
 
 // Get unique event sources from triggers
-router.get("/event-sources", dbMiddleware, async (req, res) => {
+router.get("/event-sources", dbMiddleware, checkPermission("Automation", "read"),  async (req, res) => {
   try {
     const eventSources = await req.trigger.distinct("event_source");
     res.status(200).json(eventSources);
@@ -58,7 +59,7 @@ router.get("/event-sources", dbMiddleware, async (req, res) => {
 });
 
 // Delete a trigger
-router.delete("/delete/:id", dbMiddleware, async (req, res) => {
+router.delete("/delete/:id", dbMiddleware, checkPermission("Automation", "delete"),  async (req, res) => {
   try {
     const { id } = req.params;
 

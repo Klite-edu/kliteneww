@@ -26,27 +26,34 @@ const GoogleDriveManager = () => {
     const fetchInitialData = async () => {
       try {
         // Fetch token, role, and permissions in parallel
-        const [tokenRes, roleRes, permissionsRes] = await Promise.all([
-          axios.get(
-            `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
-            { withCredentials: true }
-          ),
+        const tokenRes = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/permission/get-token`,
+          { withCredentials: true }
+        );
+
+        const userToken = tokenRes.data.token;
+
+        const [roleRes, permissionsRes] = await Promise.all([
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-role`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: { Authorization: `Bearer ${userToken}` },
+            }
           ),
           axios.get(
             `${process.env.REACT_APP_API_URL}/api/permission/get-permissions`,
-            { withCredentials: true }
+            {
+              withCredentials: true,
+              headers: { Authorization: `Bearer ${userToken}` },
+            }
           ),
         ]);
 
-        const userToken = tokenRes.data.token;
         const userRole = roleRes.data.role;
         const userPermissions = permissionsRes.data.permissions || {};
 
         if (!userToken || !userRole) {
-          navigate("/");
           return;
         }
 
@@ -55,7 +62,6 @@ const GoogleDriveManager = () => {
         setCustomPermissions(userPermissions);
       } catch (error) {
         console.error("Error fetching initial data:", error);
-        navigate("/");
       }
     };
 
@@ -93,7 +99,12 @@ const GoogleDriveManager = () => {
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/admin/google-token`,
-          { withCredentials: true }
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`, // ✅ send JWT
+            },
+          }
         );
 
         if (response.data && response.data.accessToken) {
@@ -207,7 +218,7 @@ const GoogleDriveManager = () => {
     if (!window.confirm("Are you sure you want to delete this file?")) return;
 
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/file/${fileId}`, {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/auth/file/${fileId}`, {
         withCredentials: true,
       });
       setFiles(files.filter((file) => file.fileId !== fileId));
@@ -231,14 +242,17 @@ const GoogleDriveManager = () => {
         <Navbar />
         <div className="googledrive-error-container">
           <p>No Google Drive connected yet.</p>
-          <button
-            onClick={() => {
-              window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
-            }}
-            className="googledrive-connect-btn"
-          >
-            Connect Google Drive
-          </button>
+          {(role === "client" ||
+            customPermissions["GoogleDrive Connect"]?.includes("create")) && (
+            <button
+              onClick={() => {
+                window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
+              }}
+              className="googledrive-connect-btn"
+            >
+              Connect Google Drive
+            </button>
+          )}
         </div>
       </>
     );
@@ -246,9 +260,12 @@ const GoogleDriveManager = () => {
 
   const handleDisconnect = async () => {
     try {
-      await axios.get(`${process.env.REACT_APP_API_URL}/auth/disconnect-google`, {
-        withCredentials: true,
-      });
+      await axios.get(
+        `${process.env.REACT_APP_API_URL}/auth/disconnect-google`,
+        {
+          withCredentials: true,
+        }
+      );
       setGoogleToken(null); // ✅ Google access frontend se bhi hata do
       alert("Google Drive disconnected successfully!");
     } catch (error) {
@@ -266,19 +283,26 @@ const GoogleDriveManager = () => {
           <h2 className="googledrive-upload-title">Upload File</h2>
           <div className="googledrive-upload-container">
             <div className="googledrive-file-input-container">
-              <input
-                type="file"
-                id="file-upload"
-                onChange={handleFileChange}
-                disabled={isUploading}
-                className="googledrive-file-input"
-              />
-              <label
-                htmlFor="file-upload"
-                className="googledrive-file-upload-label"
-              >
-                Choose File
-              </label>
+              {(role === "client" ||
+                customPermissions["GoogleDrive Connect"]?.includes(
+                  "create"
+                )) && (
+                <>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="googledrive-file-input"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="googledrive-file-upload-label"
+                  >
+                    Choose File
+                  </label>
+                </>
+              )}
               {file && (
                 <span className="googledrive-file-name">{file.name}</span>
               )}
@@ -312,14 +336,16 @@ const GoogleDriveManager = () => {
             )}
           </div>
         </div>
-        {googleToken && (
-          <button
-            onClick={handleDisconnect}
-            className="googledrive-disconnect-btn"
-          >
-            Disconnect Google Drive
-          </button>
-        )}
+        {googleToken &&
+          (role === "client" ||
+            customPermissions["GoogleDrive Connect"]?.includes("delete")) && (
+            <button
+              onClick={handleDisconnect}
+              className="googledrive-disconnect-btn"
+            >
+              Disconnect Google Drive
+            </button>
+          )}
 
         <div className="googledrive-file-list-section">
           <h2 className="googledrive-file-list-title">Your Files</h2>
@@ -347,20 +373,30 @@ const GoogleDriveManager = () => {
                     <h3>{file.fileName}</h3>
                     <p className="googledrive-file-type">{file.mimeType}</p>
                     <div className="googledrive-file-actions">
-                      <a
-                        href={file.viewLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="googledrive-view-btn"
-                      >
-                        View
-                      </a>
-                      <button
-                        onClick={() => handleDelete(file.fileId)}
-                        className="googledrive-delete-btn"
-                      >
-                        Delete
-                      </button>
+                      {role === "client" ||
+                      customPermissions["GoogleDrive Connect"]?.includes(
+                        "read"
+                      ) ? (
+                        <a
+                          href={file.viewLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="googledrive-view-btn"
+                        >
+                          View
+                        </a>
+                      ) : null}
+                      {role === "client" ||
+                      customPermissions["GoogleDrive Connect"]?.includes(
+                        "delete"
+                      ) ? (
+                        <button
+                          onClick={() => handleDelete(file.fileId)}
+                          className="googledrive-delete-btn"
+                        >
+                          Delete
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
